@@ -12,7 +12,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 
 // --- Configuration ---
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3010;
 
 // View Engine
 app.set('view engine', 'ejs');
