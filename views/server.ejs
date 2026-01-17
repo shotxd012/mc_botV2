@@ -1,0 +1,79 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<main class="flex-1 p-8 overflow-y-auto h-screen">
+    <header class="mb-8">
+        <h2 class="text-3xl font-bold">Server Settings</h2>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Connection Settings -->
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                <span class="material-icons text-blue-500">dns</span> Server Connection
+            </h3>
+            <form onsubmit="updateServer(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Server IP</label>
+                    <input type="text" name="ip" value="<%= server.ip %>" class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Port</label>
+                        <input type="number" name="port" value="<%= server.port %>" class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Version</label>
+                        <input type="text" name="version" value="<%= server.version %>" class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="1.20.4 or auto">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-500/20">
+                    Save Changes
+                </button>
+            </form>
+        </div>
+
+        <!-- Account Settings -->
+        <div class="space-y-8">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                    <span class="material-icons text-purple-500">account_circle</span> Minecraft Account
+                </h3>
+                <form onsubmit="updateAccount(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Microsoft Email</label>
+                        <input type="email" name="email" value="<%= account.email %>" class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" required>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                        <span class="material-icons text-base">info</span>
+                        <span>Authentication is handled automatically via Microsoft login on first run.</span>
+                    </div>
+                    <button type="submit" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-purple-500/20">
+                        Update Account
+                    </button>
+                </form>
+            </div>
+
+            <!-- General Settings -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                    <span class="material-icons text-gray-500">settings</span> General
+                </h3>
+                <form onsubmit="updateGeneral(event)" class="space-y-4">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                        <span class="font-medium">Auto Reconnect</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="autoReconnect" class="sr-only peer" <%= settings.autoReconnect ? 'checked' : '' %>>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                    <button type="submit" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 rounded-xl transition-all">
+                        Save Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include('partials/footer') %>
