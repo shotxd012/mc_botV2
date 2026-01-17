@@ -1,30 +1,32 @@
 const express = require('express');
 const router = express.Router();
-const botController = require('../bot/bot');
+const botManager = require('../bot/BotManager');
 const dataManager = require('../utils/dataManager');
 
 router.get('/', (req, res) => {
-    const status = botController.getStatus();
+    const bots = botManager.getAllBotsStatus();
     res.render('dashboard', {
         page: 'home',
-        status: status
+        bots: bots
     });
 });
 
-router.get('/server', (req, res) => {
-    const server = dataManager.getServerConfig();
-    const account = dataManager.getMinecraftAccount();
-    const settings = dataManager.getSettings();
-    res.render('server', {
-        page: 'server',
-        server,
-        account,
-        settings
-    });
-});
+router.get('/bot/:id', (req, res) => {
+    const id = req.params.id;
+    const status = botManager.getStatus(id);
 
-router.get('/console', (req, res) => {
-    res.render('console', { page: 'console' });
+    if (!status) {
+        return res.redirect('/');
+    }
+
+    const botConfig = dataManager.getBot(id);
+
+    res.render('bot-control', {
+        page: 'bot',
+        status: status,
+        botConfig: botConfig,
+        botId: id
+    });
 });
 
 module.exports = router;

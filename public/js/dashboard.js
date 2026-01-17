@@ -1,36 +1,61 @@
 const socket = io();
+const isBotPage = typeof BOT_ID !== 'undefined';
+
+// Initial Request
+if (isBotPage) {
+    socket.emit('get-status', BOT_ID);
+}
 
 // --- Socket Events ---
 
 socket.on('connect', () => {
-    addLog('Connected to dashboard server.', 'system');
+    if (isBotPage) {
+        addLog('Connected to dashboard server.', 'system');
+        socket.emit('get-status', BOT_ID);
+    }
 });
 
 socket.on('log', (data) => {
-    // data = { message, type }
-    addLog(data.message, data.type);
+    // data = { botId, message, type }
+    if (isBotPage && data.botId == BOT_ID) {
+        addLog(data.message, data.type);
+    }
 });
 
-socket.on('status', (status) => {
-    updateStatus(status);
+socket.on('status', (data) => {
+    // data = { botId, status }
+    if (isBotPage && data.botId == BOT_ID) {
+        updateStatus(data.status);
+    }
 });
 
 socket.on('auth-code', (data) => {
-    showAuthModal(data);
+    // data = { botId, data: { user_code, ... } }
+    if (isBotPage && data.botId == BOT_ID) {
+        showAuthModal(data.data);
+        addLog(`Auth Code: ${data.data.user_code}`, 'action');
+    }
 });
 
 // --- UI Helpers ---
 
 function addLog(message, type) {
     const container = document.getElementById('console-logs');
-    if (!container) return; // Not on console page
+    if (!container) return;
 
     const div = document.createElement('div');
-    div.className = getTypeClass(type);
+    div.className = getTypeClass(type) + " break-words";
     div.textContent = message;
 
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
+}
+
+function clearConsole() {
+    const container = document.getElementById('console-logs');
+    if (container) {
+        container.innerHTML = '<div class="text-gray-500 italic">Console cleared.</div>';
+    }
 }
 
 function getTypeClass(type) {
@@ -39,41 +64,38 @@ function getTypeClass(type) {
         case 'warning': return 'text-yellow-400';
         case 'action': return 'text-blue-400 font-bold';
         case 'chat': return 'text-green-400';
+        case 'output': return 'text-gray-300';
         case 'system': return 'text-gray-500 italic';
         default: return 'text-gray-300';
     }
 }
 
 function updateStatus(status) {
-    // Update Sidebar
-    const sbDot = document.getElementById('sidebar-status-dot');
-    const sbText = document.getElementById('sidebar-status-text');
-    if (sbDot) sbDot.className = `w-2 h-2 rounded-full ${status.online ? 'bg-green-500' : 'bg-red-500'}`;
-    if (sbText) sbText.textContent = status.online ? 'Online' : 'Offline';
+    // Update Header Status
+    const dot = document.getElementById('status-dot');
+    const text = document.getElementById('status-text');
+    if (dot) dot.className = `w-2 h-2 rounded-full ${status.online ? 'bg-green-500' : 'bg-red-500'}`;
+    if (text) text.textContent = status.online ? 'Online' : 'Offline';
 
-    // Update Dashboard Cards
-    const mainDot = document.getElementById('status-dot');
-    const mainText = document.getElementById('status-text');
+    // Update Cards
     const userText = document.getElementById('bot-username');
     const uptimeText = document.getElementById('uptime-text');
     const authStatus = document.getElementById('auth-status');
 
-    if (mainDot) mainDot.className = `w-3 h-3 rounded-full ${status.online ? 'bg-green-500' : 'bg-red-500'}`;
-    if (mainText) mainText.textContent = status.online ? 'Online' : 'Offline';
-    if (userText) userText.textContent = status.username || 'N/A';
-    if (userText) userText.title = status.username || '';
+    if (userText) userText.textContent = status.username || '-';
     if (uptimeText) uptimeText.textContent = status.uptime;
     if (authStatus) {
         authStatus.textContent = status.authStatus;
-        authStatus.className = `text-xl font-bold ${status.authStatus === 'Verified' ? 'text-green-500' : 'text-yellow-500'}`;
+        authStatus.className = `font-bold ${status.authStatus === 'Verified' ? 'text-green-500' : 'text-yellow-500'}`;
     }
 }
 
 // --- Controls ---
 
 async function controlBot(action) {
+    if (!isBotPage) return;
     try {
-        const res = await fetch(`/api/${action}`, { method: 'POST' });
+        const res = await fetch(`/api/bot/${BOT_ID}/${action}`, { method: 'POST' });
         const data = await res.json();
         if (!data.success) {
             alert('Error: ' + data.message);
@@ -85,15 +107,20 @@ async function controlBot(action) {
 }
 
 async function toggleAfk() {
-    // Toggle logic: we ask user what to do since we don't track state locally perfectly yet
-    if (confirm("Start AFK Mode? (Cancel to Stop AFK)")) {
-        await fetch('/api/afk', {
+    if (!isBotPage) return;
+    const btn = document.getElementById('afk-btn');
+    const isStarting = btn.innerText.includes('Toggle') || btn.innerText.includes('Start');
+    // Simplified toggle logic: server handles state, but we don't strictly know if it's on or off without status
+    // For now, prompt:
+
+    if (confirm("Enable AFK Mode?")) {
+        await fetch(`/api/bot/${BOT_ID}/afk`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ enabled: true })
         });
     } else {
-         await fetch('/api/afk', {
+         await fetch(`/api/bot/${BOT_ID}/afk`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ enabled: false })
@@ -103,79 +130,71 @@ async function toggleAfk() {
 
 async function sendCommand(e) {
     e.preventDefault();
+    if (!isBotPage) return;
+
     const input = document.getElementById('command-input');
     const command = input.value;
     if (!command) return;
 
     try {
-        await fetch('/api/command', {
+        await fetch(`/api/bot/${BOT_ID}/command`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ command })
         });
         input.value = '';
-        addLog(`> ${command}`, 'action');
+        addLog(`> ${command}`, 'output');
     } catch(err) {
         console.error(err);
     }
 }
 
-// --- Settings Forms ---
-
-async function updateServer(e) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData);
+async function deleteBot() {
+    if (!isBotPage) return;
+    if (!confirm("Are you sure you want to delete this bot? This action cannot be undone.")) return;
 
     try {
-        await fetch('/api/settings/server', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        alert('Server settings saved.');
-    } catch(err) { alert('Error saving settings'); }
+        const res = await fetch(`/api/bot/${BOT_ID}/delete`, { method: 'POST' });
+        if (res.ok) {
+            window.location.href = '/';
+        } else {
+            alert("Failed to delete bot.");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error deleting bot.");
+    }
 }
 
-async function updateAccount(e) {
+// --- Settings ---
+
+async function updateBotConfig(e) {
     e.preventDefault();
+    if (!isBotPage) return;
+
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
 
-    try {
-        await fetch('/api/settings/account', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        alert('Account settings saved.');
-    } catch(err) { alert('Error saving settings'); }
-}
-
-async function updateGeneral(e) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData);
-
-    // Checkbox hack: if checked it exists, if not it doesn't.
-    // But FormData includes it only if checked.
-    // However, updateSettings expects boolean.
-    // Wait, my control.js expects `autoReconnect` in body.
-    // HTML Checkbox: <input type="checkbox" name="autoReconnect">
-    // If checked, data.autoReconnect = 'on'. If not, undefined.
-
+    // Structure for API
     const payload = {
-        autoReconnect: !!data.autoReconnect
+        server: {
+            ip: data.ip,
+            port: data.port,
+            version: data.version
+        },
+        account: {
+            email: data.email
+        },
+        name: data.name
     };
 
     try {
-        await fetch('/api/settings/general', {
+        await fetch(`/api/bot/${BOT_ID}/settings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        alert('General settings saved.');
-        location.reload();
+        alert('Settings saved. Restart the bot to apply changes.');
     } catch(err) { alert('Error saving settings'); }
 }
 

@@ -3,106 +3,131 @@
 
 <main class="flex-1 p-8 overflow-y-auto h-screen">
     <header class="flex justify-between items-center mb-8">
-        <h2 class="text-3xl font-bold">Dashboard</h2>
+        <h2 class="text-3xl font-bold">Your Bots</h2>
         <div class="flex items-center gap-4">
-            <span class="text-sm text-gray-500 dark:text-gray-400">Welcome, <%= user.username %></span>
+            <button onclick="openCreateModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95">
+                <span class="material-icons">add</span> Create Server Bot
+            </button>
         </div>
     </header>
 
-    <!-- Status Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
-        <!-- Status -->
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md">
-            <h3 class="text-gray-500 dark:text-gray-400 font-medium mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
-                <span class="material-icons text-base">info</span> Status
-            </h3>
-            <div class="flex items-center gap-3">
-                <div id="status-dot" class="w-3 h-3 rounded-full <%= status.online ? 'bg-green-500' : 'bg-red-500' %>"></div>
-                <span id="status-text" class="text-xl font-bold"><%= status.online ? 'Online' : 'Offline' %></span>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <% bots.forEach(function(bot) { %>
+            <div onclick="window.location.href='/bot/<%= bot.id %>'" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md cursor-pointer transition-all group">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-xl font-bold truncate group-hover:text-blue-500 transition-colors"><%= bot.name %></h3>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold <%= bot.online ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' %>">
+                        <%= bot.online ? 'ONLINE' : 'OFFLINE' %>
+                    </span>
+                </div>
+                <div class="space-y-3 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="flex items-center gap-3">
+                        <span class="material-icons text-lg text-gray-400">dns</span>
+                        <%= bot.server.ip %>:<%= bot.server.port %>
+                    </p>
+                    <p class="flex items-center gap-3">
+                        <span class="material-icons text-lg text-gray-400">person</span>
+                        <%= bot.username %>
+                    </p>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center text-xs text-gray-400">
+                    <span>ID: #<%= bot.id %></span>
+                    <span><%= bot.server.version %></span>
+                </div>
             </div>
-        </div>
+        <% }); %>
 
-        <!-- Auth -->
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md">
-             <h3 class="text-gray-500 dark:text-gray-400 font-medium mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
-                <span class="material-icons text-base">verified_user</span> Auth
-             </h3>
-             <span id="auth-status" class="text-xl font-bold <%= status.authStatus === 'Verified' ? 'text-green-500' : 'text-yellow-500' %>"><%= status.authStatus %></span>
-        </div>
-
-        <!-- Uptime -->
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md">
-            <h3 class="text-gray-500 dark:text-gray-400 font-medium mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
-                <span class="material-icons text-base">timer</span> Uptime
-            </h3>
-            <span id="uptime-text" class="text-xl font-bold font-mono"><%= status.uptime %></span>
-        </div>
-
-        <!-- Username -->
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md">
-            <h3 class="text-gray-500 dark:text-gray-400 font-medium mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
-                <span class="material-icons text-base">account_circle</span> Username
-            </h3>
-            <span id="bot-username" class="text-xl font-bold truncate block" title="<%= status.username %>"><%= status.username || 'N/A' %></span>
-        </div>
-
-        <!-- Server -->
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md">
-            <h3 class="text-gray-500 dark:text-gray-400 font-medium mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
-                <span class="material-icons text-base">dns</span> Server
-            </h3>
-            <span class="text-xl font-bold truncate block" title="<%= status.server.ip %>:<%= status.server.port %>"><%= status.server.ip %>:<%= status.server.port %></span>
-        </div>
-    </div>
-
-    <!-- Controls -->
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
-        <h3 class="text-lg font-bold mb-6">Quick Controls</h3>
-        <div class="flex flex-wrap gap-4">
-            <button onclick="controlBot('start')" class="flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-green-500/20 active:scale-95">
-                <span class="material-icons">play_arrow</span> Start Bot
-            </button>
-            <button onclick="controlBot('stop')" class="flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-red-500/20 active:scale-95">
-                <span class="material-icons">stop</span> Stop Bot
-            </button>
-            <button onclick="controlBot('restart')" class="flex items-center gap-2 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-yellow-500/20 active:scale-95">
-                <span class="material-icons">refresh</span> Restart
-            </button>
-            <div class="w-px h-12 bg-gray-200 dark:bg-gray-700 mx-2 hidden md:block"></div>
-            <button id="afk-btn" onclick="toggleAfk()" class="flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-bold transition-all active:scale-95">
-                <span class="material-icons">cached</span> Toggle AFK
-            </button>
+        <!-- Add New Placeholder -->
+        <div onclick="openCreateModal()" class="bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:text-blue-500 cursor-pointer transition-all min-h-[180px]">
+            <span class="material-icons text-4xl mb-2">add_circle_outline</span>
+            <span class="font-bold">Add New Bot</span>
         </div>
     </div>
 </main>
 
-<!-- Microsoft Auth Modal -->
-<div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
-    <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-300" id="auth-modal-content">
-        <div class="text-center mb-6">
-            <span class="material-icons text-blue-500 text-5xl mb-4">microsoft</span>
-            <h3 class="text-xl font-bold">Microsoft Authentication Required</h3>
-            <p class="text-gray-500 dark:text-gray-400 mt-2">Please verify your account to continue.</p>
-        </div>
-
-        <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-xl mb-6 border border-gray-200 dark:border-gray-700">
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Verification Code:</p>
-            <div class="flex items-center justify-between gap-2">
-                <code id="auth-code" class="text-2xl font-mono font-bold text-blue-500"></code>
-                <button onclick="copyCode()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg text-gray-500 transition-colors" title="Copy Code">
-                    <span class="material-icons text-sm">content_copy</span>
-                </button>
+<!-- Create Bot Modal -->
+<div id="create-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-lg mx-4 transform scale-95 transition-transform duration-300" id="create-modal-content">
+        <h3 class="text-2xl font-bold mb-6">Create New Bot</h3>
+        <form onsubmit="createBot(event)" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Bot Name</label>
+                <input type="text" name="name" placeholder="e.g. Survival Server" required class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
             </div>
-        </div>
-
-        <a id="auth-link" href="#" target="_blank" class="block w-full bg-blue-500 hover:bg-blue-600 text-white text-center font-bold py-3 rounded-xl mb-4 transition-all shadow-lg shadow-blue-500/20">
-            Open Microsoft Login
-        </a>
-
-        <button onclick="closeAuthModal()" class="w-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium py-2">
-            Close
-        </button>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Microsoft Account Email</label>
+                <input type="email" name="email" placeholder="user@gmail.com" required class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Server IP</label>
+                    <input type="text" name="ip" placeholder="play.example.com" required class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Port</label>
+                    <input type="number" name="port" value="25565" required class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Minecraft Version</label>
+                <select name="version" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    <option value="1.20.4">1.20.4</option>
+                    <option value="1.20.1">1.20.1</option>
+                    <option value="1.19.4">1.19.4</option>
+                    <option value="1.18.2">1.18.2</option>
+                    <option value="1.12.2">1.12.2</option>
+                    <option value="auto">Auto</option>
+                </select>
+            </div>
+            <div class="flex justify-end gap-3 mt-8">
+                <button type="button" onclick="closeCreateModal()" class="px-6 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium">Cancel</button>
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Create</button>
+            </div>
+        </form>
     </div>
 </div>
+
+<script>
+function openCreateModal() {
+    const modal = document.getElementById('create-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        document.getElementById('create-modal-content').classList.remove('scale-95');
+    }, 10);
+}
+
+function closeCreateModal() {
+    const modal = document.getElementById('create-modal');
+    modal.classList.add('opacity-0');
+    document.getElementById('create-modal-content').classList.add('scale-95');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
+}
+
+async function createBot(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const res = await fetch('/api/bots/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+            window.location.reload();
+        } else {
+            alert('Failed to create bot');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error creating bot');
+    }
+}
+</script>
 
 <%- include('partials/footer') %>

@@ -1,0 +1,163 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<script>
+    const BOT_ID = "<%= botId %>";
+</script>
+
+<main class="flex-1 p-8 overflow-y-auto h-screen flex flex-col gap-8">
+    <!-- Header -->
+    <header class="flex justify-between items-center">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                <span class="material-icons">arrow_back</span>
+            </a>
+            <div>
+                <h2 class="text-3xl font-bold"><%= botConfig.name %></h2>
+                <div class="flex items-center gap-2 text-sm text-gray-500">
+                    <span id="status-dot" class="w-2 h-2 rounded-full <%= status.online ? 'bg-green-500' : 'bg-red-500' %>"></span>
+                    <span id="status-text"><%= status.online ? 'Online' : 'Offline' %></span>
+                    <span>•</span>
+                    <span><%= status.server.ip %>:<%= status.server.port %></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button onclick="deleteBot()" class="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-2 rounded-lg font-medium transition-colors border border-transparent hover:border-red-500/20">
+                Delete Bot
+            </button>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 flex-1 min-h-0">
+        <!-- Left Column: Controls & Console -->
+        <div class="xl:col-span-2 flex flex-col gap-6 min-h-0">
+            <!-- Controls -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                <div class="flex flex-wrap gap-4">
+                    <button onclick="controlBot('start')" class="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-green-500/20 active:scale-95">
+                        <span class="material-icons">play_arrow</span> Start
+                    </button>
+                    <button onclick="controlBot('stop')" class="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-red-500/20 active:scale-95">
+                        <span class="material-icons">stop</span> Stop
+                    </button>
+                    <button onclick="controlBot('restart')" class="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-yellow-500/20 active:scale-95">
+                        <span class="material-icons">refresh</span> Restart
+                    </button>
+                    <div class="w-px h-12 bg-gray-200 dark:bg-gray-700 hidden md:block"></div>
+                    <button id="afk-btn" onclick="toggleAfk()" class="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-bold transition-all active:scale-95">
+                        <span class="material-icons">cached</span> Toggle AFK
+                    </button>
+                </div>
+
+                <!-- Status Row -->
+                <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+                    <div class="text-center">
+                        <div class="text-xs text-gray-500 uppercase font-bold mb-1">Uptime</div>
+                        <div id="uptime-text" class="font-mono font-bold"><%= status.uptime %></div>
+                    </div>
+                    <div class="text-center border-l border-r border-gray-100 dark:border-gray-700">
+                        <div class="text-xs text-gray-500 uppercase font-bold mb-1">Auth Status</div>
+                        <div id="auth-status" class="<%= status.authStatus === 'Verified' ? 'text-green-500' : 'text-yellow-500' %> font-bold"><%= status.authStatus %></div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xs text-gray-500 uppercase font-bold mb-1">Username</div>
+                        <div id="bot-username" class="font-bold truncate"><%= status.username || '-' %></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Console -->
+            <div class="flex-1 bg-gray-900 rounded-2xl shadow-sm border border-gray-700 flex flex-col overflow-hidden min-h-[400px]">
+                <div class="px-4 py-2 bg-gray-800 border-b border-gray-700 flex justify-between items-center">
+                    <span class="text-xs font-mono text-gray-400">CONSOLE</span>
+                    <button onclick="clearConsole()" class="text-xs text-gray-500 hover:text-gray-300">Clear</button>
+                </div>
+                <div id="console-logs" class="flex-1 p-4 overflow-y-auto font-mono text-sm space-y-1 console-logs bg-gray-900 text-gray-300">
+                    <div class="text-gray-500 italic">Connecting to console stream...</div>
+                </div>
+                <div class="p-3 bg-gray-800 border-t border-gray-700">
+                    <form onsubmit="sendCommand(event)" class="flex gap-3">
+                        <input type="text" id="command-input" class="flex-1 px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 text-white focus:ring-1 focus:ring-blue-500 outline-none font-mono text-sm" placeholder="Type a command (/) or chat message..." autocomplete="off">
+                        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all text-sm">
+                            Send
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Settings -->
+        <div class="flex flex-col gap-6">
+            <!-- Configuration -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <span class="material-icons text-blue-500">settings</span> Configuration
+                </h3>
+                <form onsubmit="updateBotConfig(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Name</label>
+                        <input type="text" name="name" value="<%= botConfig.name %>" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Server IP</label>
+                        <input type="text" name="ip" value="<%= botConfig.server.ip %>" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Port</label>
+                            <input type="number" name="port" value="<%= botConfig.server.port %>" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Version</label>
+                            <input type="text" name="version" value="<%= botConfig.server.version %>" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Microsoft Email</label>
+                        <input type="email" name="email" value="<%= botConfig.account.email %>" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg transition-all shadow-lg shadow-blue-500/20 text-sm">
+                        Save Changes
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl text-xs text-gray-500 dark:text-gray-400">
+                 Auth is handled automatically via Microsoft. If a code appears, use it to login.
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Microsoft Auth Modal -->
+<div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-300" id="auth-modal-content">
+        <div class="text-center mb-6">
+            <span class="material-icons text-blue-500 text-5xl mb-4">microsoft</span>
+            <h3 class="text-xl font-bold">Microsoft Authentication Required</h3>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">Please verify your account to continue.</p>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-xl mb-6 border border-gray-200 dark:border-gray-700">
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Verification Code:</p>
+            <div class="flex items-center justify-between gap-2">
+                <code id="auth-code" class="text-2xl font-mono font-bold text-blue-500"></code>
+                <button onclick="copyCode()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg text-gray-500 transition-colors" title="Copy Code">
+                    <span class="material-icons text-sm">content_copy</span>
+                </button>
+            </div>
+        </div>
+
+        <a id="auth-link" href="#" target="_blank" class="block w-full bg-blue-500 hover:bg-blue-600 text-white text-center font-bold py-3 rounded-xl mb-4 transition-all shadow-lg shadow-blue-500/20">
+            Open Microsoft Login
+        </a>
+
+        <button onclick="closeAuthModal()" class="w-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium py-2">
+            Close
+        </button>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

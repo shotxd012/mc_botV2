@@ -5,7 +5,7 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const socketIo = require('socket.io');
 const dataManager = require('./utils/dataManager');
-const botController = require('./bot/bot');
+const botManager = require('./bot/BotManager');
 
 const app = express();
 const server = http.createServer(app);
@@ -60,16 +60,23 @@ app.use('/api', requireAuth, controlRoutes);
 
 // --- Socket.IO ---
 io.on('connection', (socket) => {
-    // Send current status on connect
-    socket.emit('status', botController.getStatus());
+    // Send list of bots on connect
+    socket.emit('bot-list', botManager.getAllBotsStatus());
+
+    socket.on('get-status', (botId) => {
+        const status = botManager.getStatus(botId);
+        if (status) {
+            socket.emit('status', { botId, status });
+        }
+    });
 
     socket.on('disconnect', () => {
         // console.log('Client disconnected');
     });
 });
 
-// Initialize Bot Controller with IO
-botController.setIo(io);
+// Initialize Bot Manager
+botManager.init(io);
 app.set('io', io);
 
 // --- Start Server ---
