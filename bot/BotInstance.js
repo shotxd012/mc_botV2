@@ -1,6 +1,6 @@
 const mineflayer = require('mineflayer');
-const { pathfinder } = require('mineflayer-pathfinder');
-const autoEat = require('mineflayer-auto-eat').plugin;
+const mineflayerPathfinder = require('mineflayer-pathfinder');
+const autoEat = require('mineflayer-auto-eat').loader;
 const dataManager = require('../utils/dataManager');
 
 class BotInstance {
@@ -15,7 +15,9 @@ class BotInstance {
         this.reconnectTimeout = null;
         this.shouldReconnect = false;
         this.startTime = null;
+        this.uptimeInterval = null; // Interval for periodic uptime updates
         this.authStatus = 'Offline'; // Offline, Pending, Verified
+        this.uptimeInterval = null; // Interval for periodic uptime updates
 
         // Bind methods to this
         this.start = this.start.bind(this);
@@ -45,8 +47,10 @@ class BotInstance {
         const seconds = Math.floor(diff / 1000);
         const minutes = Math.floor(seconds / 60);
         const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
 
-        if (hours > 0) return `${hours}h ${minutes % 60}m`;
+        if (days > 0) return `${days}d ${hours % 24}h ${minutes % 60}m`;
+        if (hours > 0) return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
         if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
         return `${seconds}s`;
     }
@@ -116,10 +120,10 @@ class BotInstance {
         try {
             this.bot = mineflayer.createBot(options);
             this.isRunning = true;
-            this.startTime = null;
+            // Don't reset startTime here, it will be set on login
             this.emitStatus();
 
-            this.bot.loadPlugin(pathfinder);
+            this.bot.loadPlugin(mineflayerPathfinder.pathfinder);
             this.bot.loadPlugin(autoEat);
 
             this.bindEvents();
@@ -153,6 +157,10 @@ class BotInstance {
         this.bot = null;
         this.isRunning = false;
         this.startTime = null;
+        if (this.uptimeInterval) {
+            clearInterval(this.uptimeInterval);
+            this.uptimeInterval = null;
+        }
         this.authStatus = 'Offline';
         this.emitStatus();
         this.log("Bot stopped.");
@@ -172,6 +180,14 @@ class BotInstance {
             this.startTime = Date.now();
             this.authStatus = 'Verified';
             this.emitStatus();
+            
+            // Start periodic uptime updates to console
+            if (this.uptimeInterval) clearInterval(this.uptimeInterval);
+            this.uptimeInterval = setInterval(() => {
+                if (this.isRunning && this.startTime) {
+                    this.log(`Uptime: ${this.formatUptime(this.startTime)}`, 'info');
+                }
+            }, 60000); // Update every minute
 
             // Update email in config if it changed/was auto-detected (unlikely but good practice)
             // Actually, we don't want to write to disk here unnecessarily.
@@ -187,6 +203,10 @@ class BotInstance {
             this.isRunning = false;
             this.bot = null;
             this.startTime = null;
+            if (this.uptimeInterval) {
+                clearInterval(this.uptimeInterval);
+                this.uptimeInterval = null;
+            }
             this.stopAfk();
 
             const settings = dataManager.getSettings();
@@ -209,10 +229,24 @@ class BotInstance {
             this.log(`Bot error: ${err.message}`, 'error');
         });
 
+        // Raw message event (includes system messages, chat, etc.)
         this.bot.on('message', (jsonMsg) => {
             const message = jsonMsg.toString();
+            // Log to console
+            this.log(`[MSG] ${message}`, 'chat');
+            // Also emit to frontend
             if (this.io) {
-                this.io.emit('log', { botId: this.id, message: message, type: 'chat' });
+                this.io.emit('log', { botId: this.id, message: `[MSG] ${message}`, type: 'chat' });
+            }
+        });
+        
+        // Player chat messages specifically
+        this.bot.on('chat', (username, message) => {
+            // Log player chat to console
+            this.log(`[${username}] ${message}`, 'chat');
+            // Also emit to frontend
+            if (this.io) {
+                this.io.emit('log', { botId: this.id, message: `[${username}] ${message}`, type: 'chat' });
             }
         });
     }
