@@ -1,0 +1,33 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "Project mc bot deployer",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shotxd012/mc_botV2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/shotxd012/mc_botV2/issues"
+  },
+  "homepage": "https://github.com/shotxd012/mc_botV2#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "body-parser": "^2.2.2",
+    "ejs": "^4.0.1",
+    "express": "^5.2.1",
+    "express-session": "^1.18.2",
+    "mineflayer": "^4.33.0",
+    "mineflayer-auto-eat": "^5.0.3",
+    "mineflayer-pathfinder": "^2.4.5",
+    "socket.io": "^4.8.3"
+  }
+}
