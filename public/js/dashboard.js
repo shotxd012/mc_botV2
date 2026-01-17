@@ -77,6 +77,9 @@ function updateStatus(status) {
     if (dot) dot.className = `w-2 h-2 rounded-full ${status.online ? 'bg-green-500' : 'bg-red-500'}`;
     if (text) text.textContent = status.online ? 'Online' : 'Offline';
 
+    // Update Start/Stop Button
+    updateStartStopButton(status.isRunning);
+
     // Update Cards
     const userText = document.getElementById('bot-username');
     const uptimeText = document.getElementById('uptime-text');
@@ -87,6 +90,82 @@ function updateStatus(status) {
     if (authStatus) {
         authStatus.textContent = status.authStatus;
         authStatus.className = `font-bold ${status.authStatus === 'Verified' ? 'text-green-500' : 'text-yellow-500'}`;
+    }
+
+    // Update Bot Details Container
+    const detailUsername = document.getElementById('detail-username');
+    const detailHealth = document.getElementById('detail-health');
+    const detailFood = document.getElementById('detail-food');
+    const detailPosition = document.getElementById('detail-position');
+    const detailDimension = document.getElementById('detail-dimension');
+
+    if (detailUsername) detailUsername.textContent = status.username || '-';
+    if (detailHealth) {
+        detailHealth.textContent = status.health !== undefined ? status.health : '-';
+        // Update color based on health value
+        if (status.health !== undefined && !isNaN(status.health)) {
+            detailHealth.className = 'font-bold';
+            if (status.health > 15) {
+                detailHealth.classList.add('text-green-500');
+            } else if (status.health > 10) {
+                detailHealth.classList.add('text-yellow-500');
+            } else {
+                detailHealth.classList.add('text-red-500');
+            }
+        }
+    }
+    if (detailFood) {
+        detailFood.textContent = status.food !== undefined ? status.food : '-';
+        // Update color based on food value
+        if (status.food !== undefined && !isNaN(status.food)) {
+            detailFood.className = 'font-bold';
+            if (status.food >= 15) {
+                detailFood.classList.add('text-green-500');
+            } else if (status.food >= 7) {
+                detailFood.classList.add('text-yellow-500');
+            } else {
+                detailFood.classList.add('text-red-500');
+            }
+        }
+    }
+    if (detailPosition) detailPosition.textContent = status.position !== undefined ? status.position : '-';
+    if (detailDimension) detailDimension.textContent = status.dimension !== undefined ? status.dimension : '-';
+}
+
+function updateStartStopButton(isRunning) {
+    const startStopBtn = document.getElementById('start-stop-btn');
+    const startStopIcon = document.getElementById('start-stop-icon');
+    const startStopText = document.getElementById('start-stop-text');
+    
+    if (isRunning) {
+        // Bot is running - show stop button
+        startStopBtn.className = 'flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-red-500/20 active:scale-95';
+        startStopIcon.textContent = 'stop';
+        startStopText.textContent = 'Stop';
+    } else {
+        // Bot is stopped - show start button
+        startStopBtn.className = 'flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-green-500/20 active:scale-95';
+        startStopIcon.textContent = 'play_arrow';
+        startStopText.textContent = 'Start';
+    }
+}
+
+async function toggleStartStop() {
+    if (!isBotPage) return;
+    
+    const statusElement = document.getElementById('status-text');
+    const isCurrentlyRunning = statusElement && statusElement.textContent === 'Online';
+    
+    const action = isCurrentlyRunning ? 'stop' : 'start';
+    try {
+        const res = await fetch(`/api/bot/${BOT_ID}/${action}`, { method: 'POST' });
+        const data = await res.json();
+        if (!data.success) {
+            alert('Error: ' + data.message);
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Failed to send command.');
     }
 }
 

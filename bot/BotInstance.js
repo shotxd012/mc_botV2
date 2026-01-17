@@ -56,6 +56,22 @@ class BotInstance {
     }
 
     getStatus() {
+        // Initialize default values
+        let health = '-';
+        let food = '-';
+        let position = '-';
+        let dimension = '-';
+        
+        // Get actual values if bot is available
+        if (this.bot && this.bot.entity) {
+            health = this.bot.health || 20;
+            food = this.bot.food || 20;
+            if (this.bot.entity.position) {
+                position = `${Math.round(this.bot.entity.position.x)}, ${Math.round(this.bot.entity.position.y)}, ${Math.round(this.bot.entity.position.z)}`;
+            }
+            dimension = this.bot.game.dimension || 'overworld';
+        }
+        
         return {
             id: this.id,
             name: this.botConfig.name,
@@ -64,7 +80,11 @@ class BotInstance {
             server: this.botConfig.server,
             isRunning: this.isRunning,
             uptime: this.isRunning && this.startTime ? this.formatUptime(this.startTime) : '0s',
-            authStatus: this.authStatus
+            authStatus: this.authStatus,
+            health: health,
+            food: food,
+            position: position,
+            dimension: dimension
         };
     }
 
@@ -248,6 +268,24 @@ class BotInstance {
             if (this.io) {
                 this.io.emit('log', { botId: this.id, message: `[${username}] ${message}`, type: 'chat' });
             }
+        });
+        
+        // Health update event
+        this.bot.on('health', () => {
+            this.emitStatus();
+        });
+        
+        // Experience update event (food level changes trigger health event in newer versions, but we'll add this too)
+        this.bot.on('entityMoved', (entity) => {
+            // Only emit status update if it's the bot's own entity that moved
+            if (this.bot && entity.id === this.bot.entity.id) {
+                this.emitStatus();
+            }
+        });
+        
+        // Dimension change event
+        this.bot.on('game', () => {
+            this.emitStatus();
         });
     }
 

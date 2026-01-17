@@ -36,11 +36,8 @@
             <!-- Controls -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                 <div class="flex flex-wrap gap-4">
-                    <button onclick="controlBot('start')" class="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-green-500/20 active:scale-95">
-                        <span class="material-icons">play_arrow</span> Start
-                    </button>
-                    <button onclick="controlBot('stop')" class="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-red-500/20 active:scale-95">
-                        <span class="material-icons">stop</span> Stop
+                    <button id="start-stop-btn" onclick="toggleStartStop()" class="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-green-500/20 active:scale-95">
+                        <span id="start-stop-icon" class="material-icons">play_arrow</span> <span id="start-stop-text">Start</span>
                     </button>
                     <button onclick="controlBot('restart')" class="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-yellow-500/20 active:scale-95">
                         <span class="material-icons">refresh</span> Restart
@@ -64,6 +61,33 @@
                     <div class="text-center">
                         <div class="text-xs text-gray-500 uppercase font-bold mb-1">Username</div>
                         <div id="bot-username" class="font-bold truncate"><%= status.username || '-' %></div>
+                    </div>
+                </div>
+
+                <!-- Bot Details Container -->
+                <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+                    <h3 class="text-sm font-bold text-gray-500 uppercase mb-4">Bot Information</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg text-center">
+                            <div class="text-xs text-gray-500 mb-1">Username</div>
+                            <div id="detail-username" class="font-bold truncate"><%= status.username || '-' %></div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg text-center">
+                            <div class="text-xs text-gray-500 mb-1">Health</div>
+                            <div id="detail-health" class="font-bold text-red-500">-</div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg text-center">
+                            <div class="text-xs text-gray-500 mb-1">Food</div>
+                            <div id="detail-food" class="font-bold text-green-500">-</div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg text-center">
+                            <div class="text-xs text-gray-500 mb-1">Position</div>
+                            <div id="detail-position" class="font-mono text-sm break-all">-</div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg text-center">
+                            <div class="text-xs text-gray-500 mb-1">Dimension</div>
+                            <div id="detail-dimension" class="font-bold capitalize">-</div>
+                        </div>
                     </div>
                 </div>
             </div>
