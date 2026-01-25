@@ -38,6 +38,7 @@ function deleteBot(id) {
     const bot = bots.get(parseInt(id));
     if (bot) {
         bot.stop();
+        bot.clearConsoleHistory(); // Clean up console history file
         bots.delete(parseInt(id));
         return dataManager.deleteBot(id);
     }
@@ -91,6 +92,20 @@ function getStatus(id) {
     return bot ? bot.getStatus() : null;
 }
 
+function getLogHistory(id, count = 100) {
+    const bot = bots.get(parseInt(id));
+    return bot ? bot.getLogHistory(count) : [];
+}
+
+function clearConsoleHistory(id) {
+    const bot = bots.get(parseInt(id));
+    if (bot) {
+        bot.clearConsoleHistory();
+        return true;
+    }
+    return false;
+}
+
 module.exports = {
     init,
     getBotInstance,
@@ -104,5 +119,7 @@ module.exports = {
     startAfk,
     stopAfk,
     chat,
-    getStatus
+    getStatus,
+    getLogHistory,
+    clearConsoleHistory
 };

@@ -4,6 +4,7 @@ const isBotPage = typeof BOT_ID !== 'undefined';
 // Initial Request
 if (isBotPage) {
     socket.emit('get-status', BOT_ID);
+    loadConsoleHistory();
 }
 
 // --- Socket Events ---
@@ -48,13 +49,60 @@ function addLog(message, type) {
     div.textContent = message;
 
     container.appendChild(div);
-    container.scrollTop = container.scrollHeight;
+    
+    // Only scroll to bottom if user is near the bottom (not viewing history)
+    const isNearBottom = container.scrollHeight - container.clientHeight <= container.scrollTop + 50;
+    if (isNearBottom) {
+        container.scrollTop = container.scrollHeight;
+    }
 }
 
-function clearConsole() {
+async function clearConsole() {
     const container = document.getElementById('console-logs');
     if (container) {
         container.innerHTML = '<div class="text-gray-500 italic">Console cleared.</div>';
+    }
+    
+    // Also clear the server-side history
+    if (isBotPage) {
+        try {
+            await fetch(`/api/bot/${BOT_ID}/history/clear`, { method: 'POST' });
+        } catch (error) {
+            console.error('Failed to clear server console history:', error);
+        }
+    }
+}
+
+async function loadConsoleHistory() {
+    try {
+        const response = await fetch(`/api/bot/${BOT_ID}/history?count=100`);
+        const data = await response.json();
+        
+        if (data.success && data.history && Array.isArray(data.history)) {
+            const container = document.getElementById('console-logs');
+            if (container) {
+                // Clear existing content except the connecting message
+                container.innerHTML = '';
+                
+                // Add historical logs
+                data.history.forEach(entry => {
+                    const div = document.createElement('div');
+                    div.className = getTypeClass(entry.type) + " break-words";
+                    
+                    // Format timestamp for display (convert ISO string to readable format)
+                    const date = new Date(entry.timestamp);
+                    const timeString = date.toLocaleTimeString();
+                    div.textContent = `[${timeString}] ${entry.message}`;
+                    
+                    container.appendChild(div);
+                });
+                
+                // Scroll to bottom
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load console history:', error);
     }
 }
 
@@ -79,6 +127,9 @@ function updateStatus(status) {
 
     // Update Start/Stop Button
     updateStartStopButton(status.isRunning);
+
+    // Update AFK Button based on status
+    updateAfkButton(status.isAfkActive);
 
     // Update Cards
     const userText = document.getElementById('bot-username');
@@ -130,6 +181,22 @@ function updateStatus(status) {
     }
     if (detailPosition) detailPosition.textContent = status.position !== undefined ? status.position : '-';
     if (detailDimension) detailDimension.textContent = status.dimension !== undefined ? status.dimension : '-';
+}
+
+function updateAfkButton(isAfkActive) {
+    const btn = document.getElementById('afk-btn');
+    if (!btn) return;
+    
+    // Update button text and appearance based on AFK state
+    if (isAfkActive) {
+        btn.innerHTML = '<span class="material-icons text-sm">cached</span> Stop AFK <span class="afk-status-indicator ml-1 w-2 h-2 rounded-full bg-green-500 inline-block"></span>';
+        btn.classList.remove('bg-slate-100', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-200');
+        btn.classList.add('bg-green-500', 'hover:bg-green-600', 'text-white');
+    } else {
+        btn.innerHTML = '<span class="material-icons text-sm">cached</span> Start AFK <span class="afk-status-indicator ml-1 w-2 h-2 rounded-full bg-red-500 inline-block"></span>';
+        btn.classList.remove('bg-green-500', 'hover:bg-green-600', 'text-white');
+        btn.classList.add('bg-slate-100', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-200');
+    }
 }
 
 function updateStartStopButton(isRunning) {
@@ -187,23 +254,22 @@ async function controlBot(action) {
 
 async function toggleAfk() {
     if (!isBotPage) return;
-    const btn = document.getElementById('afk-btn');
-    const isStarting = btn.innerText.includes('Toggle') || btn.innerText.includes('Start');
-    // Simplified toggle logic: server handles state, but we don't strictly know if it's on or off without status
-    // For now, prompt:
-
-    if (confirm("Enable AFK Mode?")) {
-        await fetch(`/api/bot/${BOT_ID}/afk`, {
+    
+    try {
+        // Send undefined/null for enabled to make the server toggle the current state
+        const res = await fetch(`/api/bot/${BOT_ID}/afk`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ enabled: true })
+            body: JSON.stringify({ enabled: null }) // null means toggle current state
         });
-    } else {
-         await fetch(`/api/bot/${BOT_ID}/afk`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ enabled: false })
-        });
+        
+        const data = await res.json();
+        if (!data.success) {
+            alert('Error: ' + data.message);
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Failed to toggle AFK mode.');
     }
 }
 
@@ -230,14 +296,20 @@ async function sendCommand(e) {
 
 async function deleteBot() {
     if (!isBotPage) return;
-    if (!confirm("Are you sure you want to delete this bot? This action cannot be undone.")) return;
+    
+    // Get bot name to include in confirmation for better security
+    const botName = document.querySelector('h2.text-xl')?.textContent || 'this bot';
+    const confirmationText = `Are you sure you want to delete "${botName}"? This action cannot be undone and will permanently remove all associated data including console history.`;
+    
+    if (!confirm(confirmationText)) return;
 
     try {
         const res = await fetch(`/api/bot/${BOT_ID}/delete`, { method: 'POST' });
         if (res.ok) {
             window.location.href = '/';
         } else {
-            alert("Failed to delete bot.");
+            const errorData = await res.json();
+            alert(errorData.message || "Failed to delete bot.");
         }
     } catch (e) {
         console.error(e);

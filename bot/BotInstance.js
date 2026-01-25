@@ -2,6 +2,8 @@ const mineflayer = require('mineflayer');
 const mineflayerPathfinder = require('mineflayer-pathfinder');
 const autoEat = require('mineflayer-auto-eat').loader;
 const dataManager = require('../utils/dataManager');
+const fs = require('fs');
+const path = require('path');
 
 class BotInstance {
     constructor(id, botConfig, io) {
@@ -18,12 +20,22 @@ class BotInstance {
         this.uptimeInterval = null; // Interval for periodic uptime updates
         this.authStatus = 'Offline'; // Offline, Pending, Verified
         this.uptimeInterval = null; // Interval for periodic uptime updates
+        this.isAfkActive = false; // Track AFK state
+        
+        // Console history
+        this.consoleHistory = [];
+        this.maxHistorySize = 1000; // Maximum number of log entries to keep in memory
+        this.historyFilePath = path.join(__dirname, `../data/bot_${this.id}_history.json`);
+        
+        this.loadConsoleHistory();
 
         // Bind methods to this
         this.start = this.start.bind(this);
         this.stop = this.stop.bind(this);
         this.restart = this.restart.bind(this);
         this.getStatus = this.getStatus.bind(this);
+        this.getLogHistory = this.getLogHistory.bind(this);
+        this.clearConsoleHistory = this.clearConsoleHistory.bind(this);
     }
 
     log(message, type = 'info') {
@@ -33,6 +45,9 @@ class BotInstance {
         if (this.io) {
             this.io.emit('log', { botId: this.id, message: logEntry, type });
         }
+        
+        // Add to console history
+        this.addLogToHistory(logEntry, type);
     }
 
     emitStatus() {
@@ -81,6 +96,7 @@ class BotInstance {
             isRunning: this.isRunning,
             uptime: this.isRunning && this.startTime ? this.formatUptime(this.startTime) : '0s',
             authStatus: this.authStatus,
+            isAfkActive: this.isAfkActive,
             health: health,
             food: food,
             position: position,
@@ -293,6 +309,8 @@ class BotInstance {
     startAfk() {
         if (!this.bot || !this.bot.entity) return;
         this.log("Starting AFK mode...");
+        this.isAfkActive = true;
+        this.emitStatus(); // Emit status update so frontend knows AFK state changed
 
         if (this.afkInterval) clearInterval(this.afkInterval);
 
@@ -317,14 +335,80 @@ class BotInstance {
         if (this.afkInterval) {
             clearInterval(this.afkInterval);
             this.afkInterval = null;
-            this.log("AFK mode stopped.");
         }
+        this.isAfkActive = false;
+        this.log("AFK mode stopped.");
+        this.emitStatus(); // Emit status update so frontend knows AFK state changed
     }
 
     chat(message) {
         if (!this.bot) return;
         this.bot.chat(message);
         this.log(`> ${message}`, 'output');
+    }
+
+    // --- Console History Methods ---
+    addLogToHistory(message, type = 'info') {
+        const logEntry = {
+            timestamp: new Date().toISOString(),
+            message,
+            type
+        };
+
+        this.consoleHistory.push(logEntry);
+
+        // Limit history size
+        if (this.consoleHistory.length > this.maxHistorySize) {
+            this.consoleHistory = this.consoleHistory.slice(-this.maxHistorySize);
+        }
+
+        // Save to file
+        this.saveConsoleHistory();
+    }
+
+    getLogHistory(count = 100) {
+        // Return the last 'count' entries, or all if count is greater than available
+        const startIndex = Math.max(0, this.consoleHistory.length - count);
+        return this.consoleHistory.slice(startIndex);
+    }
+
+    saveConsoleHistory() {
+        try {
+            fs.writeFileSync(this.historyFilePath, JSON.stringify(this.consoleHistory, null, 2));
+        } catch (err) {
+            console.error(`Failed to save console history for bot ${this.id}:`, err);
+        }
+    }
+
+    loadConsoleHistory() {
+        try {
+            if (fs.existsSync(this.historyFilePath)) {
+                const data = fs.readFileSync(this.historyFilePath, 'utf8');
+                this.consoleHistory = JSON.parse(data);
+                
+                // Ensure we don't exceed max history size
+                if (this.consoleHistory.length > this.maxHistorySize) {
+                    this.consoleHistory = this.consoleHistory.slice(-this.maxHistorySize);
+                }
+            } else {
+                // Initialize with empty array if file doesn't exist
+                this.consoleHistory = [];
+            }
+        } catch (err) {
+            console.error(`Failed to load console history for bot ${this.id}:`, err);
+            this.consoleHistory = []; // Fallback to empty array
+        }
+    }
+
+    clearConsoleHistory() {
+        this.consoleHistory = [];
+        try {
+            if (fs.existsSync(this.historyFilePath)) {
+                fs.unlinkSync(this.historyFilePath);
+            }
+        } catch (err) {
+            console.error(`Failed to clear console history file for bot ${this.id}:`, err);
+        }
     }
 }
 
