@@ -1,36 +1,37 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
 
-<main class="flex-1 p-8 overflow-y-auto h-screen">
-    <header class="flex justify-between items-center mb-8">
-        <h2 class="text-3xl font-bold">Your Bots</h2>
-        <div class="flex items-center gap-4">
-            <button onclick="openCreateModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95">
-                <span class="material-icons">add</span> Create Server Bot
-            </button>
+<main class="flex-1 p-6 md:p-8 overflow-y-auto h-screen">
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+        <div>
+            <h2 class="text-2xl md:text-3xl font-bold tracking-tight">Your Bots</h2>
+            <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">Manage your Minecraft bot instances</p>
         </div>
+        <button onclick="openCreateModal()" class="bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-all text-sm min-w-[160px] border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow">
+            <span class="material-icons text-base">add</span> Create Bot
+        </button>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         <% bots.forEach(function(bot) { %>
-            <div onclick="window.location.href='/bot/<%= bot.id %>'" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md cursor-pointer transition-all group">
-                <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-xl font-bold truncate group-hover:text-blue-500 transition-colors"><%= bot.name %></h3>
-                    <span class="px-3 py-1 rounded-full text-xs font-bold <%= bot.online ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' %>">
+            <div onclick="window.location.href='/bot/<%= bot.id %>'" class="bg-white dark:bg-slate-800/60 backdrop-blur-sm p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer transition-all group">
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="text-lg font-semibold truncate group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors max-w-[70%]"><%= bot.name %></h3>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium <%= bot.online ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400' %>">
                         <%= bot.online ? 'ONLINE' : 'OFFLINE' %>
                     </span>
                 </div>
-                <div class="space-y-3 text-sm text-gray-500 dark:text-gray-400">
-                    <p class="flex items-center gap-3">
-                        <span class="material-icons text-lg text-gray-400">dns</span>
-                        <%= bot.server.ip %>:<%= bot.server.port %>
+                <div class="space-y-2 text-sm text-slate-500 dark:text-slate-400">
+                    <p class="flex items-center gap-2.5">
+                        <span class="material-icons text-base text-slate-400">dns</span>
+                        <span class="truncate"><%= bot.server.ip %>:<%= bot.server.port %></span>
                     </p>
-                    <p class="flex items-center gap-3">
-                        <span class="material-icons text-lg text-gray-400">person</span>
-                        <%= bot.username %>
+                    <p class="flex items-center gap-2.5">
+                        <span class="material-icons text-base text-slate-400">person</span>
+                        <span class="truncate"><%= bot.username %></span>
                     </p>
                 </div>
-                <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center text-xs text-gray-400">
+                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/30 flex justify-between items-center text-xs text-slate-400 dark:text-slate-500">
                     <span>ID: #<%= bot.id %></span>
                     <span><%= bot.server.version %></span>
                 </div>
@@ -38,39 +39,44 @@
         <% }); %>
 
         <!-- Add New Placeholder -->
-        <div onclick="openCreateModal()" class="bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:text-blue-500 cursor-pointer transition-all min-h-[180px]">
-            <span class="material-icons text-4xl mb-2">add_circle_outline</span>
-            <span class="font-bold">Add New Bot</span>
+        <div onclick="openCreateModal()" class="bg-slate-50 dark:bg-slate-800/30 border-2 border-dashed border-slate-200 dark:border-slate-700/50 rounded-xl p-5 flex flex-col items-center justify-center text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer transition-all">
+            <span class="material-icons text-2xl mb-2">add_circle_outline</span>
+            <span class="font-medium text-sm">Add New Bot</span>
         </div>
     </div>
 </main>
 
 <!-- Create Bot Modal -->
-<div id="create-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
-    <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-lg mx-4 transform scale-95 transition-transform duration-300" id="create-modal-content">
-        <h3 class="text-2xl font-bold mb-6">Create New Bot</h3>
+<div id="create-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white dark:bg-slate-800/90 backdrop-blur-md p-6 rounded-xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-300 border border-slate-200 dark:border-slate-700/50 shadow-xl" id="create-modal-content">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold">Create New Bot</h3>
+            <button onclick="closeCreateModal()" class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                <span class="material-icons text-base">close</span>
+            </button>
+        </div>
         <form onsubmit="createBot(event)" class="space-y-4">
             <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Bot Name</label>
-                <input type="text" name="name" placeholder="e.g. Survival Server" required class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Bot Name</label>
+                <input type="text" name="name" placeholder="e.g. Survival Server" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
             </div>
             <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Microsoft Account Email</label>
-                <input type="email" name="email" placeholder="user@gmail.com" required class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Microsoft Account Email</label>
+                <input type="email" name="email" placeholder="user@example.com" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
             </div>
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-3 gap-3">
                 <div class="col-span-2">
-                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Server IP</label>
-                    <input type="text" name="ip" placeholder="play.example.com" required class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Server IP</label>
+                    <input type="text" name="ip" placeholder="play.example.com" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Port</label>
-                    <input type="number" name="port" value="25565" required class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Port</label>
+                    <input type="number" name="port" value="25565" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
                 </div>
             </div>
             <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Minecraft Version</label>
-                <select name="version" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Minecraft Version</label>
+                <select name="version" class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
                     <option value="1.20.4">1.20.4</option>
                     <option value="1.20.1">1.20.1</option>
                     <option value="1.19.4">1.19.4</option>
@@ -79,9 +85,9 @@
                     <option value="auto">Auto</option>
                 </select>
             </div>
-            <div class="flex justify-end gap-3 mt-8">
-                <button type="button" onclick="closeCreateModal()" class="px-6 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium">Cancel</button>
-                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Create</button>
+            <div class="flex justify-end gap-2.5 mt-6 pt-4 border-t border-slate-100 dark:border-slate-700/50">
+                <button type="button" onclick="closeCreateModal()" class="px-4 py-2 text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 font-medium text-sm">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-lg font-medium text-sm border border-slate-200 dark:border-slate-700 shadow-sm">Create</button>
             </div>
         </form>
     </div>
