@@ -1,4 +1,5 @@
 <% if (typeof user !== 'undefined') { %>
+<!-- Desktop Sidebar -->
 <aside class="w-60 bg-white dark:bg-slate-800/70 backdrop-blur-sm border-r border-slate-200 dark:border-slate-700/50 flex flex-col hidden md:flex fixed h-full z-10">
     <div class="p-5 border-b border-slate-200 dark:border-slate-700/50 flex items-center gap-2">
         <span class="material-icons text-slate-700 dark:text-slate-300">smart_toy</span>
@@ -17,7 +18,22 @@
         </a>
     </div>
 </aside>
-<div class="md:pl-60 w-full flex flex-col">
+
+<!-- Mobile Navigation -->
+<div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-700/50 md:hidden z-50 pb-safe-bottom">
+    <div class="flex justify-around items-center py-2">
+        <a href="/" class="flex flex-col items-center justify-center gap-1 px-3 py-2 <%= page === 'home' || page === 'bot' ? 'text-primary' : 'text-slate-500 dark:text-slate-400' %>">
+            <span class="material-icons text-lg">dashboard</span>
+            <span class="text-xs mt-1">Home</span>
+        </a>
+        <a href="/logout" class="flex flex-col items-center justify-center gap-1 px-3 py-2 text-red-500" onclick="event.preventDefault(); if(confirm('Are you sure you want to logout?')) window.location.href='/logout';">
+            <span class="material-icons text-lg">logout</span>
+            <span class="text-xs mt-1">Logout</span>
+        </a>
+    </div>
+</div>
+
+<div class="md:pl-60 w-full flex flex-col pt-0 pb-16 md:pb-0">
 <% } else { %>
 <div class="w-full flex flex-col">
 <% } %>
