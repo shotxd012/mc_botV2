@@ -81,9 +81,9 @@ router.post('/bot/:id/settings', (req, res) => {
 });
 
 // Global Settings
-router.post('/settings/general', (req, res) => {
+router.post('/settings/general', async (req, res) => {
     const { autoReconnect } = req.body;
-    dataManager.updateSettings({ autoReconnect: autoReconnect === true || autoReconnect === 'true' });
+    await dataManager.updateSettings({ autoReconnect: autoReconnect === true || autoReconnect === 'true' });
     res.json({ success: true });
 });
 

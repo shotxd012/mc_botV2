@@ -4,9 +4,9 @@ const dataManager = require('../utils/dataManager');
 let bots = new Map(); // id -> BotInstance
 let io = null;
 
-function init(socketIo) {
+async function init(socketIo) {
     io = socketIo;
-    const botsData = dataManager.getBots();
+    const botsData = await dataManager.getBots();
     botsData.forEach(botData => {
         // Only add if not already present (though init should only run once)
         if (!bots.has(botData.id)) {

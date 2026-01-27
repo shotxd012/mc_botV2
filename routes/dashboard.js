@@ -11,7 +11,7 @@ router.get('/', (req, res) => {
     });
 });
 
-router.get('/bot/:id', (req, res) => {
+router.get('/bot/:id', async (req, res) => {
     const id = req.params.id;
     const status = botManager.getStatus(id);
 
@@ -19,7 +19,7 @@ router.get('/bot/:id', (req, res) => {
         return res.redirect('/');
     }
 
-    const botConfig = dataManager.getBot(id);
+    const botConfig = await dataManager.getBot(id);
 
     res.render('bot-control', {
         page: 'bot',

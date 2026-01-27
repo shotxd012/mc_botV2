@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const socketIo = require('socket.io');
 const dataManager = require('./utils/dataManager');
 const botManager = require('./bot/BotManager');
+const { connectDB } = require('./utils/database');
 
 const app = express();
 const server = http.createServer(app);
@@ -32,9 +33,9 @@ app.use(session({
 }));
 
 // Make user available to all views
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
     res.locals.user = req.session.user;
-    res.locals.settings = dataManager.getSettings();
+    res.locals.settings = await dataManager.getSettings();
     next();
 });
 
@@ -75,13 +76,30 @@ io.on('connection', (socket) => {
     });
 });
 
-// Initialize Bot Manager
-botManager.init(io);
-app.set('io', io);
+
 
 // --- Start Server ---
-server.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+async function startServer() {
+    try {
+        await connectDB();
+        
+        server.listen(PORT, async () => {
+            console.log(`Server running on http://localhost:${PORT}`);
+            
+            // Initialize Bot Manager after server is listening
+            try {
+                await botManager.init(io);
+                app.set('io', io);
+            } catch (initError) {
+                console.error('Failed to initialize Bot Manager:', initError);
+            }
+        });
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+}
+
+startServer();
 
 module.exports = { app, server, io };

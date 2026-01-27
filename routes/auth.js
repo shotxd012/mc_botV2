@@ -10,9 +10,9 @@ router.get('/login', (req, res) => {
     res.render('login', { error: null });
 });
 
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
     const { username, password } = req.body;
-    const admin = dataManager.getAdmin(username);
+    const admin = await dataManager.getAdmin(username);
 
     if (admin && bcrypt.compareSync(password, admin.password)) {
         req.session.user = { username: admin.username };

@@ -1,149 +1,167 @@
-const fs = require('fs');
-const path = require('path');
+const Admin = require('../models/Admin');
+const Bot = require('../models/Bot');
+const Setting = require('../models/Setting');
 
-const DATA_PATH = path.join(__dirname, '../data/data.json');
-
-function readData() {
+async function readData() {
     try {
-        if (!fs.existsSync(DATA_PATH)) {
-            return { admins: [], settings: {}, bots: [] };
-        }
-        const raw = fs.readFileSync(DATA_PATH, 'utf8');
-        let data = JSON.parse(raw);
+        const [admins, bots, settings] = await Promise.all([
+            Admin.find({}).lean(),
+            Bot.find({}).lean(),
+            Setting.find({}).lean()
+        ]);
 
-        // Migration Logic: Convert single bot structure to multi-bot
-        if (!data.bots) {
-            data.bots = [];
-            // If legacy data exists, migrate it to the first bot
-            if (data.server || data.minecraftAccount) {
-                data.bots.push({
-                    id: 1,
-                    name: "Default Bot",
-                    server: data.server || { ip: 'localhost', port: 25565, version: '1.20.4' },
-                    account: data.minecraftAccount || { email: '', auth: 'microsoft' },
-                    created: Date.now()
-                });
-                delete data.server;
-                delete data.minecraftAccount;
-                // Save the migration immediately
-                fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2), 'utf8');
-            }
-        }
+        // Convert settings array to object
+        const settingsObj = {};
+        settings.forEach(setting => {
+            settingsObj[setting.key] = setting.value;
+        });
 
-        return data;
+        return {
+            admins,
+            bots,
+            settings: settingsObj
+        };
     } catch (err) {
-        console.error("Error reading data.json:", err);
+        console.error("Error reading data from MongoDB:", err);
         return { admins: [], settings: {}, bots: [] };
     }
 }
 
-function writeData(data) {
-    try {
-        fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2), 'utf8');
-        return true;
-    } catch (err) {
-        console.error("Error writing data.json:", err);
-        return false;
-    }
-}
+// writeData function is no longer needed as we use individual model methods
 
 // --- Global Settings ---
 
-function getSettings() {
-    return readData().settings || {};
+async function getSettings() {
+    try {
+        const settings = await Setting.find({}).lean();
+        const settingsObj = {};
+        settings.forEach(setting => {
+            settingsObj[setting.key] = setting.value;
+        });
+        return settingsObj;
+    } catch (err) {
+        console.error("Error getting settings from MongoDB:", err);
+        return {};
+    }
 }
 
-function updateSettings(newSettings) {
-    const data = readData();
-    data.settings = { ...data.settings, ...newSettings };
-    writeData(data);
-    return data.settings;
+async function updateSettings(newSettings) {
+    try {
+        for (const [key, value] of Object.entries(newSettings)) {
+            await Setting.findOneAndUpdate(
+                { key },
+                { key, value },
+                { upsert: true, new: true }
+            );
+        }
+        
+        return await getSettings();
+    } catch (err) {
+        console.error("Error updating settings in MongoDB:", err);
+        return {};
+    }
 }
 
-function getAdmin(username) {
-    const data = readData();
-    return data.admins ? data.admins.find(a => a.username === username) : null;
+async function getAdmin(username) {
+    try {
+        return await Admin.findOne({ username }).lean();
+    } catch (err) {
+        console.error("Error getting admin from MongoDB:", err);
+        return null;
+    }
 }
 
 // --- Bot Management ---
 
-function getBots() {
-    return readData().bots || [];
+async function getBots() {
+    try {
+        return await Bot.find({}).lean();
+    } catch (err) {
+        console.error("Error getting bots from MongoDB:", err);
+        return [];
+    }
 }
 
-function getBot(id) {
-    const bots = getBots();
-    return bots.find(b => b.id === parseInt(id));
+async function getBot(id) {
+    try {
+        return await Bot.findOne({ id: parseInt(id) }).lean();
+    } catch (err) {
+        console.error("Error getting bot from MongoDB:", err);
+        return null;
+    }
 }
 
-function addBot(botData) {
-    const data = readData();
-    if (!data.bots) data.bots = [];
+async function addBot(botData) {
+    try {
+        // Find the highest existing ID to generate a new one
+        const maxBot = await Bot.findOne().sort({ id: -1 }).lean();
+        const newId = maxBot ? maxBot.id + 1 : 1;
 
-    // Generate new ID
-    const newId = data.bots.length > 0 ? Math.max(...data.bots.map(b => b.id)) + 1 : 1;
+        const newBot = new Bot({
+            id: newId,
+            name: botData.name || `Bot ${newId}`,
+            server: {
+                ip: botData.ip || 'localhost',
+                port: parseInt(botData.port) || 25565,
+                version: botData.version || '1.20.4'
+            },
+            account: {
+                email: botData.email || '',
+                type: 'microsoft',
+                verified: false,
+                authCache: null
+            },
+            created: Date.now()
+        });
 
-    const newBot = {
-        id: newId,
-        name: botData.name || `Bot ${newId}`,
-        server: {
-            ip: botData.ip || 'localhost',
-            port: parseInt(botData.port) || 25565,
-            version: botData.version || '1.20.4'
-        },
-        account: {
-            email: botData.email || '',
-            type: 'microsoft',
-            verified: false,
-            authCache: null
-        },
-        created: Date.now()
-    };
-
-    data.bots.push(newBot);
-    writeData(data);
-    return newBot;
+        const savedBot = await newBot.save();
+        return savedBot.toObject();
+    } catch (err) {
+        console.error("Error adding bot to MongoDB:", err);
+        return null;
+    }
 }
 
-function updateBot(id, updates) {
-    const data = readData();
-    const index = data.bots.findIndex(b => b.id === parseInt(id));
+async function updateBot(id, updates) {
+    try {
+        const bot = await Bot.findOne({ id: parseInt(id) });
+        if (!bot) {
+            return null;
+        }
 
-    if (index !== -1) {
         // Deep merge for server and account if provided
         if (updates.server) {
-            data.bots[index].server = { ...data.bots[index].server, ...updates.server };
+            bot.server = { ...bot.server, ...updates.server };
             delete updates.server;
         }
         if (updates.account) {
-            data.bots[index].account = { ...data.bots[index].account, ...updates.account };
+            bot.account = { ...bot.account, ...updates.account };
             delete updates.account;
         }
 
         // Merge remaining top-level properties
-        data.bots[index] = { ...data.bots[index], ...updates };
+        Object.assign(bot, updates);
 
-        writeData(data);
-        return data.bots[index];
+        const updatedBot = await bot.save();
+        return updatedBot.toObject();
+    } catch (err) {
+        console.error("Error updating bot in MongoDB:", err);
+        return null;
     }
-    return null;
 }
 
-function deleteBot(id) {
-    const data = readData();
-    const initialLength = data.bots.length;
-    data.bots = data.bots.filter(b => b.id !== parseInt(id));
-
-    if (data.bots.length !== initialLength) {
-        writeData(data);
-        return true;
+async function deleteBot(id) {
+    try {
+        const result = await Bot.deleteOne({ id: parseInt(id) });
+        return result.deletedCount > 0;
+    } catch (err) {
+        console.error("Error deleting bot from MongoDB:", err);
+        return false;
     }
-    return false;
 }
 
 module.exports = {
     readData,
-    writeData,
     getSettings,
     updateSettings,
     getAdmin,
