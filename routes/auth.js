@@ -22,6 +22,50 @@ router.post('/login', async (req, res) => {
     }
 });
 
+router.get('/register', (req, res) => {
+    if (req.session.user) {
+        return res.redirect('/');
+    }
+    res.render('register', { error: null });
+});
+
+router.post('/register', async (req, res) => {
+    const { username, password, confirmPassword } = req.body;
+    
+    // Validation
+    if (!username || !password || !confirmPassword) {
+        return res.render('register', { error: 'All fields are required' });
+    }
+    
+    if (password !== confirmPassword) {
+        return res.render('register', { error: 'Passwords do not match' });
+    }
+    
+    if (password.length < 6) {
+        return res.render('register', { error: 'Password must be at least 6 characters long' });
+    }
+    
+    try {
+        // Check if user already exists
+        const existingUser = await dataManager.getAdmin(username);
+        if (existingUser) {
+            return res.render('register', { error: 'Username already exists' });
+        }
+        
+        // Create new user
+        const result = await dataManager.createAdmin(username, password);
+        if (result) {
+            req.session.user = { username };
+            res.redirect('/');
+        } else {
+            res.render('register', { error: 'Registration failed. Please try again.' });
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.render('register', { error: 'Registration failed. Please try again.' });
+    }
+});
+
 router.get('/logout', (req, res) => {
     req.session.destroy();
     res.redirect('/login');

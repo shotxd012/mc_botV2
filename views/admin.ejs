@@ -1,0 +1,225 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<main class="flex-1 p-4 md:p-6">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+        <p class="text-slate-600 dark:text-slate-400">Manage users and assign bots</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Users Management Section -->
+        <div class="bg-white dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700/50 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold">Users Management</h2>
+                <span class="text-sm text-slate-500 dark:text-slate-400"><%= users.length %> total users</span>
+            </div>
+            
+            <div class="space-y-3 max-h-96 overflow-y-auto">
+                <% users.forEach(function(user) { %>
+                <div class="p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-slate-200 dark:border-slate-600/50">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="font-medium"><%= user.username %></h3>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="inline-block px-2 py-0.5 text-xs rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                                    <%= typeof user.role !== 'undefined' && user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User' %>
+                                </span>
+                                <span class="text-xs text-slate-500 dark:text-slate-400">
+                                    Joined: <%= new Date(user.createdAt).toLocaleDateString() %>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <% if (user.role === 'user') { %>
+                            <button onclick="promoteUser('<%= user.username %>')" class="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs rounded-lg transition-colors">
+                                Promote
+                            </button>
+                            <% } else if (user.role === 'admin') { %>
+                            <button onclick="demoteUser('<%= user.username %>')" class="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white text-xs rounded-lg transition-colors">
+                                Demote
+                            </button>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+        </div>
+
+        <!-- Bots Assignment Section -->
+        <div class="bg-white dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700/50 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold">Bot Assignments</h2>
+                <span class="text-sm text-slate-500 dark:text-slate-400"><%= bots.length %> total bots</span>
+            </div>
+            
+            <div class="space-y-3 max-h-96 overflow-y-auto">
+                <% bots.forEach(function(bot) { %>
+                <div class="p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-slate-200 dark:border-slate-600/50">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="font-medium"><%= bot.name %></h3>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-xs text-slate-500 dark:text-slate-400">
+                                    <%= typeof bot.server !== 'undefined' ? bot.server.ip + ':' + bot.server.port : 'No server configured' %>
+                                </span>
+                                <span class="text-xs text-slate-500 dark:text-slate-400">
+                                    <%= typeof bot.server !== 'undefined' ? bot.server.version : 'Unknown' %>
+                                </span>
+                            </div>
+                            <div class="mt-2">
+                                <label class="text-xs text-slate-500 dark:text-slate-400">Assigned to:</label>
+                                <select onchange="assignBotToUser(<%= bot.id %>, this.value)" class="w-full mt-1 text-xs bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded px-2 py-1">
+                                    <option value="" <%= !bot.assignedTo ? 'selected' : '' %>>Unassigned</option>
+                                    <% users.forEach(function(user) { %>
+                                        <option value="<%= user.username %>" <%= bot.assignedTo === user.username ? 'selected' : '' %>><%= user.username %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-slate-500 dark:text-slate-400">
+                                ID: #<%= bot.id %>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Bot Form for Admins -->
+    <div class="mt-6 bg-white dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700/50 p-6">
+        <h2 class="text-lg font-semibold mb-4">Create New Bot</h2>
+        <form onsubmit="createNewBot(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Name</label>
+                <input type="text" name="name" placeholder="Bot name" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Email</label>
+                <input type="email" name="email" placeholder="Account email" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">IP</label>
+                <input type="text" name="ip" placeholder="Server IP" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Port</label>
+                <input type="number" name="port" value="25565" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Version</label>
+                <select name="version" class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+                    <option value="1.20.4">1.20.4</option>
+                    <option value="1.20.1">1.20.1</option>
+                    <option value="1.19.4">1.19.4</option>
+                    <option value="1.18.2">1.18.2</option>
+                    <option value="1.12.2">1.12.2</option>
+                    <option value="auto">Auto</option>
+                </select>
+            </div>
+            <div class="md:col-span-5 flex justify-end">
+                <button type="submit" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-lg font-medium text-sm border border-slate-200 dark:border-slate-700 shadow-sm">
+                    Create Bot
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<script>
+async function promoteUser(username) {
+    if (confirm(`Promote user '${username}' to admin?`)) {
+        try {
+            const res = await fetch('/api/admin/promote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                alert('Failed to promote user');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error promoting user');
+        }
+    }
+}
+
+async function demoteUser(username) {
+    if (confirm(`Demote user '${username}' to regular user?`)) {
+        try {
+            const res = await fetch('/api/admin/demote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                alert('Failed to demote user');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error demoting user');
+        }
+    }
+}
+
+async function createNewBot(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const res = await fetch('/api/bots/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+            window.location.reload();
+        } else {
+            const errorData = await res.json();
+            alert(errorData.error || 'Failed to create bot');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error creating bot');
+    }
+}
+
+async function assignBotToUser(botId, username) {
+    try {
+        const res = await fetch('/api/admin/assign-bot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ botId, username })
+        });
+        
+        if (res.ok) {
+            // Success - no need to reload, just show success message
+            console.log('Bot assigned successfully');
+        } else {
+            const errorData = await res.json();
+            alert(errorData.error || 'Failed to assign bot');
+            // Reset dropdown to previous value if needed
+            window.location.reload();
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error assigning bot');
+        window.location.reload();
+    }
+}
+</script>
+
+<%- include('partials/footer') %>

@@ -45,6 +45,11 @@ const botSchema = new mongoose.Schema({
     created: {
         type: Date,
         default: Date.now
+    },
+    assignedTo: {
+        type: String, // Username of the user assigned to this bot
+        ref: 'Admin',
+        default: null // Initially not assigned to any user
     }
 });
 

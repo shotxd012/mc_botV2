@@ -71,6 +71,35 @@ async function getAdmin(username) {
     }
 }
 
+async function getAllAdmins() {
+    try {
+        return await Admin.find({}).lean();
+    } catch (err) {
+        console.error("Error getting all admins from MongoDB:", err);
+        return [];
+    }
+}
+
+async function createAdmin(username, password, role = 'user') {
+    try {
+        // Hash the password
+        const bcrypt = require('bcryptjs');
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        const newAdmin = new Admin({
+            username,
+            password: hashedPassword,
+            role
+        });
+        
+        const savedAdmin = await newAdmin.save();
+        return savedAdmin.toObject();
+    } catch (err) {
+        console.error("Error creating admin in MongoDB:", err);
+        return null;
+    }
+}
+
 // --- Bot Management ---
 
 async function getBots() {
@@ -91,7 +120,7 @@ async function getBot(id) {
     }
 }
 
-async function addBot(botData) {
+async function addBot(botData, assignedTo = null) {
     try {
         // Find the highest existing ID to generate a new one
         const maxBot = await Bot.findOne().sort({ id: -1 }).lean();
@@ -111,6 +140,7 @@ async function addBot(botData) {
                 verified: false,
                 authCache: null
             },
+            assignedTo: assignedTo,
             created: Date.now()
         });
 
@@ -160,14 +190,48 @@ async function deleteBot(id) {
     }
 }
 
+async function getBotsByUser(username) {
+    try {
+        return await Bot.find({ assignedTo: username }).lean();
+    } catch (err) {
+        console.error("Error getting bots by user from MongoDB:", err);
+        return [];
+    }
+}
+
+async function assignBotToUser(botId, username) {
+    try {
+        const result = await Bot.updateOne({ id: parseInt(botId) }, { assignedTo: username });
+        return result.modifiedCount > 0;
+    } catch (err) {
+        console.error("Error assigning bot to user in MongoDB:", err);
+        return false;
+    }
+}
+
+async function unassignBot(botId) {
+    try {
+        const result = await Bot.updateOne({ id: parseInt(botId) }, { assignedTo: null });
+        return result.modifiedCount > 0;
+    } catch (err) {
+        console.error("Error unassigning bot in MongoDB:", err);
+        return false;
+    }
+}
+
 module.exports = {
     readData,
     getSettings,
     updateSettings,
     getAdmin,
+    createAdmin,
+    getAllAdmins,
     getBots,
     getBot,
     addBot,
     updateBot,
-    deleteBot
+    deleteBot,
+    getBotsByUser,
+    assignBotToUser,
+    unassignBot
 };

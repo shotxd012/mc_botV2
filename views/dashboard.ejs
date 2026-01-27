@@ -7,9 +7,11 @@
             <h2 class="text-2xl md:text-3xl font-bold tracking-tight">Your Bots</h2>
             <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">Manage your Minecraft bot instances</p>
         </div>
+        <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
         <button onclick="openCreateModal()" class="bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-all text-sm min-w-[160px] border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow">
             <span class="material-icons text-base">add</span> Create Bot
         </button>
+        <% } %>
     </header>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -24,25 +26,27 @@
                 <div class="space-y-2 text-sm text-slate-500 dark:text-slate-400">
                     <p class="flex items-center gap-2.5">
                         <span class="material-icons text-base text-slate-400">dns</span>
-                        <span class="truncate"><%= bot.server.ip %>:<%= bot.server.port %></span>
+                        <span class="truncate"><%= typeof bot.server !== 'undefined' ? bot.server.ip + ':' + bot.server.port : 'No server configured' %></span>
                     </p>
                     <p class="flex items-center gap-2.5">
                         <span class="material-icons text-base text-slate-400">person</span>
-                        <span class="truncate"><%= bot.username %></span>
+                        <span class="truncate"><%= bot.username || 'Not connected' %></span>
                     </p>
                 </div>
                 <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/30 flex justify-between items-center text-xs text-slate-400 dark:text-slate-500">
                     <span>ID: #<%= bot.id %></span>
-                    <span><%= bot.server.version %></span>
+                    <span><%= typeof bot.server !== 'undefined' ? bot.server.version : 'Unknown' %></span>
                 </div>
             </div>
         <% }); %>
 
+        <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
         <!-- Add New Placeholder -->
         <div onclick="openCreateModal()" class="bg-slate-50 dark:bg-slate-800/30 border-2 border-dashed border-slate-200 dark:border-slate-700/50 rounded-xl p-5 flex flex-col items-center justify-center text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer transition-all">
             <span class="material-icons text-2xl mb-2">add_circle_outline</span>
             <span class="font-medium text-sm">Add New Bot</span>
         </div>
+        <% } %>
     </div>
 </main>
 
@@ -95,12 +99,17 @@
 
 <script>
 function openCreateModal() {
-    const modal = document.getElementById('create-modal');
-    modal.classList.remove('hidden');
-    setTimeout(() => {
-        modal.classList.remove('opacity-0');
-        document.getElementById('create-modal-content').classList.remove('scale-95');
-    }, 10);
+    // Check if user is admin before opening modal
+    <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
+        const modal = document.getElementById('create-modal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            document.getElementById('create-modal-content').classList.remove('scale-95');
+        }, 10);
+    <% } else { %>
+        alert('Permission denied. Only administrators can create bots.');
+    <% } %>
 }
 
 function closeCreateModal() {
@@ -127,7 +136,8 @@ async function createBot(e) {
         if (res.ok) {
             window.location.reload();
         } else {
-            alert('Failed to create bot');
+            const errorData = await res.json();
+            alert(errorData.error || 'Failed to create bot');
         }
     } catch (err) {
         console.error(err);
