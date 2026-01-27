@@ -56,13 +56,21 @@ router.get('/profile', async (req, res) => {
         return res.redirect('/login');
     }
     
+    // Get assigned bots for regular users
+    let assignedBots = [];
+    if (user.role === 'user') {
+        assignedBots = await dataManager.getBotsByUser(req.session.user.username);
+    }
+    
     res.render('profile', {
         page: 'profile',
         user: {
             username: user.username,
             role: user.role || 'user', // Default to 'user' if role is undefined
             createdAt: user.createdAt
-        }
+        },
+        assignedBots: assignedBots,
+        isAdmin: user.role === 'admin'
     });
 });
 

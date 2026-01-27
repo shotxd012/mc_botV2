@@ -45,39 +45,102 @@
         <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700/50">
             <h3 class="font-medium text-slate-700 dark:text-slate-300 mb-3">Account Permissions</h3>
             <div class="space-y-2 text-sm">
-                <% if (typeof user.role !== 'undefined' && user.role === 'admin') { %>
+                <% if (isAdmin) { %>
                     <div class="flex items-center gap-2">
                         <span class="material-icons text-green-500 text-base">check_circle</span>
-                        <span>Create and manage bots</span>
+                        <span>Create and manage all bots</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="material-icons text-green-500 text-base">check_circle</span>
-                        <span>Control bot operations (start/stop/restart)</span>
+                        <span>Control all bot operations (start/stop/restart)</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="material-icons text-green-500 text-base">check_circle</span>
-                        <span>Manage bot settings and configurations</span>
+                        <span>Manage all bot settings and configurations</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="material-icons text-green-500 text-base">check_circle</span>
-                        <span>Send commands to bots</span>
+                        <span>Send commands to all bots</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="material-icons text-green-500 text-base">check_circle</span>
-                        <span>Delete bots</span>
+                        <span>Delete any bot</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="material-icons text-green-500 text-base">check_circle</span>
+                        <span>Assign bots to users</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="material-icons text-green-500 text-base">check_circle</span>
+                        <span>Promote/demote users</span>
                     </div>
                 <% } else { %>
-                    <div class="flex items-center gap-2">
-                        <span class="material-icons text-yellow-500 text-base">warning</span>
-                        <span>Limited to viewing bot status only</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="material-icons text-gray-400 text-base">remove_circle</span>
-                        <span>No bot creation or management permissions</span>
-                    </div>
+                    <% if (assignedBots && assignedBots.length > 0) { %>
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-blue-500 text-base">info</span>
+                            <span>You have access to <%= assignedBots.length %> assigned bot(s)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-green-500 text-base">check_circle</span>
+                            <span>Control assigned bots (start/stop/restart)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-green-500 text-base">check_circle</span>
+                            <span>Toggle AFK mode on assigned bots</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-green-500 text-base">check_circle</span>
+                            <span>Send commands to assigned bots</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-green-500 text-base">check_circle</span>
+                            <span>View assigned bot settings</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-yellow-500 text-base">warning</span>
+                            <span>Cannot create new bots</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-yellow-500 text-base">warning</span>
+                            <span>Cannot delete bots</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-gray-400 text-base">remove_circle</span>
+                            <span>No access to unassigned bots</span>
+                        </div>
+                    <% } else { %>
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-yellow-500 text-base">warning</span>
+                            <span>No bots assigned to your account</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-gray-400 text-base">remove_circle</span>
+                            <span>No bot management permissions</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-gray-400 text-base">remove_circle</span>
+                            <span>Contact administrator for bot access</span>
+                        </div>
+                    <% } %>
                 <% } %>
             </div>
         </div>
+
+        <% if (!isAdmin && assignedBots && assignedBots.length > 0) { %>
+        <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700/50">
+            <h3 class="font-medium text-slate-700 dark:text-slate-300 mb-3">Assigned Bots</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <% assignedBots.forEach(function(bot) { %>
+                <div class="bg-slate-50 dark:bg-slate-700/30 p-3 rounded-lg border border-slate-200 dark:border-slate-600/50">
+                    <div class="font-medium text-sm"><%= bot.name %></div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        <%= typeof bot.server !== 'undefined' ? bot.server.ip + ':' + bot.server.port : 'No server configured' %>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+        </div>
+        <% } %>
     </div>
 </main>
 
