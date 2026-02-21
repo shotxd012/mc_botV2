@@ -27,8 +27,11 @@ function getAllBotsStatus() {
     return statuses;
 }
 
-function createBot(data) {
-    const newBotData = dataManager.addBot(data);
+async function createBot(data) {
+    const newBotData = await dataManager.addBot(data);
+    if (!newBotData) {
+        return null;
+    }
     const botInstance = new BotInstance(newBotData.id, newBotData, io);
     bots.set(newBotData.id, botInstance);
     return newBotData;

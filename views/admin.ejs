@@ -11,6 +11,7 @@
         <button class="admin-tab px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white" data-tab="users">Users</button>
         <button class="admin-tab px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200" data-tab="bots">Bots</button>
         <button class="admin-tab px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200" data-tab="servers">Servers</button>
+        <button class="admin-tab px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200" data-tab="logs">Logs</button>
     </div>
 
     <section id="tab-users" class="admin-tab-panel">
@@ -264,6 +265,91 @@
                     </div>
                 </form>
             </div>
+
+            <div class="bg-white dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700/50 p-6 lg:col-span-2">
+                <h2 class="text-lg font-semibold mb-4">Edit Server Profile</h2>
+                <form onsubmit="updateServerProfile(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Select Server</label>
+                        <select name="serverId" id="editServerSelect" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+                            <option value="">Select a server</option>
+                            <% servers.forEach(function(server) { %>
+                                <option value="<%= server._id %>"><%= server.name %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Name</label>
+                        <input type="text" name="name" id="editServerName" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Region</label>
+                        <input type="text" name="region" id="editServerRegion" class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">IP</label>
+                        <input type="text" name="ip" id="editServerIp" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Port</label>
+                        <input type="number" name="port" id="editServerPort" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Version</label>
+                        <select name="version" id="editServerVersion" class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+                            <option value="1.20.4">1.20.4</option>
+                            <option value="1.20.1">1.20.1</option>
+                            <option value="1.19.4">1.19.4</option>
+                            <option value="1.18.2">1.18.2</option>
+                            <option value="1.12.2">1.12.2</option>
+                            <option value="auto">Auto</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Max Bots</label>
+                        <input type="number" name="maxBots" id="editServerMaxBots" class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Notes</label>
+                        <textarea name="notes" id="editServerNotes" rows="3" class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm"></textarea>
+                    </div>
+                    <div class="md:col-span-2 flex items-center gap-2">
+                        <input type="checkbox" name="whitelist" id="editServerWhitelist" class="h-4 w-4">
+                        <label for="editServerWhitelist" class="text-sm text-slate-700 dark:text-slate-300">Whitelist enabled</label>
+                    </div>
+                    <div class="md:col-span-2 flex justify-end">
+                        <button type="submit" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-lg font-medium text-sm border border-slate-200 dark:border-slate-700 shadow-sm">
+                            Update Server
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <section id="tab-logs" class="admin-tab-panel hidden">
+        <div class="bg-white dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700/50 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold">Admin Audit Logs</h2>
+                <span class="text-sm text-slate-500 dark:text-slate-400"><%= logs.length %> entries</span>
+            </div>
+            <div class="space-y-3 max-h-[520px] overflow-y-auto">
+                <% logs.forEach(function(log) { %>
+                <div class="p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-slate-200 dark:border-slate-600/50">
+                    <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                        <span><%= new Date(log.createdAt).toLocaleString() %></span>
+                        <span class="font-medium text-slate-700 dark:text-slate-200"><%= log.actor %></span>
+                        <span class="uppercase text-slate-500 dark:text-slate-400"><%= log.action %></span>
+                        <% if (log.target) { %>
+                            <span class="text-slate-500 dark:text-slate-400">Target: <%= log.target %></span>
+                        <% } %>
+                    </div>
+                    <% if (log.details) { %>
+                        <pre class="mt-2 text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap"><%- JSON.stringify(log.details, null, 2) %></pre>
+                    <% } %>
+                </div>
+                <% }); %>
+            </div>
         </div>
     </section>
 </main>
@@ -383,6 +469,30 @@ async function assignBotToUser(botId, username) {
     }
 }
 
+async function updateServerProfile(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    data.whitelist = formData.get('whitelist') === 'on';
+
+    try {
+        const res = await fetch('/api/servers/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (res.ok && result.success) {
+            window.location.reload();
+        } else {
+            alert(result.error || 'Failed to update server');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error updating server');
+    }
+}
+
 async function createServerProfile(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -456,6 +566,43 @@ async function assignBotServer(botId) {
 
 const tabButtons = document.querySelectorAll('.admin-tab');
 const tabPanels = document.querySelectorAll('.admin-tab-panel');
+const serversData = <%- JSON.stringify(servers || []) %>;
+const editServerSelect = document.getElementById('editServerSelect');
+const editServerName = document.getElementById('editServerName');
+const editServerRegion = document.getElementById('editServerRegion');
+const editServerIp = document.getElementById('editServerIp');
+const editServerPort = document.getElementById('editServerPort');
+const editServerVersion = document.getElementById('editServerVersion');
+const editServerMaxBots = document.getElementById('editServerMaxBots');
+const editServerNotes = document.getElementById('editServerNotes');
+const editServerWhitelist = document.getElementById('editServerWhitelist');
+
+if (editServerSelect) {
+    editServerSelect.addEventListener('change', () => {
+        const serverId = editServerSelect.value;
+        const server = serversData.find(item => String(item._id) === String(serverId));
+        if (!server) {
+            editServerName.value = '';
+            editServerRegion.value = '';
+            editServerIp.value = '';
+            editServerPort.value = '';
+            editServerVersion.value = '1.20.4';
+            editServerMaxBots.value = '';
+            editServerNotes.value = '';
+            editServerWhitelist.checked = false;
+            return;
+        }
+        editServerName.value = server.name || '';
+        editServerRegion.value = server.region || '';
+        editServerIp.value = server.ip || '';
+        editServerPort.value = server.port || 25565;
+        editServerVersion.value = server.version || '1.20.4';
+        editServerMaxBots.value = server.maxBots || 0;
+        editServerNotes.value = server.notes || '';
+        editServerWhitelist.checked = !!server.whitelist;
+    });
+}
+
 tabButtons.forEach(button => {
     button.addEventListener('click', () => {
         const tab = button.getAttribute('data-tab');

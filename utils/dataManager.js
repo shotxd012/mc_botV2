@@ -1,4 +1,5 @@
 const Admin = require('../models/Admin');
+const AdminLog = require('../models/AdminLog');
 const Bot = require('../models/Bot');
 const Setting = require('../models/Setting');
 const Server = require('../models/Server');
@@ -27,6 +28,28 @@ async function readData() {
     } catch (err) {
         console.error("Error reading data from MongoDB:", err);
         return { admins: [], settings: {}, bots: [], servers: [] };
+    }
+}
+
+// --- Admin Logs ---
+
+async function addAdminLog(actor, action, target = '', details = null) {
+    try {
+        const log = new AdminLog({ actor, action, target, details });
+        await log.save();
+        return true;
+    } catch (err) {
+        console.error("Error creating admin log:", err);
+        return false;
+    }
+}
+
+async function getAdminLogs(limit = 100) {
+    try {
+        return await AdminLog.find({}).sort({ createdAt: -1 }).limit(limit).lean();
+    } catch (err) {
+        console.error("Error getting admin logs:", err);
+        return [];
     }
 }
 
@@ -244,6 +267,16 @@ async function assignBotToServer(botId, serverId, applyProfile = false) {
             return null;
         }
 
+        if (server.maxBots && server.maxBots > 0) {
+            const isSameServer = bot.serverProfile && String(bot.serverProfile) === String(server._id);
+            if (!isSameServer) {
+                const assignedCount = await Bot.countDocuments({ serverProfile: server._id });
+                if (assignedCount >= server.maxBots) {
+                    return { error: 'max_bots_reached' };
+                }
+            }
+        }
+
         bot.serverProfile = server._id;
         if (applyProfile) {
             bot.server = {
@@ -330,6 +363,8 @@ async function unassignBot(botId) {
 
 module.exports = {
     readData,
+    addAdminLog,
+    getAdminLogs,
     getSettings,
     updateSettings,
     getAdmin,

@@ -103,7 +103,14 @@ router.post('/bots/create', async (req, res) => {
         return res.status(403).json({ success: false, error: 'Permission denied. Only administrators can create bots.' });
     }
     
-    const newBot = botManager.createBot(req.body);
+    const newBot = await botManager.createBot(req.body);
+    if (!newBot) {
+        return res.json({ success: false, error: 'Failed to create bot.' });
+    }
+    await dataManager.addAdminLog(req.session.user.username, 'create_bot', String(newBot.id), {
+        name: newBot.name,
+        server: newBot.server
+    });
     res.json({ success: true, bot: newBot });
 });
 
@@ -118,6 +125,7 @@ router.post('/bot/:id/delete', async (req, res) => {
     
     const success = botManager.deleteBot(req.params.id);
     if (success) {
+        await dataManager.addAdminLog(req.session.user.username, 'delete_bot', String(req.params.id), null);
         res.json({ success: true, message: 'Bot deleted successfully.' });
     } else {
         res.json({ success: false, message: 'Failed to delete bot. Bot may not exist.' });
@@ -140,6 +148,7 @@ router.post('/bot/:id/settings', async (req, res) => {
     if (account) updates.account = account;
 
     botManager.updateBotConfig(req.params.id, updates);
+    await dataManager.addAdminLog(req.session.user.username, 'update_bot_settings', String(req.params.id), updates);
     res.json({ success: true });
 });
 
@@ -153,6 +162,9 @@ router.post('/settings/general', async (req, res) => {
     
     const { autoReconnect } = req.body;
     await dataManager.updateSettings({ autoReconnect: autoReconnect === true || autoReconnect === 'true' });
+    await dataManager.addAdminLog(req.session.user.username, 'update_global_settings', 'autoReconnect', {
+        value: autoReconnect === true || autoReconnect === 'true'
+    });
     res.json({ success: true });
 });
 
@@ -197,6 +209,7 @@ router.post('/admin/promote', async (req, res) => {
         // Update user role to admin
         const result = await Admin.updateOne({ username }, { role: 'admin' });
         if (result.modifiedCount > 0) {
+            await dataManager.addAdminLog(req.session.user.username, 'promote_user', username, null);
             res.json({ success: true });
         } else {
             res.json({ success: false, error: 'User not found' });
@@ -220,6 +233,7 @@ router.post('/admin/demote', async (req, res) => {
         // Update user role to user
         const result = await Admin.updateOne({ username }, { role: 'user' });
         if (result.modifiedCount > 0) {
+            await dataManager.addAdminLog(req.session.user.username, 'demote_user', username, null);
             res.json({ success: true });
         } else {
             res.json({ success: false, error: 'User not found' });
@@ -257,6 +271,7 @@ router.post('/admin/create-user', async (req, res) => {
         if (!created) {
             return res.json({ success: false, error: 'Failed to create user.' });
         }
+        await dataManager.addAdminLog(req.session.user.username, 'create_user', username, { role: role || 'user' });
         res.json({ success: true });
     } catch (err) {
         console.error('Error creating user:', err);
@@ -277,6 +292,7 @@ router.post('/admin/assign-bot', async (req, res) => {
     try {
         const success = await dataManager.assignBotToUser(botId, username);
         if (success) {
+            await dataManager.addAdminLog(req.session.user.username, 'assign_bot_to_user', String(botId), { username });
             res.json({ success: true });
         } else {
             res.json({ success: false, error: 'Bot not found or assignment failed' });
@@ -299,6 +315,7 @@ router.post('/admin/unassign-bot', async (req, res) => {
     try {
         const success = await dataManager.unassignBot(botId);
         if (success) {
+            await dataManager.addAdminLog(req.session.user.username, 'unassign_bot_from_user', String(botId), null);
             res.json({ success: true });
         } else {
             res.json({ success: false, error: 'Bot not found or unassignment failed' });
@@ -335,10 +352,54 @@ router.post('/servers/create', async (req, res) => {
         if (!created) {
             return res.json({ success: false, error: 'Failed to create server profile.' });
         }
+        await dataManager.addAdminLog(req.session.user.username, 'create_server', created._id.toString(), {
+            name: created.name,
+            ip: created.ip,
+            port: created.port,
+            version: created.version
+        });
         res.json({ success: true, server: created });
     } catch (err) {
         console.error('Error creating server profile:', err);
         res.json({ success: false, error: 'Failed to create server profile.' });
+    }
+});
+
+router.post('/servers/update', async (req, res) => {
+    const currentUser = await dataManager.getAdmin(req.session.user.username);
+    if (currentUser.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied. Only administrators can update servers.' });
+    }
+
+    const { serverId, name, ip, port, version, maxBots, region, notes, whitelist } = req.body;
+    if (!serverId || !name || !ip || !port || !version) {
+        return res.json({ success: false, error: 'Server ID, name, IP, port, and version are required.' });
+    }
+
+    try {
+        const updated = await dataManager.updateServer(serverId, {
+            name,
+            ip,
+            port: parseInt(port) || 25565,
+            version,
+            maxBots: parseInt(maxBots) || 0,
+            region: region || '',
+            notes: notes || '',
+            whitelist: whitelist === true || whitelist === 'true'
+        });
+        if (!updated) {
+            return res.json({ success: false, error: 'Failed to update server profile.' });
+        }
+        await dataManager.addAdminLog(req.session.user.username, 'update_server', serverId, {
+            name: updated.name,
+            ip: updated.ip,
+            port: updated.port,
+            version: updated.version
+        });
+        res.json({ success: true, server: updated });
+    } catch (err) {
+        console.error('Error updating server profile:', err);
+        res.json({ success: false, error: 'Failed to update server profile.' });
     }
 });
 
@@ -358,6 +419,7 @@ router.post('/servers/delete', async (req, res) => {
         if (!success) {
             return res.json({ success: false, error: 'Failed to delete server profile.' });
         }
+        await dataManager.addAdminLog(req.session.user.username, 'delete_server', serverId, null);
         res.json({ success: true });
     } catch (err) {
         console.error('Error deleting server profile:', err);
@@ -381,10 +443,17 @@ router.post('/servers/assign-bot', async (req, res) => {
         if (!updated) {
             return res.json({ success: false, error: 'Failed to assign bot to server.' });
         }
+        if (updated.error === 'max_bots_reached') {
+            return res.json({ success: false, error: 'Server has reached max bots limit.' });
+        }
         const botInstance = botManager.getBotInstance(botId);
         if (botInstance) {
             botInstance.updateConfig(updated);
         }
+        await dataManager.addAdminLog(req.session.user.username, 'assign_bot_to_server', String(botId), {
+            serverId: serverId || null,
+            applyProfile: applyProfile === true || applyProfile === 'true'
+        });
         res.json({ success: true });
     } catch (err) {
         console.error('Error assigning bot to server:', err);
