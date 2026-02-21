@@ -14,6 +14,8 @@ const io = socketIo(server);
 
 // --- Configuration ---
 const PORT = process.env.PORT || 3010;
+const isProduction = process.env.NODE_ENV === 'production';
+const trustProxy = process.env.TRUST_PROXY === 'true' || process.env.TRUST_PROXY === '1';
 
 // View Engine
 app.set('view engine', 'ejs');
@@ -25,11 +27,29 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // Session
+if (trustProxy) {
+    // Needed when running behind a reverse proxy (e.g., Nginx, Render, Heroku)
+    app.set('trust proxy', 1);
+}
+
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret) {
+    if (isProduction) {
+        throw new Error('SESSION_SECRET is required in production');
+    }
+    console.warn('Warning: SESSION_SECRET is not set. Using insecure development fallback.');
+}
+
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'mc-bot-secret-key-change-this',
+    secret: sessionSecret || 'REDACTED_SESSION_FALLBACK',
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false } // Set to true if using HTTPS
+    cookie: {
+        secure: isProduction,
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+    }
 }));
 
 // Make user available to all views
