@@ -24,6 +24,11 @@ const botSchema = new mongoose.Schema({
             default: '1.20.4'
         }
     },
+    serverProfile: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Server',
+        default: null
+    },
     account: {
         email: {
             type: String,

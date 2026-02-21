@@ -84,11 +84,13 @@ router.get('/admin', async (req, res) => {
     
     const allUsers = await dataManager.getAllAdmins();
     const allBots = await dataManager.getBots();
+    const allServers = await dataManager.getServers();
     
     res.render('admin', {
         page: 'admin',
         users: allUsers,
-        bots: allBots
+        bots: allBots,
+        servers: allServers
     });
 });
 

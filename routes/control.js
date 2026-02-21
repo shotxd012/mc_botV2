@@ -230,6 +230,40 @@ router.post('/admin/demote', async (req, res) => {
     }
 });
 
+router.post('/admin/create-user', async (req, res) => {
+    // Check if user has admin privileges
+    const currentUser = await dataManager.getAdmin(req.session.user.username);
+    if (currentUser.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied. Only administrators can create users.' });
+    }
+
+    const { username, password, role } = req.body;
+    if (!username || !password) {
+        return res.json({ success: false, error: 'Username and password are required.' });
+    }
+    if (password.length < 6) {
+        return res.json({ success: false, error: 'Password must be at least 6 characters long.' });
+    }
+    if (role && role !== 'admin' && role !== 'user') {
+        return res.json({ success: false, error: 'Invalid role.' });
+    }
+
+    try {
+        const existingUser = await dataManager.getAdmin(username);
+        if (existingUser) {
+            return res.json({ success: false, error: 'Username already exists.' });
+        }
+        const created = await dataManager.createAdmin(username, password, role || 'user');
+        if (!created) {
+            return res.json({ success: false, error: 'Failed to create user.' });
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error creating user:', err);
+        res.json({ success: false, error: 'Failed to create user.' });
+    }
+});
+
 // Bot Assignment Routes
 router.post('/admin/assign-bot', async (req, res) => {
     // Check if user has admin privileges
@@ -272,6 +306,89 @@ router.post('/admin/unassign-bot', async (req, res) => {
     } catch (err) {
         console.error('Error unassigning bot:', err);
         res.json({ success: false, error: 'Failed to unassign bot' });
+    }
+});
+
+// Server Profile Routes
+router.post('/servers/create', async (req, res) => {
+    const currentUser = await dataManager.getAdmin(req.session.user.username);
+    if (currentUser.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied. Only administrators can create servers.' });
+    }
+
+    const { name, ip, port, version, maxBots, region, notes, whitelist } = req.body;
+    if (!name || !ip || !port || !version) {
+        return res.json({ success: false, error: 'Name, IP, port, and version are required.' });
+    }
+
+    try {
+        const created = await dataManager.createServer({
+            name,
+            ip,
+            port,
+            version,
+            maxBots,
+            region,
+            notes,
+            whitelist
+        });
+        if (!created) {
+            return res.json({ success: false, error: 'Failed to create server profile.' });
+        }
+        res.json({ success: true, server: created });
+    } catch (err) {
+        console.error('Error creating server profile:', err);
+        res.json({ success: false, error: 'Failed to create server profile.' });
+    }
+});
+
+router.post('/servers/delete', async (req, res) => {
+    const currentUser = await dataManager.getAdmin(req.session.user.username);
+    if (currentUser.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied. Only administrators can delete servers.' });
+    }
+
+    const { serverId } = req.body;
+    if (!serverId) {
+        return res.json({ success: false, error: 'Server ID is required.' });
+    }
+
+    try {
+        const success = await dataManager.deleteServer(serverId);
+        if (!success) {
+            return res.json({ success: false, error: 'Failed to delete server profile.' });
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error deleting server profile:', err);
+        res.json({ success: false, error: 'Failed to delete server profile.' });
+    }
+});
+
+router.post('/servers/assign-bot', async (req, res) => {
+    const currentUser = await dataManager.getAdmin(req.session.user.username);
+    if (currentUser.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied. Only administrators can assign bots to servers.' });
+    }
+
+    const { botId, serverId, applyProfile } = req.body;
+    if (!botId) {
+        return res.json({ success: false, error: 'Bot ID is required.' });
+    }
+
+    try {
+        const updated = await dataManager.assignBotToServer(botId, serverId || null, applyProfile === true || applyProfile === 'true');
+        if (!updated) {
+            return res.json({ success: false, error: 'Failed to assign bot to server.' });
+        }
+        const botInstance = botManager.getBotInstance(botId);
+        if (botInstance) {
+            botInstance.updateConfig(updated);
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error assigning bot to server:', err);
+        res.json({ success: false, error: 'Failed to assign bot to server.' });
     }
 });
 
