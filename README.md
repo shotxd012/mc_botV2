@@ -10,7 +10,7 @@ A budget-friendly, secure, and feature-rich admin dashboard to control and monit
 - **Server Settings**: Configure Server IP, Port, Version, and Microsoft Account.
 - **Microsoft Authentication**: Built-in flow for first-time verification.
 - **Dark Mode**: Enabled by default with persistent settings.
-- **No Database**: Uses local `data.json` for storage.
+- **MongoDB Storage**: Uses MongoDB for users, bots, and settings.
 
 ## 🛠️ Tech Stack
 
@@ -19,7 +19,7 @@ A budget-friendly, secure, and feature-rich admin dashboard to control and monit
 - **Bot Framework**: Mineflayer
 - **Frontend**: EJS + Tailwind CSS (CDN)
 - **Real-time**: Socket.io
-- **Auth**: express-session + bcrypt (Local JSON storage)
+- **Auth**: express-session + bcrypt (MongoDB storage)
 
 ## 📋 Prerequisites
 
@@ -43,14 +43,22 @@ A budget-friendly, secure, and feature-rich admin dashboard to control and monit
    ```bash
    npm start
    ```
-   The dashboard will be available at `http://localhost:3000`.
+   The dashboard will be available at `http://localhost:3010` by default.
 
 ## 🔐 Default Login
 
 - **Username**: `root`
 - **Password**: `REDACTED_DEFAULT_PASSWORD`
 
-> **Note**: You can change the password by updating `data/data.json` (requires hashing the new password) or implementing a change password feature.
+> **Note**: You can change the password by updating the Admin record in MongoDB (requires hashing the new password) or implementing a change password feature.
+
+## ⚙️ Environment Variables
+
+- `MONGODB_URI`: MongoDB connection string (required in production).
+- `SESSION_SECRET`: Session signing secret (required in production).
+- `NODE_ENV`: Set to `production` to enable secure session cookies.
+- `TRUST_PROXY`: Set to `true` or `1` when running behind a reverse proxy (Nginx, Render, etc.).
+- `PORT`: Override the default port (3010).
 
 ## 🎮 Usage Guide
 
@@ -84,7 +92,7 @@ afk-bot-dashboard/
 ├── bot/
 │   └── bot.js          # Mineflayer bot logic
 ├── data/
-│   └── data.json       # Local storage (admins, settings)
+│   └── ...             # Runtime bot cache/history files
 ├── public/
 │   └── js/
 │       └── dashboard.js # Frontend logic
