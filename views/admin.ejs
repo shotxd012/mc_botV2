@@ -81,6 +81,16 @@
         </div>
     </section>
 
+    <% 
+        const serverCounts = {};
+        bots.forEach(function(bot) {
+            if (bot.serverProfile) {
+                const key = String(bot.serverProfile);
+                serverCounts[key] = (serverCounts[key] || 0) + 1;
+            }
+        });
+    %>
+
     <section id="tab-bots" class="admin-tab-panel hidden">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700/50 p-6">
@@ -116,13 +126,23 @@
                                 </div>
                                 <div class="mt-3">
                                     <label class="text-xs text-slate-500 dark:text-slate-400">Server profile:</label>
-                                    <div class="flex flex-wrap gap-2 mt-1">
-                                        <select class="server-select w-full md:w-auto text-xs bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded px-2 py-1" data-bot-id="<%= bot.id %>">
+                                    <div class="flex flex-wrap gap-2 mt-1 items-center">
+                                        <select class="server-select w-full md:w-auto text-xs bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded px-2 py-1" data-bot-id="<%= bot.id %>" data-current-server="<%= bot.serverProfile ? String(bot.serverProfile) : '' %>">
                                             <option value="">Unassigned</option>
                                             <% servers.forEach(function(server) { %>
-                                                <option value="<%= server._id %>" <%= bot.serverProfile && String(bot.serverProfile) === String(server._id) ? 'selected' : '' %>><%= server.name %></option>
+                                                <% 
+                                                    const serverId = String(server._id);
+                                                    const assignedCount = serverCounts[serverId] || 0;
+                                                    const maxBots = server.maxBots || 0;
+                                                    const isCurrent = bot.serverProfile && String(bot.serverProfile) === serverId;
+                                                    const isFull = maxBots > 0 && assignedCount >= maxBots && !isCurrent;
+                                                %>
+                                                <option value="<%= server._id %>" data-max-bots="<%= maxBots %>" data-assigned-count="<%= assignedCount %>" <%= isFull ? 'disabled' : '' %> <%= isCurrent ? 'selected' : '' %>>
+                                                    <%= server.name %><%= isFull ? ' (full)' : '' %>
+                                                </option>
                                             <% }); %>
                                         </select>
+                                        <span class="server-warning hidden text-xs text-red-500" data-bot-id="<%= bot.id %>">Max bots reached for this server.</span>
                                         <label class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                                             <input type="checkbox" class="apply-profile" data-bot-id="<%= bot.id %>">
                                             Apply profile settings
@@ -543,8 +563,25 @@ async function deleteServerProfile(serverId, name) {
 async function assignBotServer(botId) {
     const serverSelect = document.querySelector(`.server-select[data-bot-id="${botId}"]`);
     const applyCheckbox = document.querySelector(`.apply-profile[data-bot-id="${botId}"]`);
+    const warning = document.querySelector(`.server-warning[data-bot-id="${botId}"]`);
     const serverId = serverSelect ? serverSelect.value : '';
     const applyProfile = applyCheckbox ? applyCheckbox.checked : false;
+
+    if (serverSelect && serverId) {
+        const selectedOption = serverSelect.options[serverSelect.selectedIndex];
+        const maxBots = parseInt(selectedOption.getAttribute('data-max-bots') || '0', 10);
+        const assignedCount = parseInt(selectedOption.getAttribute('data-assigned-count') || '0', 10);
+        const currentServer = serverSelect.getAttribute('data-current-server') || '';
+        const isCurrent = currentServer && currentServer === serverId;
+        const isFull = maxBots > 0 && assignedCount >= maxBots && !isCurrent;
+        if (isFull) {
+            if (warning) {
+                warning.classList.remove('hidden');
+            }
+            alert('This server has reached its max bots limit.');
+            return;
+        }
+    }
 
     try {
         const res = await fetch('/api/servers/assign-bot', {
@@ -618,6 +655,22 @@ tabButtons.forEach(button => {
         tabPanels.forEach(panel => {
             panel.classList.toggle('hidden', panel.id !== `tab-${tab}`);
         });
+    });
+});
+
+document.querySelectorAll('.server-select').forEach(select => {
+    select.addEventListener('change', () => {
+        const botId = select.getAttribute('data-bot-id');
+        const warning = document.querySelector(`.server-warning[data-bot-id="${botId}"]`);
+        if (!warning) return;
+        const selectedOption = select.options[select.selectedIndex];
+        const maxBots = parseInt(selectedOption.getAttribute('data-max-bots') || '0', 10);
+        const assignedCount = parseInt(selectedOption.getAttribute('data-assigned-count') || '0', 10);
+        const currentServer = select.getAttribute('data-current-server') || '';
+        const serverId = select.value;
+        const isCurrent = currentServer && currentServer === serverId;
+        const isFull = maxBots > 0 && assignedCount >= maxBots && !isCurrent;
+        warning.classList.toggle('hidden', !isFull);
     });
 });
 </script>
