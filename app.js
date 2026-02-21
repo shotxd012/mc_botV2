@@ -45,7 +45,8 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: isProduction,
+        // Use auto so login works on HTTP while still enabling secure cookies on HTTPS.
+        secure: isProduction ? 'auto' : false,
         httpOnly: true,
         sameSite: 'lax',
         maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
