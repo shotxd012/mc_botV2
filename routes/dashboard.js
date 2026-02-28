@@ -151,7 +151,7 @@ router.get('/admin', async (req, res) => {
     const allServers = await dataManager.getServers();
     const adminLogs = await dataManager.getAdminLogs(200);
     const botStatuses = botManager.getAllBotsStatus();
-    const systemStats = buildSystemStats({
+    const systemStats = await buildSystemStats({
         bots: allBots,
         botStatuses,
         servers: allServers
