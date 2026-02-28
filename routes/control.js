@@ -3,6 +3,22 @@ const router = express.Router();
 const botManager = require('../bot/BotManager');
 const dataManager = require('../utils/dataManager');
 const Admin = require('../models/Admin');
+const passkeyUtils = require('../utils/passkey');
+
+async function enforcePasskey(req, res, bot) {
+    if (!passkeyUtils.requiresPasskeyForBot(bot)) {
+        return null;
+    }
+    if (passkeyUtils.isPasskeyValidated(req, bot.id)) {
+        return null;
+    }
+    res.status(403).json({
+        success: false,
+        error: 'Passkey required for this bot.',
+        message: 'Passkey required for this bot.'
+    });
+    return { blocked: true };
+}
 
 // Bot Control
 router.post('/bot/:id/start', async (req, res) => {
@@ -13,6 +29,8 @@ router.post('/bot/:id/start', async (req, res) => {
     if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
         return res.status(403).json({ success: false, error: 'Permission denied. You do not have access to this bot.' });
     }
+    const passkeyBlock = await enforcePasskey(req, res, bot);
+    if (passkeyBlock) return;
     
     botManager.startBot(req.params.id);
     res.json({ success: true });
@@ -26,6 +44,8 @@ router.post('/bot/:id/stop', async (req, res) => {
     if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
         return res.status(403).json({ success: false, error: 'Permission denied. You do not have access to this bot.' });
     }
+    const passkeyBlock = await enforcePasskey(req, res, bot);
+    if (passkeyBlock) return;
     
     botManager.stopBot(req.params.id);
     res.json({ success: true });
@@ -39,6 +59,8 @@ router.post('/bot/:id/restart', async (req, res) => {
     if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
         return res.status(403).json({ success: false, error: 'Permission denied. You do not have access to this bot.' });
     }
+    const passkeyBlock = await enforcePasskey(req, res, bot);
+    if (passkeyBlock) return;
     
     botManager.restartBot(req.params.id);
     res.json({ success: true });
@@ -52,6 +74,8 @@ router.post('/bot/:id/afk', async (req, res) => {
     if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
         return res.status(403).json({ success: false, error: 'Permission denied. You do not have access to this bot.' });
     }
+    const passkeyBlock = await enforcePasskey(req, res, bot);
+    if (passkeyBlock) return;
     
     const { enabled } = req.body;
     const botInstance = botManager.getBotInstance(req.params.id);
@@ -87,6 +111,8 @@ router.post('/bot/:id/command', async (req, res) => {
     if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
         return res.status(403).json({ success: false, error: 'Permission denied. You do not have access to this bot.' });
     }
+    const passkeyBlock = await enforcePasskey(req, res, bot);
+    if (passkeyBlock) return;
     
     const { command } = req.body;
     if (command) {
@@ -122,6 +148,8 @@ router.post('/bot/:id/delete', async (req, res) => {
     if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
         return res.status(403).json({ success: false, error: 'Permission denied. You do not have access to this bot.' });
     }
+    const passkeyBlock = await enforcePasskey(req, res, bot);
+    if (passkeyBlock) return;
     
     const success = botManager.deleteBot(req.params.id);
     if (success) {
@@ -141,6 +169,8 @@ router.post('/bot/:id/settings', async (req, res) => {
     if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
         return res.status(403).json({ success: false, error: 'Permission denied. You do not have access to this bot.' });
     }
+    const passkeyBlock = await enforcePasskey(req, res, bot);
+    if (passkeyBlock) return;
     
     const { server, account } = req.body;
     const updates = {};
@@ -169,7 +199,14 @@ router.post('/settings/general', async (req, res) => {
 });
 
 // Get console history
-router.get('/bot/:id/history', (req, res) => {
+router.get('/bot/:id/history', async (req, res) => {
+    const bot = await dataManager.getBot(req.params.id);
+    if (!bot) {
+        return res.json({ success: false, error: 'Bot not found' });
+    }
+    const passkeyBlock = await enforcePasskey(req, res, bot);
+    if (passkeyBlock) return;
+
     const { count } = req.query;
     const historyCount = parseInt(count) || 100;
     const history = botManager.getLogHistory(req.params.id, historyCount);
@@ -185,6 +222,8 @@ router.post('/bot/:id/history/clear', async (req, res) => {
     if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
         return res.status(403).json({ success: false, error: 'Permission denied. You do not have access to this bot.' });
     }
+    const passkeyBlock = await enforcePasskey(req, res, bot);
+    if (passkeyBlock) return;
     
     const botInstance = botManager.getBotInstance(req.params.id);
     if (botInstance) {

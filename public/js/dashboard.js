@@ -16,6 +16,16 @@ socket.on('connect', () => {
     }
 });
 
+socket.on('disconnect', async () => {
+    if (!isBotPage) return;
+    try {
+        await fetch(`/bot/${BOT_ID}/passkey/lock`, { method: 'POST', keepalive: true });
+    } catch (e) {
+        // Best-effort lock on disconnect
+    }
+    window.location.href = `/bot/${BOT_ID}`;
+});
+
 socket.on('log', (data) => {
     // data = { botId, message, type }
     if (isBotPage && data.botId == BOT_ID) {

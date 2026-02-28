@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const botManager = require('../bot/BotManager');
 const dataManager = require('../utils/dataManager');
+const passkeyUtils = require('../utils/passkey');
+const { buildSystemStats } = require('../utils/systemStats');
 
 router.get('/', async (req, res) => {
     const user = await dataManager.getAdmin(req.session.user.username);
@@ -40,6 +42,17 @@ router.get('/bot/:id', async (req, res) => {
         return res.redirect('/');
     }
 
+    if (passkeyUtils.requiresPasskeyForBot(botConfig) && !passkeyUtils.isPasskeyValidated(req, botConfig.id)) {
+        return res.render('bot-passkey', {
+            page: 'bot-passkey',
+            user: user,
+            botConfig: botConfig,
+            botId: id,
+            serverName: null,
+            error: null
+        });
+    }
+
     res.render('bot-control', {
         page: 'bot',
         status: status,
@@ -47,6 +60,57 @@ router.get('/bot/:id', async (req, res) => {
         botId: id,
         user: user
     });
+});
+
+router.post('/bot/:id/passkey', async (req, res) => {
+    const id = req.params.id;
+    const user = await dataManager.getAdmin(req.session.user.username);
+    const botConfig = await dataManager.getBot(id);
+
+    if (!botConfig) {
+        return res.redirect('/');
+    }
+
+    // Check if user has permission to access this bot
+    if (user.role !== 'admin' && botConfig.assignedTo !== req.session.user.username) {
+        return res.redirect('/');
+    }
+
+    if (!passkeyUtils.requiresPasskeyForBot(botConfig)) {
+        return res.redirect(`/bot/${id}`);
+    }
+
+    const { passkey } = req.body;
+    if (passkeyUtils.isPasskeyValidForBot(botConfig, passkey)) {
+        passkeyUtils.markPasskeyValidated(req, botConfig.id);
+        return res.redirect(`/bot/${id}`);
+    }
+
+    return res.render('bot-passkey', {
+        page: 'bot-passkey',
+        user: user,
+        botConfig: botConfig,
+        botId: id,
+        serverName: null,
+        error: 'Invalid passkey.'
+    });
+});
+
+router.post('/bot/:id/passkey/lock', async (req, res) => {
+    const id = req.params.id;
+    const user = await dataManager.getAdmin(req.session.user.username);
+    const botConfig = await dataManager.getBot(id);
+
+    if (!botConfig) {
+        return res.status(404).json({ success: false, error: 'Bot not found' });
+    }
+
+    if (user.role !== 'admin' && botConfig.assignedTo !== req.session.user.username) {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+
+    passkeyUtils.clearPasskeyValidated(req, botConfig.id);
+    res.json({ success: true });
 });
 
 // Profile Route
@@ -86,13 +150,20 @@ router.get('/admin', async (req, res) => {
     const allBots = await dataManager.getBots();
     const allServers = await dataManager.getServers();
     const adminLogs = await dataManager.getAdminLogs(200);
+    const botStatuses = botManager.getAllBotsStatus();
+    const systemStats = buildSystemStats({
+        bots: allBots,
+        botStatuses,
+        servers: allServers
+    });
     
     res.render('admin', {
         page: 'admin',
         users: allUsers,
         bots: allBots,
         servers: allServers,
-        logs: adminLogs
+        logs: adminLogs,
+        systemStats
     });
 });
 
