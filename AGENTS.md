@@ -1,7 +1,5 @@
 # AGENTS.md
 
-This file provides guidance to Qoder (qoder.com) when working with code in this repository.
-
 ## Project Overview
 
 This is a Minecraft AFK Bot Admin Dashboard - a web-based application that controls and monitors Minecraft AFK bots using Mineflayer. The application allows users to manage multiple Minecraft bots with features like start/stop control, AFK mode, live console, and server configuration.
