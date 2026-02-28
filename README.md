@@ -1,4 +1,4 @@
-# Minecraft AFK Bot Admin Dashboard
+# Minecraft AFK Bot Admin Dashboard 🙂
 
 A budget-friendly, secure, and feature-rich admin dashboard to control and monitor a Minecraft AFK bot using Mineflayer. Built with Node.js, Express, EJS, and Tailwind CSS.
 
