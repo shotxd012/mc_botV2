@@ -5,27 +5,31 @@
     const BOT_ID = "<%= botId %>";
 </script>
 
-<main class="flex-1 p-6 md:p-8 overflow-y-auto h-screen flex flex-col gap-6">
+<main class="flex-1 p-4 sm:p-6 md:p-8 min-h-screen pb-20 md:pb-8 flex flex-col gap-6">
     <!-- Header -->
-    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-5">
         <div class="flex items-center gap-3">
-            <a href="/" class="p-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
-                <span class="material-icons text-sm">arrow_back</span>
+            <a href="/" class="p-2 bg-slate-100 dark:bg-obsidian-850 hover:bg-slate-200 dark:hover:bg-obsidian-800 text-slate-600 dark:text-slate-300 transition-colors border border-slate-200 dark:border-obsidian-700 flex items-center justify-center">
+                <span class="material-icons text-base">arrow_back</span>
             </a>
             <div>
-                <h2 class="text-xl md:text-2xl font-semibold"><%= botConfig.name %></h2>
-                <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    <span id="status-dot" class="w-2 h-2 rounded-full <%= status.online ? 'bg-green-500' : 'bg-red-500' %>"></span>
-                    <span id="status-text"><%= status.online ? 'Online' : 'Offline' %></span>
+                <div class="flex items-center gap-2.5">
+                    <h2 class="bot-title text-xl md:text-2xl font-bold uppercase tracking-tight text-slate-900 dark:text-white"><%= botConfig.name %></h2>
+                    <span class="px-1.5 py-0.5 font-mono text-[10px] bg-slate-100 dark:bg-obsidian-800 border border-slate-200 dark:border-obsidian-700 text-slate-500 dark:text-slate-400">#<%= botId %></span>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                    <span id="status-dot" class="w-2 h-2 inline-block <%= status.online ? 'bg-emerald-500' : 'bg-redstone-500' %>"></span>
+                    <span id="status-text" class="font-bold"><%= status.online ? 'Online' : 'Offline' %></span>
                     <span>•</span>
-                    <span><%= typeof status.server !== 'undefined' ? status.server.ip + ':' + status.server.port : 'No server configured' %></span>
+                    <span class="truncate"><%= typeof status.server !== 'undefined' ? status.server.ip + ':' + status.server.port : 'No server configured' %></span>
                 </div>
             </div>
         </div>
 
-        <div class="flex items-center gap-2">
-            <button onclick="deleteBot()" class="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 px-3 py-1.5 rounded-lg font-medium transition-colors border border-transparent hover:border-red-500/20 text-sm">
-                Delete Bot
+        <div class="flex items-center gap-2 self-end sm:self-auto">
+            <button onclick="deleteBot()" class="px-3 py-2 text-redstone-500 hover:text-white hover:bg-redstone-600 font-mono text-xs uppercase font-bold transition-all border border-redstone-500/30 hover:border-redstone-600 flex items-center gap-1.5 active:translate-y-0.5">
+                <span class="material-icons text-sm">delete</span>
+                <span>Delete Bot</span>
             </button>
         </div>
     </header>
@@ -33,78 +37,104 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
         <!-- Left Column: Controls & Console -->
         <div class="lg:col-span-2 flex flex-col gap-5 min-h-0">
-            <!-- Controls -->
-            <div class="bg-white dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700/50 p-5">
+            <!-- Controls Box -->
+            <div class="bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700/80 p-5 shadow-sm">
                 <div class="flex flex-wrap gap-3">
-                    <button id="start-stop-btn" onclick="toggleStartStop()" class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-all text-sm min-w-[120px]">
-                        <span id="start-stop-icon" class="material-icons text-sm">play_arrow</span> <span id="start-stop-text">Start</span>
+                    <!-- Start/Stop Button (server-synced initial state) -->
+                    <button id="start-stop-btn" onclick="toggleStartStop()" class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 <%= status.isRunning ? 'bg-redstone-600 hover:bg-redstone-500 border-redstone-500/50' : 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500/50' %> text-white font-mono font-bold text-xs uppercase tracking-wider transition-all border shadow-sm active:translate-y-0.5 min-w-[120px]">
+                        <span id="start-stop-icon" class="material-icons text-sm"><%= status.isRunning ? 'stop' : 'play_arrow' %></span>
+                        <span id="start-stop-text"><%= status.isRunning ? 'Stop Bot' : 'Start Bot' %></span>
                     </button>
-                    <button onclick="controlBot('restart')" class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-all text-sm min-w-[120px]">
-                        <span class="material-icons text-sm">refresh</span> Restart
+
+                    <!-- Restart Button -->
+                    <button onclick="controlBot('restart')" class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-mono font-bold text-xs uppercase tracking-wider transition-all border border-amber-500/50 shadow-sm active:translate-y-0.5 min-w-[120px]">
+                        <span class="material-icons text-sm">refresh</span>
+                        <span>Restart</span>
                     </button>
-                    <div class="w-px h-8 bg-slate-200 dark:bg-slate-700/50 hidden md:block"></div>
-                    <button id="afk-btn" onclick="toggleAfk()" class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium transition-all text-sm min-w-[120px]">
-                        <span class="material-icons text-sm">cached</span> Toggle AFK
+
+                    <div class="w-px h-8 bg-slate-200 dark:border-obsidian-700 hidden md:block self-center"></div>
+
+                    <!-- AFK Toggle Button (server-synced initial state) -->
+                    <button id="afk-btn" onclick="toggleAfk()" class="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 <%= status.isAfkActive ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 hover:bg-emerald-500/30' : 'bg-slate-100 dark:bg-obsidian-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-obsidian-700 hover:bg-slate-200 dark:hover:bg-obsidian-750' %> text-xs font-mono font-bold uppercase tracking-wider transition-all border min-w-[120px] active:translate-y-0.5">
+                        <span class="inline-block w-2 h-2 mr-1.5 <%= status.isAfkActive ? 'bg-emerald-400' : 'bg-slate-500' %>"></span>
+                        <span><%= status.isAfkActive ? 'Stop AFK' : 'Start AFK' %></span>
                     </button>
                 </div>
 
                 <!-- Status Row -->
-                <div class="grid grid-cols-3 gap-3 mt-5 pt-5 border-t border-slate-100 dark:border-slate-700/50">
-                    <div class="text-center">
-                        <div class="text-xs text-slate-500 uppercase font-medium mb-1">Uptime</div>
-                        <div id="uptime-text" class="font-mono text-sm"><%= status.uptime %></div>
+                <div class="grid grid-cols-3 gap-3 mt-5 pt-5 border-t border-slate-200 dark:border-obsidian-700/60">
+                    <div class="text-center p-2 bg-slate-50 dark:bg-obsidian-950/60 border border-slate-200 dark:border-obsidian-800">
+                        <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">Session Uptime</div>
+                        <div id="uptime-text" class="font-mono text-sm font-bold text-slate-900 dark:text-white"><%= status.uptime || '0s' %></div>
                     </div>
-                    <div class="text-center border-l border-r border-slate-100 dark:border-slate-700/50">
-                        <div class="text-xs text-slate-500 uppercase font-medium mb-1">Auth Status</div>
-                        <div id="auth-status" class="<%= status.authStatus === 'Verified' ? 'text-green-500' : 'text-amber-500' %> text-sm font-medium"><%= status.authStatus %></div>
+                    <div class="text-center p-2 bg-slate-50 dark:bg-obsidian-950/60 border border-slate-200 dark:border-obsidian-800">
+                        <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">Auth Status</div>
+                        <div class="flex items-center justify-center mt-0.5">
+                            <span id="auth-status" class="font-mono text-xs uppercase px-2 py-0.5 border font-bold <%= status.authStatus === 'Verified' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : (status.authStatus === 'Pending' ? 'text-amber-400 border-amber-500/30 bg-amber-500/10 animate-pulse' : 'text-slate-400 border-slate-700 bg-slate-800') %>">
+                                <%= status.authStatus || 'Offline' %>
+                            </span>
+                        </div>
                     </div>
-                    <div class="text-center">
-                        <div class="text-xs text-slate-500 uppercase font-medium mb-1">Username</div>
-                        <div id="bot-username" class="text-sm font-medium truncate"><%= status.username || '-' %></div>
+                    <div class="text-center p-2 bg-slate-50 dark:bg-obsidian-950/60 border border-slate-200 dark:border-obsidian-800">
+                        <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">IGN / Username</div>
+                        <div id="bot-username" class="font-mono text-sm font-bold truncate text-slate-900 dark:text-white"><%= (status.username && status.username !== 'N/A') ? status.username : '-' %></div>
                     </div>
                 </div>
 
-                <!-- Bot Details Container -->
-                <div class="mt-5 pt-5 border-t border-slate-100 dark:border-slate-700/50">
-                    <h3 class="text-xs font-medium text-slate-500 uppercase mb-3 tracking-wide">Bot Information</h3>
+                <!-- Bot HUD Information -->
+                <div class="mt-5 pt-5 border-t border-slate-200 dark:border-obsidian-700/60">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold">In-Game Telemetry</h3>
+                        <span class="text-[10px] font-mono text-slate-500">Live Entity Metrics</span>
+                    </div>
                     <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-                        <div class="bg-slate-50 dark:bg-slate-700/30 p-3 rounded-lg text-center">
-                            <div class="text-xs text-slate-500 mb-1">Username</div>
-                            <div id="detail-username" class="text-xs font-medium truncate"><%= status.username || '-' %></div>
+                        <div class="bg-slate-50 dark:bg-obsidian-950/60 p-3 border border-slate-200 dark:border-obsidian-800 text-center">
+                            <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">Entity</div>
+                            <div id="detail-username" class="text-xs font-mono font-bold truncate text-slate-800 dark:text-slate-200"><%= (status.username && status.username !== 'N/A') ? status.username : '-' %></div>
                         </div>
-                        <div class="bg-slate-50 dark:bg-slate-700/30 p-3 rounded-lg text-center">
-                            <div class="text-xs text-slate-500 mb-1">Health</div>
-                            <div id="detail-health" class="text-xs font-medium text-red-500">-</div>
+                        <div class="bg-slate-50 dark:bg-obsidian-950/60 p-3 border border-slate-200 dark:border-obsidian-800 text-center">
+                            <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">Health</div>
+                            <div id="detail-health" class="text-xs font-mono font-bold text-redstone-500">-</div>
                         </div>
-                        <div class="bg-slate-50 dark:bg-slate-700/30 p-3 rounded-lg text-center">
-                            <div class="text-xs text-slate-500 mb-1">Food</div>
-                            <div id="detail-food" class="text-xs font-medium text-green-500">-</div>
+                        <div class="bg-slate-50 dark:bg-obsidian-950/60 p-3 border border-slate-200 dark:border-obsidian-800 text-center">
+                            <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">Food / Hunger</div>
+                            <div id="detail-food" class="text-xs font-mono font-bold text-emerald-500">-</div>
                         </div>
-                        <div class="bg-slate-50 dark:bg-slate-700/30 p-3 rounded-lg text-center">
-                            <div class="text-xs text-slate-500 mb-1">Position</div>
-                            <div id="detail-position" class="text-xs font-mono break-all">-</div>
+                        <div class="bg-slate-50 dark:bg-obsidian-950/60 p-3 border border-slate-200 dark:border-obsidian-800 text-center">
+                            <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">Coordinates (X,Y,Z)</div>
+                            <div id="detail-position" class="text-xs font-mono font-bold truncate text-slate-800 dark:text-slate-200">-</div>
                         </div>
-                        <div class="bg-slate-50 dark:bg-slate-700/30 p-3 rounded-lg text-center">
-                            <div class="text-xs text-slate-500 mb-1">Dimension</div>
-                            <div id="detail-dimension" class="text-xs font-medium capitalize">-</div>
+                        <div class="bg-slate-50 dark:bg-obsidian-950/60 p-3 border border-slate-200 dark:border-obsidian-800 text-center">
+                            <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">Dimension</div>
+                            <div id="detail-dimension" class="text-xs font-mono font-bold uppercase text-slate-800 dark:text-slate-200">-</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Console -->
-            <div class="flex-1 bg-slate-900 rounded-xl border border-slate-700/50 flex flex-col overflow-hidden min-h-[350px]">
-                <div class="px-3 py-2 bg-slate-800 border-b border-slate-700/50 flex justify-between items-center">
-                    <span class="text-xs font-mono text-slate-400">CONSOLE</span>
-                    <button onclick="clearConsole()" class="text-xs text-slate-500 hover:text-slate-300">Clear</button>
+            <!-- Terminal / Console -->
+            <div class="flex-1 bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 flex flex-col overflow-hidden min-h-[380px] shadow-lg">
+                <div class="px-4 py-2.5 bg-obsidian-900 border-b border-obsidian-700/80 flex justify-between items-center select-none">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 bg-emerald-500 inline-block"></span>
+                        <span class="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">Terminal Output Stream</span>
+                    </div>
+                    <button onclick="clearConsole()" class="text-[10px] font-mono uppercase px-2 py-0.5 text-slate-400 hover:text-white border border-obsidian-700 hover:border-slate-500 transition-colors">
+                        Clear Buffer
+                    </button>
                 </div>
-                <div id="console-logs" class="flex-1 p-3 overflow-y-auto font-mono text-xs space-y-0.5 console-logs bg-slate-900 text-slate-300">
-                    <div class="text-slate-500 italic">Connecting to console stream...</div>
+
+                <div id="console-logs" class="flex-1 p-3.5 overflow-y-auto text-xs font-mono space-y-0.5 bg-obsidian-950 text-slate-300 console-logs leading-relaxed">
+                    <div class="console-placeholder text-slate-500 italic py-1">Connecting to console stream...</div>
                 </div>
-                <div class="p-3 bg-slate-800 border-t border-slate-700/50">
+
+                <div class="p-3 bg-obsidian-900 border-t border-obsidian-700/80">
                     <form onsubmit="sendCommand(event)" class="flex gap-2">
-                        <input type="text" id="command-input" class="flex-1 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white focus:ring-1 focus:ring-slate-400 outline-none font-mono text-sm" placeholder="Type a command (/) or chat message..." autocomplete="off">
-                        <button type="submit" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-all text-sm">
+                        <div class="relative flex-1">
+                            <span class="absolute left-3 top-2.5 font-mono text-xs text-primary select-none">></span>
+                            <input type="text" id="command-input" class="w-full pl-7 pr-3 py-2 bg-obsidian-950 border border-obsidian-700 text-white font-mono text-xs focus:border-primary outline-none transition-colors" placeholder="Type command (e.g. /gamemode) or chat message..." autocomplete="off">
+                        </div>
+                        <button type="submit" class="px-5 py-2 bg-primary hover:bg-primary-hover text-white font-mono text-xs font-bold uppercase tracking-wider transition-colors border border-primary-hover active:translate-y-0.5">
                             Send
                         </button>
                     </form>
@@ -114,72 +144,83 @@
 
         <!-- Right Column: Settings -->
         <div class="flex flex-col gap-5">
-            <!-- Configuration -->
-            <div class="bg-white dark:bg-slate-800/60 backdrop-blur-sm p-5 rounded-xl border border-slate-200 dark:border-slate-700/50">
-                <h3 class="text-base font-semibold mb-4 flex items-center gap-2">
-                    <span class="material-icons text-slate-600 dark:text-slate-400 text-sm">settings</span> Configuration
-                </h3>
-                <form onsubmit="updateBotConfig(event)" class="space-y-3">
+            <!-- Configuration Box -->
+            <div class="bg-white dark:bg-obsidian-900 p-5 border border-slate-200 dark:border-obsidian-700/80 shadow-sm">
+                <div class="flex items-center gap-2 mb-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-3">
+                    <span class="material-icons text-primary text-base">settings</span>
+                    <h3 class="text-xs font-mono uppercase tracking-wider font-bold text-slate-900 dark:text-white">Bot Configuration</h3>
+                </div>
+
+                <form onsubmit="updateBotConfig(event)" class="space-y-3.5">
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 uppercase mb-1.5">Name</label>
-                        <input type="text" name="name" value="<%= botConfig.name %>" class="w-full px-2.5 py-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-1 focus:ring-slate-400">
+                        <label class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 font-semibold">Instance Name</label>
+                        <input type="text" name="name" value="<%= botConfig.name %>" required class="w-full px-3 py-2 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs text-slate-900 dark:text-white outline-none focus:border-primary">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 uppercase mb-1.5">Server IP</label>
-                        <input type="text" name="ip" value="<%= typeof botConfig.server !== 'undefined' ? botConfig.server.ip : '' %>" class="w-full px-2.5 py-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-1 focus:ring-slate-400">
+                        <label class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 font-semibold">Server Host IP</label>
+                        <input type="text" name="ip" value="<%= typeof botConfig.server !== 'undefined' ? botConfig.server.ip : '' %>" required class="w-full px-3 py-2 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-medium text-slate-500 uppercase mb-1.5">Port</label>
-                            <input type="number" name="port" value="<%= typeof botConfig.server !== 'undefined' ? botConfig.server.port : '25565' %>" class="w-full px-2.5 py-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-1 focus:ring-slate-400">
+                            <label class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 font-semibold">Port</label>
+                            <input type="number" name="port" value="<%= typeof botConfig.server !== 'undefined' ? botConfig.server.port : '25565' %>" required class="w-full px-3 py-2 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-500 uppercase mb-1.5">Version</label>
-                            <input type="text" name="version" value="<%= typeof botConfig.server !== 'undefined' ? botConfig.server.version : '1.20.4' %>" class="w-full px-2.5 py-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-1 focus:ring-slate-400">
+                            <label class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 font-semibold">Version</label>
+                            <input type="text" name="version" value="<%= typeof botConfig.server !== 'undefined' ? botConfig.server.version : '1.20.4' %>" required class="w-full px-3 py-2 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 uppercase mb-1.5">Microsoft Email</label>
-                        <input type="email" name="email" value="<%= typeof botConfig.account !== 'undefined' ? botConfig.account.email : '' %>" class="w-full px-2.5 py-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-1 focus:ring-slate-400">
+                        <label class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 font-semibold">Microsoft Account Email</label>
+                        <input type="email" name="email" value="<%= typeof botConfig.account !== 'undefined' ? botConfig.account.email : '' %>" required class="w-full px-3 py-2 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs text-slate-900 dark:text-white outline-none focus:border-primary">
                     </div>
-                    <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-medium py-2 rounded-lg transition-all text-sm border border-slate-200 dark:border-slate-700 shadow-sm">
-                        Save Changes
+                    <button type="submit" class="w-full bg-primary hover:bg-primary-hover text-white font-mono text-xs font-bold uppercase tracking-wider py-2.5 transition-all border border-primary-hover active:translate-y-0.5">
+                        Save Configuration
                     </button>
                 </form>
             </div>
 
-            <div class="bg-slate-50 dark:bg-slate-800/30 p-3 rounded-lg text-xs text-slate-500 dark:text-slate-400">
-                 Auth is handled automatically via Microsoft. If a code appears, use it to login.
+            <!-- Microsoft Auth Helper Notice -->
+            <div class="bg-white dark:bg-obsidian-900 p-4 border border-slate-200 dark:border-obsidian-700/80 text-xs space-y-1.5">
+                <div class="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-bold uppercase font-mono text-[10px]">
+                    <span class="material-icons text-sm text-primary">security</span>
+                    <span>Authentication Protocol</span>
+                </div>
+                <p class="text-slate-500 dark:text-slate-400 leading-relaxed text-[11px]">
+                    Microsoft auth flows trigger automatic login tokens. If a verification code is prompted, copy the code and authenticate on the Microsoft portal.
+                </p>
             </div>
         </div>
     </div>
 </main>
 
-<!-- Microsoft Auth Modal -->
-<div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
-    <div class="bg-white dark:bg-slate-800/90 backdrop-blur-md p-5 rounded-xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-300 border border-slate-200 dark:border-slate-700/50 shadow-xl" id="auth-modal-content">
+<!-- Microsoft Auth Modal (Sharp Geometric Square) -->
+<div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-white dark:bg-obsidian-900 border-2 border-slate-300 dark:border-obsidian-700 p-6 w-full max-w-md mx-4 shadow-2xl transform scale-95 transition-transform duration-200" id="auth-modal-content">
         <div class="text-center mb-5">
-            <span class="material-icons text-slate-600 dark:text-slate-400 text-3xl mb-3">microsoft</span>
-            <h3 class="text-lg font-semibold">Microsoft Authentication Required</h3>
-            <p class="text-slate-500 dark:text-slate-400 mt-2 text-sm">Please verify your account to continue.</p>
+            <div class="w-12 h-12 bg-primary/10 border border-primary/20 text-primary mx-auto flex items-center justify-center mb-3">
+                <span class="material-icons text-2xl">vpn_key</span>
+            </div>
+            <h3 class="text-base font-bold uppercase tracking-wider text-slate-900 dark:text-white">Microsoft Auth Required</h3>
+            <p class="text-slate-500 dark:text-slate-400 mt-1 text-xs">Verify your Minecraft account credentials below.</p>
         </div>
 
-        <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg mb-5 border border-slate-200 dark:border-slate-700/50">
-            <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">Verification Code:</p>
+        <div class="bg-slate-50 dark:bg-obsidian-950 p-4 mb-5 border border-slate-300 dark:border-obsidian-700">
+            <span class="block text-[10px] font-mono uppercase text-slate-400 tracking-wider mb-1">One-Time Verification Code</span>
             <div class="flex items-center justify-between gap-2">
-                <code id="auth-code" class="text-lg font-mono font-medium text-slate-700 dark:text-slate-300"></code>
-                <button onclick="copyCode()" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-500 transition-colors" title="Copy Code">
-                    <span class="material-icons text-xs">content_copy</span>
+                <code id="auth-code" class="text-xl font-mono font-bold tracking-widest text-primary"></code>
+                <button id="copy-code-btn" onclick="copyCode()" class="p-2 bg-slate-200 dark:bg-obsidian-800 hover:bg-slate-300 dark:hover:bg-obsidian-700 text-slate-700 dark:text-slate-300 transition-colors border border-slate-300 dark:border-obsidian-700" title="Copy Code">
+                    <span class="material-icons text-sm">content_copy</span>
                 </button>
             </div>
         </div>
 
-        <a id="auth-link" href="#" target="_blank" class="block w-full bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white text-center font-medium py-2.5 rounded-lg mb-4 transition-all text-sm border border-slate-200 dark:border-slate-700 shadow-sm">
-            Open Microsoft Login
+        <a id="auth-link" href="#" target="_blank" class="block w-full bg-primary hover:bg-primary-hover text-white text-center font-mono text-xs font-bold uppercase tracking-wider py-2.5 mb-3 transition-colors border border-primary-hover">
+            Open Microsoft Device Login ->
         </a>
 
-        <button onclick="closeAuthModal()" class="w-full text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium py-2 text-sm">
-            Close
+        <button onclick="closeAuthModal()" class="w-full text-slate-500 hover:text-slate-300 font-mono text-xs uppercase tracking-wider py-2 border border-transparent hover:border-slate-700 transition-colors">
+            Close Dialog
         </button>
     </div>
 </div>
