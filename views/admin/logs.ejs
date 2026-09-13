@@ -1,0 +1,162 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<main class="flex-1 p-4 sm:p-6 md:p-8 min-h-screen pb-20 md:pb-8 flex flex-col gap-6">
+    <%- include('layout-nav') %>
+
+    <!-- Header, Filter & Search Bar -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 p-4 shadow-sm">
+        <div class="flex flex-wrap items-center gap-2 flex-1">
+            <div class="relative flex-1 max-w-sm">
+                <span class="material-icons absolute left-3 top-2.5 text-slate-400 text-sm">search</span>
+                <input type="text" id="logSearchInput" placeholder="Search logs by actor, action, or target..." oninput="filterLogs()" class="w-full pl-9 pr-3 py-2 text-xs font-mono bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+
+            <div class="flex items-center gap-1 font-mono text-xs">
+                <button onclick="setLogCategoryFilter('all')" class="log-filter-btn px-2.5 py-1.5 border border-primary bg-primary text-white text-[11px] font-bold uppercase transition-colors" data-filter="all">All</button>
+                <button onclick="setLogCategoryFilter('bot')" class="log-filter-btn px-2.5 py-1.5 border border-slate-300 dark:border-obsidian-700 bg-white dark:bg-obsidian-900 text-slate-600 dark:text-slate-400 text-[11px] font-bold uppercase hover:text-slate-900 dark:hover:text-white transition-colors" data-filter="bot">Bots</button>
+                <button onclick="setLogCategoryFilter('server')" class="log-filter-btn px-2.5 py-1.5 border border-slate-300 dark:border-obsidian-700 bg-white dark:bg-obsidian-900 text-slate-600 dark:text-slate-400 text-[11px] font-bold uppercase hover:text-slate-900 dark:hover:text-white transition-colors" data-filter="server">Servers</button>
+                <button onclick="setLogCategoryFilter('user')" class="log-filter-btn px-2.5 py-1.5 border border-slate-300 dark:border-obsidian-700 bg-white dark:bg-obsidian-900 text-slate-600 dark:text-slate-400 text-[11px] font-bold uppercase hover:text-slate-900 dark:hover:text-white transition-colors" data-filter="user">Users</button>
+            </div>
+        </div>
+
+        <div class="text-xs font-mono text-slate-400 flex items-center gap-2">
+            <span class="material-icons text-sm text-slate-400">filter_list</span>
+            <span>Showing <%= logs.length %> recent entries</span>
+        </div>
+    </div>
+
+    <!-- Audit Logs Stream -->
+    <div class="bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 shadow-sm p-5">
+        <div id="logsContainer" class="space-y-3 max-h-[700px] overflow-y-auto pr-1">
+            <% if (logs && logs.length > 0) { %>
+                <% logs.forEach(function(log, idx) { 
+                    const isDelete = log.action && (log.action.includes('delete') || log.action.includes('stop'));
+                    const isCreate = log.action && (log.action.includes('create') || log.action.includes('start'));
+                    const isAssign = log.action && log.action.includes('assign');
+                %>
+                <div class="log-entry p-3.5 bg-slate-50 dark:bg-obsidian-950 border border-slate-200 dark:border-obsidian-850 font-mono text-xs transition-colors hover:border-slate-300 dark:hover:border-obsidian-750"
+                     data-actor="<%= (log.actor || '').toLowerCase() %>"
+                     data-action="<%= (log.action || '').toLowerCase() %>"
+                     data-target="<%= (log.target || '').toLowerCase() %>">
+                    
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-slate-400 text-[11px]">[<%= new Date(log.createdAt).toLocaleString() %>]</span>
+                            <span class="font-bold text-primary"><%= log.actor %></span>
+                            
+                            <span class="px-2 py-0.5 text-[10px] font-bold uppercase border <%= isDelete ? 'bg-redstone-500/10 text-redstone-400 border-redstone-500/30' : (isCreate ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-slate-200 dark:bg-obsidian-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-obsidian-700') %>">
+                                <%= log.action %>
+                            </span>
+
+                            <% if (log.target) { %>
+                                <span class="text-slate-500 text-[11px]">
+                                    target: <strong class="text-slate-800 dark:text-slate-200"><%= log.target %></strong>
+                                </span>
+                            <% } %>
+                        </div>
+
+                        <% if (log.details) { %>
+                            <button onclick="viewLogPayload(<%= idx %>)" class="text-[11px] text-primary hover:underline flex items-center gap-1">
+                                <span class="material-icons text-xs">code</span>
+                                <span>Inspect Payload</span>
+                            </button>
+                        <% } %>
+                    </div>
+
+                    <% if (log.details) { %>
+                        <div class="mt-2 text-[11px] text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-obsidian-900 p-2.5 border border-slate-200 dark:border-obsidian-800 overflow-x-auto whitespace-pre-wrap"><%= typeof log.details === 'object' ? JSON.stringify(log.details, null, 2) : log.details %></div>
+                    <% } %>
+                </div>
+                <% }); %>
+            <% } else { %>
+                <div class="p-12 text-center text-slate-400 font-mono text-xs">No audit logs recorded yet.</div>
+            <% } %>
+        </div>
+
+        <div id="noLogsMessage" class="hidden p-12 text-center text-slate-400 font-mono text-xs">
+            No audit records match the current filter or search criteria.
+        </div>
+    </div>
+</main>
+
+<!-- Payload Inspector Modal -->
+<div id="payloadModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 w-full max-w-lg shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-obsidian-700/60 pb-3 mb-4">
+            <h2 class="text-sm font-mono uppercase font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span class="material-icons text-primary">data_object</span>
+                <span>Audit Log Payload</span>
+            </h2>
+            <button onclick="closePayloadModal()" class="text-slate-400 hover:text-slate-200">
+                <span class="material-icons text-lg">close</span>
+            </button>
+        </div>
+
+        <pre id="payloadContent" class="bg-slate-50 dark:bg-obsidian-950 p-4 border border-slate-300 dark:border-obsidian-800 font-mono text-xs text-slate-800 dark:text-slate-200 overflow-x-auto max-h-96"></pre>
+
+        <div class="flex justify-end pt-3 border-t border-slate-200 dark:border-obsidian-800 mt-4">
+            <button type="button" onclick="closePayloadModal()" class="px-4 py-1.5 bg-slate-100 dark:bg-obsidian-800 text-slate-700 dark:text-slate-300 font-mono text-xs uppercase font-bold border border-slate-300 dark:border-obsidian-700">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const logsData = <%- JSON.stringify(logs || []) %>;
+let activeLogCategory = 'all';
+
+function setLogCategoryFilter(category) {
+    activeLogCategory = category;
+    document.querySelectorAll('.log-filter-btn').forEach(btn => {
+        if (btn.getAttribute('data-filter') === category) {
+            btn.classList.add('bg-primary', 'text-white', 'border-primary');
+            btn.classList.remove('bg-white', 'dark:bg-obsidian-900', 'text-slate-600', 'dark:text-slate-400');
+        } else {
+            btn.classList.remove('bg-primary', 'text-white', 'border-primary');
+            btn.classList.add('bg-white', 'dark:bg-obsidian-900', 'text-slate-600', 'dark:text-slate-400');
+        }
+    });
+    filterLogs();
+}
+
+function filterLogs() {
+    const query = (document.getElementById('logSearchInput').value || '').toLowerCase().trim();
+    const entries = document.querySelectorAll('.log-entry');
+    let visibleCount = 0;
+
+    entries.forEach(entry => {
+        const actor = entry.getAttribute('data-actor') || '';
+        const action = entry.getAttribute('data-action') || '';
+        const target = entry.getAttribute('data-target') || '';
+
+        const matchesQuery = !query || actor.includes(query) || action.includes(query) || target.includes(query);
+
+        let matchesCat = true;
+        if (activeLogCategory !== 'all') {
+            matchesCat = action.includes(activeLogCategory);
+        }
+
+        const visible = matchesQuery && matchesCat;
+        entry.classList.toggle('hidden', !visible);
+        if (visible) visibleCount++;
+    });
+
+    const emptyMsg = document.getElementById('noLogsMessage');
+    if (emptyMsg) emptyMsg.classList.toggle('hidden', visibleCount > 0);
+}
+
+function viewLogPayload(idx) {
+    const log = logsData[idx];
+    if (!log) return;
+    document.getElementById('payloadContent').textContent = JSON.stringify(log.details, null, 2);
+    document.getElementById('payloadModal').classList.remove('hidden');
+}
+
+function closePayloadModal() {
+    document.getElementById('payloadModal').classList.add('hidden');
+}
+</script>
+
+<%- include('../partials/footer') %>

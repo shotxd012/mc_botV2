@@ -1,0 +1,102 @@
+<!-- Admin Operations Hub Header & Sub-Navigation -->
+<header class="border-b border-slate-200 dark:border-obsidian-700/60 pb-5">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-2.5">
+                <h1 class="text-xl sm:text-2xl font-bold uppercase tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="material-icons text-primary">admin_panel_settings</span>
+                    <span>Admin Operations Hub</span>
+                </h1>
+                <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase bg-redstone-500/10 text-redstone-400 border border-redstone-500/30">
+                    Root Access
+                </span>
+            </div>
+            <p class="text-slate-500 dark:text-slate-400 mt-1 text-xs sm:text-sm">
+                Unified control center for Minecraft bot fleet, server clusters, security, and telemetry.
+            </p>
+        </div>
+
+        <!-- Quick Fleet / Action Status -->
+        <div class="flex items-center gap-2">
+            <button onclick="fleetStartAll()" class="px-3 py-1.5 bg-emerald-600/90 hover:bg-emerald-600 text-white font-mono text-xs uppercase font-bold transition-all border border-emerald-500/40 flex items-center gap-1.5 active:translate-y-0.5 shadow-sm" title="Start all inactive bots">
+                <span class="material-icons text-sm">play_arrow</span>
+                <span class="hidden sm:inline">Start All</span>
+            </button>
+            <button onclick="fleetStopAll()" class="px-3 py-1.5 bg-slate-200 hover:bg-redstone-600 dark:bg-obsidian-800 dark:hover:bg-redstone-600 text-slate-700 hover:text-white dark:text-slate-300 dark:hover:text-white font-mono text-xs uppercase font-bold transition-all border border-slate-300 dark:border-obsidian-700 hover:border-redstone-600 flex items-center gap-1.5 active:translate-y-0.5 shadow-sm" title="Stop all running bots">
+                <span class="material-icons text-sm">stop</span>
+                <span class="hidden sm:inline">Stop All</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Sub-page Navigation Tabs -->
+    <div class="flex items-center gap-1 mt-6 overflow-x-auto pb-1 no-scrollbar border-t border-slate-200 dark:border-obsidian-800 pt-3">
+        <a href="/admin/overview" class="flex items-center gap-2 px-3.5 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors border <%= adminTab === 'overview' ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white dark:bg-obsidian-900 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-obsidian-700 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-obsidian-800' %>">
+            <span class="material-icons text-sm">speed</span>
+            <span>Telemetry</span>
+        </a>
+        <a href="/admin/bots" class="flex items-center gap-2 px-3.5 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors border <%= adminTab === 'bots' ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white dark:bg-obsidian-900 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-obsidian-700 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-obsidian-800' %>">
+            <span class="material-icons text-sm">smart_toy</span>
+            <span>Bot Fleet</span>
+            <% if (typeof bots !== 'undefined') { %>
+                <span class="text-[10px] px-1.5 py-0.2 <%= adminTab === 'bots' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-obsidian-800 text-slate-500' %>"><%= bots.length %></span>
+            <% } %>
+        </a>
+        <a href="/admin/servers" class="flex items-center gap-2 px-3.5 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors border <%= adminTab === 'servers' ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white dark:bg-obsidian-900 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-obsidian-700 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-obsidian-800' %>">
+            <span class="material-icons text-sm">dns</span>
+            <span>Server Profiles</span>
+            <% if (typeof servers !== 'undefined') { %>
+                <span class="text-[10px] px-1.5 py-0.2 <%= adminTab === 'servers' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-obsidian-800 text-slate-500' %>"><%= servers.length %></span>
+            <% } %>
+        </a>
+        <a href="/admin/users" class="flex items-center gap-2 px-3.5 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors border <%= adminTab === 'users' ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white dark:bg-obsidian-900 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-obsidian-700 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-obsidian-800' %>">
+            <span class="material-icons text-sm">group</span>
+            <span>Users & Access</span>
+            <% if (typeof users !== 'undefined') { %>
+                <span class="text-[10px] px-1.5 py-0.2 <%= adminTab === 'users' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-obsidian-800 text-slate-500' %>"><%= users.length %></span>
+            <% } %>
+        </a>
+        <a href="/admin/logs" class="flex items-center gap-2 px-3.5 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors border <%= adminTab === 'logs' ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white dark:bg-obsidian-900 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-obsidian-700 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-obsidian-800' %>">
+            <span class="material-icons text-sm">receipt_long</span>
+            <span>Audit Logs</span>
+        </a>
+        <a href="/admin/settings" class="flex items-center gap-2 px-3.5 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors border <%= adminTab === 'settings' ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white dark:bg-obsidian-900 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-obsidian-700 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-obsidian-800' %>">
+            <span class="material-icons text-sm">settings</span>
+            <span>Settings</span>
+        </a>
+    </div>
+</header>
+
+<script>
+async function fleetStartAll() {
+    if (!confirm('Start all stopped bots in the fleet?')) return;
+    try {
+        const res = await fetch('/api/admin/bots/start-all', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+            if (typeof showToast === 'function') showToast(`Started ${data.startedCount} bots.`, 'success');
+            setTimeout(() => window.location.reload(), 700);
+        } else {
+            if (typeof showToast === 'function') showToast(data.error || 'Failed to start fleet.', 'error');
+        }
+    } catch (e) {
+        if (typeof showToast === 'function') showToast('Network error starting fleet.', 'error');
+    }
+}
+
+async function fleetStopAll() {
+    if (!confirm('Stop all active bots in the fleet?')) return;
+    try {
+        const res = await fetch('/api/admin/bots/stop-all', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+            if (typeof showToast === 'function') showToast(`Stopped ${data.stoppedCount} bots.`, 'info');
+            setTimeout(() => window.location.reload(), 700);
+        } else {
+            if (typeof showToast === 'function') showToast(data.error || 'Failed to stop fleet.', 'error');
+        }
+    } catch (e) {
+        if (typeof showToast === 'function') showToast('Network error stopping fleet.', 'error');
+    }
+}
+</script>
