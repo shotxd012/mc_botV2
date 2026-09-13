@@ -1,59 +1,81 @@
 <% if (typeof user !== 'undefined') { %>
 <!-- Desktop Sidebar -->
-<aside class="w-60 bg-white dark:bg-slate-800/70 backdrop-blur-sm border-r border-slate-200 dark:border-slate-700/50 flex flex-col hidden md:flex fixed h-full z-10">
-    <div class="p-5 border-b border-slate-200 dark:border-slate-700/50 flex items-center gap-2">
-        <span class="material-icons text-slate-700 dark:text-slate-300">smart_toy</span>
-        <h1 class="text-lg font-semibold">Bot Admin</h1>
+<aside class="w-60 bg-white dark:bg-obsidian-900 border-r border-slate-200 dark:border-obsidian-700/60 flex flex-col hidden md:flex fixed h-full z-20 select-none">
+    <div class="p-4 border-b border-slate-200 dark:border-obsidian-700/60 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 bg-primary text-white flex items-center justify-center">
+                <span class="material-icons text-base">smart_toy</span>
+            </div>
+            <div>
+                <h1 class="text-sm font-bold tracking-wider uppercase text-slate-900 dark:text-white">Bot Admin</h1>
+                <span class="text-[10px] font-mono text-slate-400 dark:text-slate-500 uppercase tracking-widest block -mt-0.5">Control Hub</span>
+            </div>
+        </div>
+        <span class="text-[10px] font-mono bg-slate-100 dark:bg-obsidian-800 border border-slate-200 dark:border-obsidian-700 px-1.5 py-0.5 text-slate-500 dark:text-slate-400">v2.0</span>
     </div>
-    <nav class="flex-1 p-3 space-y-1">
-        <a href="/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg <%= page === 'home' ? 'bg-slate-100 dark:bg-slate-700/60 text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/40' %> transition-all text-sm">
-            <span class="material-icons text-base">dashboard</span>
+
+    <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+        <a href="/" class="flex items-center gap-3 px-3 py-2.5 text-sm transition-colors border-l-2 <%= page === 'home' || page === 'bot' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
+            <span class="material-icons text-base <%= page === 'home' || page === 'bot' ? 'text-primary' : 'text-slate-400' %>">dashboard</span>
             <span>All Bots</span>
         </a>
-        <a href="/profile" class="flex items-center gap-3 px-3 py-2.5 rounded-lg <%= page === 'profile' ? 'bg-slate-100 dark:bg-slate-700/60 text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/40' %> transition-all text-sm">
-            <span class="material-icons text-base">person</span>
+        <a href="/profile" class="flex items-center gap-3 px-3 py-2.5 text-sm transition-colors border-l-2 <%= page === 'profile' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
+            <span class="material-icons text-base <%= page === 'profile' ? 'text-primary' : 'text-slate-400' %>">person</span>
             <span>Profile</span>
         </a>
         <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
-        <a href="/admin" class="flex items-center gap-3 px-3 py-2.5 rounded-lg <%= page === 'admin' ? 'bg-slate-100 dark:bg-slate-700/60 text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/40' %> transition-all text-sm">
-            <span class="material-icons text-base">admin_panel_settings</span>
+        <a href="/admin" class="flex items-center gap-3 px-3 py-2.5 text-sm transition-colors border-l-2 <%= page === 'admin' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
+            <span class="material-icons text-base <%= page === 'admin' ? 'text-primary' : 'text-slate-400' %>">admin_panel_settings</span>
             <span>Admin Panel</span>
         </a>
         <% } %>
     </nav>
-    <div class="p-3 border-t border-slate-200 dark:border-slate-700/50">
-        <a href="/logout" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all text-sm">
-            <span class="material-icons text-base">logout</span>
-            <span>Logout</span>
+
+    <!-- User / Session footer -->
+    <div class="p-3 border-t border-slate-200 dark:border-obsidian-700/60 bg-slate-50/50 dark:bg-obsidian-950/40">
+        <div class="flex items-center justify-between mb-2 px-1">
+            <div class="flex items-center gap-2 truncate">
+                <div class="w-6 h-6 bg-slate-200 dark:bg-obsidian-800 border border-slate-300 dark:border-obsidian-700 flex items-center justify-center text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
+                    <%= user.username ? user.username.charAt(0).toUpperCase() : 'U' %>
+                </div>
+                <span class="text-xs font-medium truncate text-slate-700 dark:text-slate-300"><%= user.username %></span>
+            </div>
+            <span class="text-[10px] font-mono uppercase px-1.5 py-0.2 bg-primary/10 text-primary border border-primary/20">
+                <%= user.role || 'user' %>
+            </span>
+        </div>
+        <a href="/logout" class="flex items-center justify-center gap-2 w-full px-3 py-2 text-xs font-medium text-redstone-500 hover:text-white hover:bg-redstone-600 border border-redstone-500/20 hover:border-redstone-600 transition-colors">
+            <span class="material-icons text-sm">logout</span>
+            <span>Sign Out</span>
         </a>
     </div>
 </aside>
 
 <!-- Mobile Navigation -->
-<div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-700/50 md:hidden z-50 pb-safe-bottom">
-    <div class="flex justify-around items-center py-2">
-        <a href="/" class="flex flex-col items-center justify-center gap-1 px-3 py-2 <%= page === 'home' || page === 'bot' ? 'text-primary' : 'text-slate-500 dark:text-slate-400' %>">
+<div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-obsidian-900 border-t border-slate-200 dark:border-obsidian-700/80 md:hidden z-50 pb-safe-bottom">
+    <div class="flex justify-around items-stretch">
+        <a href="/" class="flex-1 flex flex-col items-center justify-center py-2.5 border-t-2 <%= page === 'home' || page === 'bot' ? 'border-primary text-primary bg-primary/5 dark:bg-primary/10' : 'border-transparent text-slate-500 dark:text-slate-400' %> transition-colors">
             <span class="material-icons text-lg">dashboard</span>
-            <span class="text-xs mt-1">Home</span>
+            <span class="text-[10px] uppercase font-mono tracking-wider mt-0.5 font-medium">Bots</span>
         </a>
-        <a href="/profile" class="flex flex-col items-center justify-center gap-1 px-3 py-2 <%= page === 'profile' ? 'text-primary' : 'text-slate-500 dark:text-slate-400' %>">
+        <a href="/profile" class="flex-1 flex flex-col items-center justify-center py-2.5 border-t-2 <%= page === 'profile' ? 'border-primary text-primary bg-primary/5 dark:bg-primary/10' : 'border-transparent text-slate-500 dark:text-slate-400' %> transition-colors">
             <span class="material-icons text-lg">person</span>
-            <span class="text-xs mt-1">Profile</span>
+            <span class="text-[10px] uppercase font-mono tracking-wider mt-0.5 font-medium">Profile</span>
         </a>
         <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
-        <a href="/admin" class="flex flex-col items-center justify-center gap-1 px-3 py-2 <%= page === 'admin' ? 'text-primary' : 'text-slate-500 dark:text-slate-400' %>">
+        <a href="/admin" class="flex-1 flex flex-col items-center justify-center py-2.5 border-t-2 <%= page === 'admin' ? 'border-primary text-primary bg-primary/5 dark:bg-primary/10' : 'border-transparent text-slate-500 dark:text-slate-400' %> transition-colors">
             <span class="material-icons text-lg">admin_panel_settings</span>
-            <span class="text-xs mt-1">Admin</span>
+            <span class="text-[10px] uppercase font-mono tracking-wider mt-0.5 font-medium">Admin</span>
         </a>
         <% } %>
-        <a href="/logout" class="flex flex-col items-center justify-center gap-1 px-3 py-2 text-red-500" onclick="event.preventDefault(); if(confirm('Are you sure you want to logout?')) window.location.href='/logout';">
+        <a href="/logout" class="flex-1 flex flex-col items-center justify-center py-2.5 border-t-2 border-transparent text-redstone-500 transition-colors" onclick="event.preventDefault(); if(confirm('Are you sure you want to sign out?')) window.location.href='/logout';">
             <span class="material-icons text-lg">logout</span>
-            <span class="text-xs mt-1">Logout</span>
+            <span class="text-[10px] uppercase font-mono tracking-wider mt-0.5 font-medium">Exit</span>
         </a>
     </div>
 </div>
 
-<div class="md:pl-60 w-full flex flex-col pt-0 pb-16 md:pb-0">
+<div class="md:pl-60 w-full flex flex-col min-h-screen pb-16 md:pb-0">
 <% } else { %>
-<div class="w-full flex flex-col">
+<div class="w-full flex flex-col min-h-screen">
 <% } %>

@@ -1,97 +1,145 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
 
-<main class="flex-1 p-6 md:p-8 overflow-y-auto h-screen">
-    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+<main class="flex-1 p-4 sm:p-6 md:p-8 min-h-screen pb-20 md:pb-8 flex flex-col">
+    <!-- Dashboard Header -->
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8 border-b border-slate-200 dark:border-obsidian-700/60 pb-5">
         <div>
-            <h2 class="text-2xl md:text-3xl font-bold tracking-tight">Your Bots</h2>
-            <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">Manage your Minecraft bot instances</p>
+            <div class="flex items-center gap-3">
+                <h2 class="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight uppercase">Bots Directory</h2>
+                <span class="px-2 py-0.5 text-xs font-mono font-bold bg-primary/10 text-primary border border-primary/20">
+                    <%= bots.length %> <%= bots.length === 1 ? 'INSTANCE' : 'INSTANCES' %>
+                </span>
+            </div>
+            <p class="text-slate-500 dark:text-slate-400 mt-1 text-xs sm:text-sm">Manage, inspect, and automate your Minecraft AFK bot workers.</p>
         </div>
         <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
-        <button onclick="openCreateModal()" class="bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-all text-sm min-w-[160px] border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow">
-            <span class="material-icons text-base">add</span> Create Bot
+        <button onclick="openCreateModal()" class="bg-primary hover:bg-primary-hover text-white px-4 py-2.5 font-mono text-xs uppercase tracking-wider font-semibold flex items-center justify-center gap-2 transition-all border border-primary-hover shadow-sm active:translate-y-0.5 w-full sm:w-auto">
+            <span class="material-icons text-base">add</span>
+            <span>Create New Bot</span>
         </button>
         <% } %>
     </header>
 
+    <!-- Bots Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         <% bots.forEach(function(bot) { %>
-            <div onclick="window.location.href='/bot/<%= bot.id %>'" class="bg-white dark:bg-slate-800/60 backdrop-blur-sm p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer transition-all group">
-                <div class="flex justify-between items-start mb-3">
-                    <h3 class="text-lg font-semibold truncate group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors max-w-[70%]"><%= bot.name %></h3>
-                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium <%= bot.online ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400' %>">
-                        <%= bot.online ? 'ONLINE' : 'OFFLINE' %>
+            <div onclick="window.location.href='/bot/<%= bot.id %>'" data-bot-card="<%= bot.id %>" class="bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 hover:border-primary dark:hover:border-primary cursor-pointer transition-all p-5 flex flex-col justify-between group relative select-none hover:shadow-lg border-t-2 <%= bot.online ? 'border-t-emerald-500' : 'border-t-slate-400 dark:border-t-obsidian-700' %>">
+                <div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center gap-3 min-w-0 pr-2">
+                            <div class="w-9 h-9 bg-slate-100 dark:bg-obsidian-800 border border-slate-200 dark:border-obsidian-700 flex items-center justify-center font-mono font-bold text-sm text-slate-700 dark:text-slate-300 flex-shrink-0 group-hover:border-primary group-hover:text-primary transition-colors">
+                                <%= bot.name ? bot.name.charAt(0).toUpperCase() : '#' %>
+                            </div>
+                            <div class="min-w-0">
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white truncate group-hover:text-primary transition-colors">
+                                    <%= bot.name %>
+                                </h3>
+                                <span class="text-[11px] font-mono text-slate-400 dark:text-slate-500">ID: #<%= bot.id %></span>
+                            </div>
+                        </div>
+                        <span class="bot-status-badge px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider uppercase border flex-shrink-0 <%= bot.online ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-slate-100 dark:bg-obsidian-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-obsidian-700' %>">
+                            <%= bot.online ? 'ONLINE' : 'OFFLINE' %>
+                        </span>
+                    </div>
+
+                    <div class="space-y-2.5 text-xs text-slate-600 dark:text-slate-400 border-t border-slate-100 dark:border-obsidian-800 pt-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                                <span class="material-icons text-sm">dns</span> Server:
+                            </span>
+                            <span class="bot-server-text font-mono text-slate-700 dark:text-slate-300 truncate max-w-[180px]">
+                                <%= typeof bot.server !== 'undefined' ? bot.server.ip + ':' + bot.server.port : 'No server configured' %>
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                                <span class="material-icons text-sm">person</span> Player:
+                            </span>
+                            <span class="bot-username-text font-mono text-slate-700 dark:text-slate-300 truncate max-w-[180px]">
+                                <%= bot.username || 'Not connected' %>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 pt-3 border-t border-slate-100 dark:border-obsidian-800 flex justify-between items-center text-[11px] font-mono">
+                    <span class="text-slate-400 dark:text-slate-500">
+                        VER: <%= typeof bot.server !== 'undefined' ? bot.server.version : 'AUTO' %>
                     </span>
-                </div>
-                <div class="space-y-2 text-sm text-slate-500 dark:text-slate-400">
-                    <p class="flex items-center gap-2.5">
-                        <span class="material-icons text-base text-slate-400">dns</span>
-                        <span class="truncate"><%= typeof bot.server !== 'undefined' ? bot.server.ip + ':' + bot.server.port : 'No server configured' %></span>
-                    </p>
-                    <p class="flex items-center gap-2.5">
-                        <span class="material-icons text-base text-slate-400">person</span>
-                        <span class="truncate"><%= bot.username || 'Not connected' %></span>
-                    </p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/30 flex justify-between items-center text-xs text-slate-400 dark:text-slate-500">
-                    <span>ID: #<%= bot.id %></span>
-                    <span><%= typeof bot.server !== 'undefined' ? bot.server.version : 'Unknown' %></span>
+                    <span class="text-primary font-medium flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                        <span>CONTROL</span>
+                        <span class="material-icons text-xs">arrow_forward</span>
+                    </span>
                 </div>
             </div>
         <% }); %>
 
         <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
-        <!-- Add New Placeholder -->
-        <div onclick="openCreateModal()" class="bg-slate-50 dark:bg-slate-800/30 border-2 border-dashed border-slate-200 dark:border-slate-700/50 rounded-xl p-5 flex flex-col items-center justify-center text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer transition-all">
-            <span class="material-icons text-2xl mb-2">add_circle_outline</span>
-            <span class="font-medium text-sm">Add New Bot</span>
+        <!-- Add New Bot Placeholder -->
+        <div onclick="openCreateModal()" class="bg-slate-50/60 dark:bg-obsidian-950/40 border-2 border-dashed border-slate-300 dark:border-obsidian-700 hover:border-primary dark:hover:border-primary p-6 flex flex-col items-center justify-center text-slate-400 hover:text-primary cursor-pointer transition-all min-h-[190px] group">
+            <span class="material-icons text-3xl mb-2 group-hover:scale-110 transition-transform">add_box</span>
+            <span class="font-mono text-xs uppercase font-bold tracking-wider">Add New Bot Instance</span>
+            <span class="text-[11px] text-slate-500 mt-1">Configure server & credentials</span>
         </div>
         <% } %>
     </div>
 </main>
 
-<!-- Create Bot Modal -->
-<div id="create-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
-    <div class="bg-white dark:bg-slate-800/90 backdrop-blur-md p-6 rounded-xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-300 border border-slate-200 dark:border-slate-700/50 shadow-xl" id="create-modal-content">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-semibold">Create New Bot</h3>
-            <button onclick="closeCreateModal()" class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+<!-- Create Bot Modal (Sharp Geometric Square Style) -->
+<div id="create-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-white dark:bg-obsidian-900 border-2 border-slate-300 dark:border-obsidian-700 p-6 w-full max-w-md mx-4 shadow-2xl transform scale-95 transition-transform duration-200" id="create-modal-content">
+        <div class="flex justify-between items-center mb-5 border-b border-slate-200 dark:border-obsidian-700 pb-3">
+            <div class="flex items-center gap-2">
+                <span class="material-icons text-primary text-lg">smart_toy</span>
+                <h3 class="text-base font-bold uppercase tracking-wider text-slate-900 dark:text-white">Create New Bot</h3>
+            </div>
+            <button onclick="closeCreateModal()" class="p-1 text-slate-400 hover:text-slate-200 transition-colors border border-transparent hover:border-slate-600">
                 <span class="material-icons text-base">close</span>
             </button>
         </div>
+
         <form onsubmit="createBot(event)" class="space-y-4">
             <div>
-                <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Bot Name</label>
-                <input type="text" name="name" placeholder="e.g. Survival Server" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+                <label class="block text-xs font-mono uppercase tracking-wider mb-1.5 text-slate-700 dark:text-slate-300 font-semibold">Bot Label Name</label>
+                <input type="text" name="name" placeholder="e.g. Survival-AFK-01" required class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-primary transition-colors">
             </div>
+
             <div>
-                <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Microsoft Account Email</label>
-                <input type="email" name="email" placeholder="user@example.com" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+                <label class="block text-xs font-mono uppercase tracking-wider mb-1.5 text-slate-700 dark:text-slate-300 font-semibold">Microsoft Account Email</label>
+                <input type="email" name="email" placeholder="user@example.com" required class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-primary transition-colors">
             </div>
+
             <div class="grid grid-cols-3 gap-3">
                 <div class="col-span-2">
-                    <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Server IP</label>
-                    <input type="text" name="ip" placeholder="play.example.com" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+                    <label class="block text-xs font-mono uppercase tracking-wider mb-1.5 text-slate-700 dark:text-slate-300 font-semibold">Server Host IP</label>
+                    <input type="text" name="ip" placeholder="play.example.com" required class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2.5 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary transition-colors">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Port</label>
-                    <input type="number" name="port" value="25565" required class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+                    <label class="block text-xs font-mono uppercase tracking-wider mb-1.5 text-slate-700 dark:text-slate-300 font-semibold">Port</label>
+                    <input type="number" name="port" value="25565" required class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2.5 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary transition-colors">
                 </div>
             </div>
+
             <div>
-                <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Minecraft Version</label>
-                <select name="version" class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-slate-400 outline-none transition-all text-sm">
+                <label class="block text-xs font-mono uppercase tracking-wider mb-1.5 text-slate-700 dark:text-slate-300 font-semibold">Minecraft Version</label>
+                <select name="version" class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2.5 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary transition-colors">
                     <option value="1.20.4">1.20.4</option>
                     <option value="1.20.1">1.20.1</option>
                     <option value="1.19.4">1.19.4</option>
                     <option value="1.18.2">1.18.2</option>
                     <option value="1.12.2">1.12.2</option>
-                    <option value="auto">Auto</option>
+                    <option value="auto">Auto-detect</option>
                 </select>
             </div>
-            <div class="flex justify-end gap-2.5 mt-6 pt-4 border-t border-slate-100 dark:border-slate-700/50">
-                <button type="button" onclick="closeCreateModal()" class="px-4 py-2 text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 font-medium text-sm">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-lg font-medium text-sm border border-slate-200 dark:border-slate-700 shadow-sm">Create</button>
+
+            <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-obsidian-700">
+                <button type="button" onclick="closeCreateModal()" class="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-mono text-xs uppercase tracking-wider transition-colors border border-transparent hover:border-slate-600">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 bg-primary hover:bg-primary-hover text-white font-mono text-xs uppercase tracking-wider font-bold transition-all border border-primary-hover active:translate-y-0.5">
+                    Create Bot
+                </button>
             </div>
         </form>
     </div>
@@ -99,7 +147,6 @@
 
 <script>
 function openCreateModal() {
-    // Check if user is admin before opening modal
     <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
         const modal = document.getElementById('create-modal');
         modal.classList.remove('hidden');
@@ -108,7 +155,11 @@ function openCreateModal() {
             document.getElementById('create-modal-content').classList.remove('scale-95');
         }, 10);
     <% } else { %>
-        alert('Permission denied. Only administrators can create bots.');
+        if (typeof showToast === 'function') {
+            showToast('Permission denied. Only administrators can create bots.', 'error');
+        } else {
+            alert('Permission denied. Only administrators can create bots.');
+        }
     <% } %>
 }
 
@@ -118,7 +169,7 @@ function closeCreateModal() {
     document.getElementById('create-modal-content').classList.add('scale-95');
     setTimeout(() => {
         modal.classList.add('hidden');
-    }, 300);
+    }, 200);
 }
 
 async function createBot(e) {
@@ -137,11 +188,19 @@ async function createBot(e) {
             window.location.reload();
         } else {
             const errorData = await res.json();
-            alert(errorData.error || 'Failed to create bot');
+            if (typeof showToast === 'function') {
+                showToast(errorData.error || 'Failed to create bot', 'error');
+            } else {
+                alert(errorData.error || 'Failed to create bot');
+            }
         }
     } catch (err) {
         console.error(err);
-        alert('Error creating bot');
+        if (typeof showToast === 'function') {
+            showToast('Error creating bot', 'error');
+        } else {
+            alert('Error creating bot');
+        }
     }
 }
 </script>
