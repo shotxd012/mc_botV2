@@ -2,8 +2,7 @@ const mineflayer = require('mineflayer');
 const mineflayerPathfinder = require('mineflayer-pathfinder');
 const autoEat = require('mineflayer-auto-eat').loader;
 const dataManager = require('../utils/dataManager');
-const fs = require('fs');
-const path = require('path');
+const BotLog = require('../models/BotLog');
 
 class BotInstance {
     constructor(id, botConfig, io) {
@@ -25,7 +24,6 @@ class BotInstance {
         // Console history
         this.consoleHistory = [];
         this.maxHistorySize = 1000; // Maximum number of log entries to keep in memory
-        this.historyFilePath = path.join(__dirname, `../data/bot_${this.id}_history.json`);
         
         this.loadConsoleHistory();
 
@@ -348,22 +346,27 @@ class BotInstance {
     }
 
     // --- Console History Methods ---
-    addLogToHistory(message, type = 'info') {
+    async addLogToHistory(message, type = 'info') {
         const logEntry = {
-            timestamp: new Date().toISOString(),
+            timestamp: new Date(),
             message,
-            type
+            type,
+            botId: this.id
         };
 
-        this.consoleHistory.push(logEntry);
+        this.consoleHistory.push({ ...logEntry, timestamp: logEntry.timestamp.toISOString() });
 
         // Limit history size
         if (this.consoleHistory.length > this.maxHistorySize) {
             this.consoleHistory = this.consoleHistory.slice(-this.maxHistorySize);
         }
 
-        // Save to file
-        this.saveConsoleHistory();
+        // Save to MongoDB asynchronously
+        try {
+            await BotLog.create(logEntry);
+        } catch (err) {
+            console.error(`Failed to save log to MongoDB for bot ${this.id}:`, err);
+        }
     }
 
     getLogHistory(count = 100) {
@@ -372,42 +375,31 @@ class BotInstance {
         return this.consoleHistory.slice(startIndex);
     }
 
-    saveConsoleHistory() {
+    async loadConsoleHistory() {
         try {
-            fs.writeFileSync(this.historyFilePath, JSON.stringify(this.consoleHistory, null, 2));
+            const logs = await BotLog.find({ botId: this.id })
+                .sort({ timestamp: -1 })
+                .limit(this.maxHistorySize)
+                .lean();
+            
+            // Reverse so oldest is first
+            this.consoleHistory = logs.reverse().map(log => ({
+                timestamp: new Date(log.timestamp).toISOString(),
+                message: log.message,
+                type: log.type
+            }));
         } catch (err) {
-            console.error(`Failed to save console history for bot ${this.id}:`, err);
+            console.error(`Failed to load console history from MongoDB for bot ${this.id}:`, err);
+            this.consoleHistory = [];
         }
     }
 
-    loadConsoleHistory() {
-        try {
-            if (fs.existsSync(this.historyFilePath)) {
-                const data = fs.readFileSync(this.historyFilePath, 'utf8');
-                this.consoleHistory = JSON.parse(data);
-                
-                // Ensure we don't exceed max history size
-                if (this.consoleHistory.length > this.maxHistorySize) {
-                    this.consoleHistory = this.consoleHistory.slice(-this.maxHistorySize);
-                }
-            } else {
-                // Initialize with empty array if file doesn't exist
-                this.consoleHistory = [];
-            }
-        } catch (err) {
-            console.error(`Failed to load console history for bot ${this.id}:`, err);
-            this.consoleHistory = []; // Fallback to empty array
-        }
-    }
-
-    clearConsoleHistory() {
+    async clearConsoleHistory() {
         this.consoleHistory = [];
         try {
-            if (fs.existsSync(this.historyFilePath)) {
-                fs.unlinkSync(this.historyFilePath);
-            }
+            await BotLog.deleteMany({ botId: this.id });
         } catch (err) {
-            console.error(`Failed to clear console history file for bot ${this.id}:`, err);
+            console.error(`Failed to clear console history in MongoDB for bot ${this.id}:`, err);
         }
     }
 }
