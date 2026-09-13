@@ -6,7 +6,8 @@ const bodyParser = require('body-parser');
 const socketIo = require('socket.io');
 const dataManager = require('./utils/dataManager');
 const botManager = require('./bot/BotManager');
-const { connectDB } = require('./utils/database');
+const { connectDB, getMongoURI } = require('./utils/database');
+const MongoStore = require('connect-mongo');
 
 const app = express();
 const server = http.createServer(app);
@@ -44,6 +45,10 @@ app.use(session({
     secret: sessionSecret || 'dev-insecure-session-secret',
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: getMongoURI(),
+        collectionName: 'sessions'
+    }),
     cookie: {
         // Use auto so login works on HTTP while still enabling secure cookies on HTTPS.
         secure: isProduction ? 'auto' : false,
