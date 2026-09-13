@@ -76,13 +76,14 @@ const requireAuth = (req, res, next) => {
 };
 
 // --- Routes ---
-// Import routes (we will implement these files fully in later steps)
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const controlRoutes = require('./routes/control');
+const adminRoutes = require('./routes/admin');
 
 // Use Routes
 app.use('/', authRoutes);
+app.use('/admin', requireAuth, adminRoutes);
 app.use('/', requireAuth, dashboardRoutes);
 app.use('/api', requireAuth, controlRoutes);
 

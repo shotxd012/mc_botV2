@@ -126,6 +126,29 @@ async function createAdmin(username, password, role = 'user') {
     }
 }
 
+async function deleteAdmin(username) {
+    try {
+        await Bot.updateMany({ assignedTo: username }, { assignedTo: null });
+        const result = await Admin.deleteOne({ username });
+        return result.deletedCount > 0;
+    } catch (err) {
+        console.error("Error deleting admin from MongoDB:", err);
+        return false;
+    }
+}
+
+async function updateAdminPassword(username, newPassword) {
+    try {
+        const bcrypt = require('bcryptjs');
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const result = await Admin.updateOne({ username }, { password: hashedPassword });
+        return result.modifiedCount > 0;
+    } catch (err) {
+        console.error("Error updating admin password in MongoDB:", err);
+        return false;
+    }
+}
+
 // --- Bot Management ---
 
 async function getBots() {
@@ -370,6 +393,8 @@ module.exports = {
     getAdmin,
     createAdmin,
     getAllAdmins,
+    deleteAdmin,
+    updateAdminPassword,
     getBots,
     getBot,
     addBot,

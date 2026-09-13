@@ -1,0 +1,368 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<main class="flex-1 p-4 sm:p-6 md:p-8 min-h-screen pb-20 md:pb-8 flex flex-col gap-6">
+    <%- include('layout-nav') %>
+
+    <!-- Header & Action Bar -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 p-4 shadow-sm">
+        <div class="flex items-center gap-3 flex-1 max-w-md">
+            <div class="relative w-full">
+                <span class="material-icons absolute left-3 top-2.5 text-slate-400 text-sm">search</span>
+                <input type="text" id="serverSearchInput" placeholder="Search servers by name, IP, or region..." oninput="filterServers()" class="w-full pl-9 pr-3 py-2 text-xs font-mono bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+        </div>
+
+        <button onclick="openCreateServerModal()" class="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-mono text-xs uppercase font-bold transition-all border border-primary-hover flex items-center gap-1.5 active:translate-y-0.5 shadow-sm">
+            <span class="material-icons text-sm">add</span>
+            <span>Create Server Profile</span>
+        </button>
+    </div>
+
+    <!-- Server Profiles Grid -->
+    <div id="serversGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <% servers.forEach(function(server) { 
+            const serverId = String(server._id);
+            const assigned = serverCounts[serverId] || 0;
+            const max = server.maxBots || 0;
+            const percent = max > 0 ? Math.min(100, Math.round((assigned / max) * 100)) : 0;
+            const isFull = max > 0 && assigned >= max;
+        %>
+        <div class="server-card bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 p-5 shadow-sm flex flex-col justify-between"
+             data-name="<%= server.name.toLowerCase() %>"
+             data-ip="<%= server.ip.toLowerCase() %>"
+             data-region="<%= (server.region || '').toLowerCase() %>">
+            
+            <div>
+                <!-- Top Header -->
+                <div class="flex items-start justify-between border-b border-slate-200 dark:border-obsidian-800 pb-3 mb-3">
+                    <div>
+                        <h3 class="font-mono font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                            <span><%= server.name %></span>
+                            <% if (server.region) { %>
+                                <span class="px-1.5 py-0.2 bg-slate-100 dark:bg-obsidian-800 text-slate-500 border border-slate-300 dark:border-obsidian-700 text-[10px]"><%= server.region %></span>
+                            <% } %>
+                        </h3>
+                        <div class="text-xs font-mono text-slate-500 mt-1 flex items-center gap-1">
+                            <span class="material-icons text-xs text-slate-400">dns</span>
+                            <span><%= server.ip %>:<%= server.port %></span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-obsidian-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-obsidian-700">
+                            <%= server.version %>
+                        </span>
+                        <% if (server.whitelist) { %>
+                            <span class="px-1.5 py-0.2 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-mono uppercase">
+                                Whitelist
+                            </span>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Capacity Allocation Bar -->
+                <div class="mb-4 bg-slate-50 dark:bg-obsidian-950 border border-slate-200 dark:border-obsidian-850 p-3 space-y-2">
+                    <div class="flex items-center justify-between text-xs font-mono">
+                        <span class="text-slate-400 uppercase text-[10px] tracking-wider">Fleet Capacity:</span>
+                        <span class="font-bold <%= isFull ? 'text-redstone-500' : 'text-slate-700 dark:text-slate-300' %>">
+                            <%= assigned %> / <%= max > 0 ? max : '∞' %> Bots <%= max > 0 ? `(${percent}%)` : '' %>
+                        </span>
+                    </div>
+
+                    <% if (max > 0) { %>
+                        <div class="w-full bg-slate-200 dark:bg-obsidian-800 h-2 overflow-hidden">
+                            <div class="h-full <%= isFull ? 'bg-redstone-500' : (percent > 75 ? 'bg-amber-500' : 'bg-primary') %> transition-all duration-300" style="width: <%= percent %>%"></div>
+                        </div>
+                    <% } else { %>
+                        <div class="text-[10px] font-mono text-slate-400">Unlimited bot allocations permitted.</div>
+                    <% } %>
+                </div>
+
+                <% if (server.notes) { %>
+                    <div class="text-xs font-mono text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-obsidian-950 p-2.5 border border-slate-200 dark:border-obsidian-850 mb-3">
+                        "<%= server.notes %>"
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Card Bottom Actions -->
+            <div class="flex items-center justify-end gap-2 border-t border-slate-200 dark:border-obsidian-800 pt-3 mt-3">
+                <button onclick="openEditServerModal('<%= server._id %>')" class="px-3 py-1.5 bg-slate-100 dark:bg-obsidian-800 hover:bg-slate-200 dark:hover:bg-obsidian-700 text-slate-700 dark:text-slate-300 font-mono text-xs uppercase font-bold transition-colors flex items-center gap-1 border border-slate-300 dark:border-obsidian-700">
+                    <span class="material-icons text-xs">edit</span>
+                    <span>Edit</span>
+                </button>
+                <button onclick="deleteServerProfile('<%= server._id %>', '<%= server.name %>')" class="px-3 py-1.5 text-redstone-500 hover:text-white hover:bg-redstone-600 font-mono text-xs uppercase font-bold transition-colors border border-redstone-500/30 flex items-center gap-1">
+                    <span class="material-icons text-xs">delete</span>
+                    <span>Delete</span>
+                </button>
+            </div>
+        </div>
+        <% }); %>
+    </div>
+
+    <!-- Empty State -->
+    <div id="noServersMessage" class="hidden p-12 text-center bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 font-mono text-xs text-slate-400">
+        No server profiles match your search filter.
+    </div>
+</main>
+
+<!-- Create Server Profile Modal -->
+<div id="createServerModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 w-full max-w-xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-obsidian-700/60 pb-3 mb-4">
+            <h2 class="text-base font-mono uppercase font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span class="material-icons text-primary">dns</span>
+                <span>Create Server Profile</span>
+            </h2>
+            <button onclick="closeCreateServerModal()" class="text-slate-400 hover:text-slate-200">
+                <span class="material-icons text-lg">close</span>
+            </button>
+        </div>
+
+        <form onsubmit="handleCreateServer(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Profile Name</label>
+                <input type="text" name="name" placeholder="e.g. Hypixel Survival" required class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Region</label>
+                <input type="text" name="region" placeholder="US-East / EU-Central" class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Host IP</label>
+                <input type="text" name="ip" placeholder="mc.example.com" required class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Port</label>
+                <input type="number" name="port" value="25565" required class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Version</label>
+                <select name="version" class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
+                    <option value="1.20.4">1.20.4</option>
+                    <option value="1.20.1">1.20.1</option>
+                    <option value="1.19.4">1.19.4</option>
+                    <option value="1.18.2">1.18.2</option>
+                    <option value="1.12.2">1.12.2</option>
+                    <option value="auto">Auto</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Max Bots Allowed (0 = unlimited)</label>
+                <input type="number" name="maxBots" value="0" class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Profile Notes</label>
+                <textarea name="notes" rows="2" placeholder="Rules, spawn points, or network info" class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"></textarea>
+            </div>
+            <div class="sm:col-span-2 flex items-center gap-2">
+                <input type="checkbox" name="whitelist" id="newServerWhitelist" class="accent-primary">
+                <label for="newServerWhitelist" class="text-xs font-mono text-slate-700 dark:text-slate-300 cursor-pointer">Server Whitelist Enforced</label>
+            </div>
+
+            <div class="sm:col-span-2 flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-obsidian-800">
+                <button type="button" onclick="closeCreateServerModal()" class="px-4 py-2 bg-slate-100 dark:bg-obsidian-800 text-slate-700 dark:text-slate-300 font-mono text-xs uppercase font-bold border border-slate-300 dark:border-obsidian-700">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 bg-primary hover:bg-primary-hover text-white font-mono text-xs uppercase font-bold transition-all border border-primary-hover active:translate-y-0.5">
+                    Save Profile
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Server Profile Modal -->
+<div id="editServerModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 w-full max-w-xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-obsidian-700/60 pb-3 mb-4">
+            <h2 class="text-base font-mono uppercase font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span class="material-icons text-primary">edit</span>
+                <span>Edit Server Profile</span>
+            </h2>
+            <button onclick="closeEditServerModal()" class="text-slate-400 hover:text-slate-200">
+                <span class="material-icons text-lg">close</span>
+            </button>
+        </div>
+
+        <form onsubmit="handleUpdateServer(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input type="hidden" name="serverId" id="editServerId">
+            <div>
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Profile Name</label>
+                <input type="text" name="name" id="editServerName" required class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Region</label>
+                <input type="text" name="region" id="editServerRegion" class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Host IP</label>
+                <input type="text" name="ip" id="editServerIp" required class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Port</label>
+                <input type="number" name="port" id="editServerPort" required class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Version</label>
+                <select name="version" id="editServerVersion" class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
+                    <option value="1.20.4">1.20.4</option>
+                    <option value="1.20.1">1.20.1</option>
+                    <option value="1.19.4">1.19.4</option>
+                    <option value="1.18.2">1.18.2</option>
+                    <option value="1.12.2">1.12.2</option>
+                    <option value="auto">Auto</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Max Bots Allowed</label>
+                <input type="number" name="maxBots" id="editServerMaxBots" class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Notes</label>
+                <textarea name="notes" id="editServerNotes" rows="2" class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"></textarea>
+            </div>
+            <div class="sm:col-span-2 flex items-center gap-2">
+                <input type="checkbox" name="whitelist" id="editServerWhitelist" class="accent-primary">
+                <label for="editServerWhitelist" class="text-xs font-mono text-slate-700 dark:text-slate-300 cursor-pointer">Whitelist Enforced</label>
+            </div>
+
+            <div class="sm:col-span-2 flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-obsidian-800">
+                <button type="button" onclick="closeEditServerModal()" class="px-4 py-2 bg-slate-100 dark:bg-obsidian-800 text-slate-700 dark:text-slate-300 font-mono text-xs uppercase font-bold border border-slate-300 dark:border-obsidian-700">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 bg-primary hover:bg-primary-hover text-white font-mono text-xs uppercase font-bold transition-all border border-primary-hover active:translate-y-0.5">
+                    Update Profile
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const serversData = <%- JSON.stringify(servers || []) %>;
+
+function filterServers() {
+    const query = (document.getElementById('serverSearchInput').value || '').toLowerCase().trim();
+    const cards = document.querySelectorAll('.server-card');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+        const name = card.getAttribute('data-name') || '';
+        const ip = card.getAttribute('data-ip') || '';
+        const region = card.getAttribute('data-region') || '';
+
+        const matches = !query || name.includes(query) || ip.includes(query) || region.includes(query);
+        card.classList.toggle('hidden', !matches);
+        if (matches) visibleCount++;
+    });
+
+    const emptyMsg = document.getElementById('noServersMessage');
+    if (emptyMsg) emptyMsg.classList.toggle('hidden', visibleCount > 0);
+}
+
+function openCreateServerModal() {
+    document.getElementById('createServerModal').classList.remove('hidden');
+}
+
+function closeCreateServerModal() {
+    document.getElementById('createServerModal').classList.add('hidden');
+}
+
+function openEditServerModal(serverId) {
+    const server = serversData.find(s => String(s._id) === String(serverId));
+    if (!server) return;
+
+    document.getElementById('editServerId').value = server._id;
+    document.getElementById('editServerName').value = server.name || '';
+    document.getElementById('editServerRegion').value = server.region || '';
+    document.getElementById('editServerIp').value = server.ip || '';
+    document.getElementById('editServerPort').value = server.port || 25565;
+    document.getElementById('editServerVersion').value = server.version || '1.20.4';
+    document.getElementById('editServerMaxBots').value = server.maxBots || 0;
+    document.getElementById('editServerNotes').value = server.notes || '';
+    document.getElementById('editServerWhitelist').checked = !!server.whitelist;
+
+    document.getElementById('editServerModal').classList.remove('hidden');
+}
+
+function closeEditServerModal() {
+    document.getElementById('editServerModal').classList.add('hidden');
+}
+
+async function handleCreateServer(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    data.whitelist = formData.get('whitelist') === 'on';
+
+    try {
+        const res = await fetch('/api/servers/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        if (res.ok && result.success) {
+            if (typeof showToast === 'function') showToast(`Server profile '${data.name}' created.`, 'success');
+            closeCreateServerModal();
+            setTimeout(() => window.location.reload(), 600);
+        } else {
+            if (typeof showToast === 'function') showToast(result.error || 'Failed to create server', 'error');
+        }
+    } catch (err) {
+        if (typeof showToast === 'function') showToast('Error creating server profile', 'error');
+    }
+}
+
+async function handleUpdateServer(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    data.whitelist = formData.get('whitelist') === 'on';
+
+    try {
+        const res = await fetch('/api/servers/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (res.ok && result.success) {
+            if (typeof showToast === 'function') showToast('Server profile updated successfully.', 'success');
+            closeEditServerModal();
+            setTimeout(() => window.location.reload(), 600);
+        } else {
+            if (typeof showToast === 'function') showToast(result.error || 'Failed to update server', 'error');
+        }
+    } catch (err) {
+        if (typeof showToast === 'function') showToast('Error updating server profile', 'error');
+    }
+}
+
+async function deleteServerProfile(serverId, name) {
+    if (!confirm(`Delete server profile '${name}'? Any bots assigned to this profile will be unlinked.`)) {
+        return;
+    }
+    try {
+        const res = await fetch('/api/servers/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ serverId })
+        });
+        const result = await res.json();
+        if (res.ok && result.success) {
+            if (typeof showToast === 'function') showToast('Server profile deleted.', 'info');
+            setTimeout(() => window.location.reload(), 600);
+        } else {
+            if (typeof showToast === 'function') showToast(result.error || 'Failed to delete server', 'error');
+        }
+    } catch (err) {
+        if (typeof showToast === 'function') showToast('Error deleting server profile', 'error');
+    }
+}
+</script>
+
+<%- include('../partials/footer') %>

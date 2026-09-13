@@ -15,18 +15,46 @@
     </div>
 
     <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
-        <a href="/" class="flex items-center gap-3 px-3 py-2.5 text-sm transition-colors border-l-2 <%= page === 'home' || page === 'bot' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
+        <div class="px-3 py-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            Main
+        </div>
+        <a href="/" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'home' || page === 'bot' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
             <span class="material-icons text-base <%= page === 'home' || page === 'bot' ? 'text-primary' : 'text-slate-400' %>">dashboard</span>
             <span>All Bots</span>
         </a>
-        <a href="/profile" class="flex items-center gap-3 px-3 py-2.5 text-sm transition-colors border-l-2 <%= page === 'profile' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
+        <a href="/profile" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'profile' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
             <span class="material-icons text-base <%= page === 'profile' ? 'text-primary' : 'text-slate-400' %>">person</span>
             <span>Profile</span>
         </a>
+
         <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
-        <a href="/admin" class="flex items-center gap-3 px-3 py-2.5 text-sm transition-colors border-l-2 <%= page === 'admin' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
-            <span class="material-icons text-base <%= page === 'admin' ? 'text-primary' : 'text-slate-400' %>">admin_panel_settings</span>
-            <span>Admin Panel</span>
+        <div class="pt-4 px-3 py-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-primary flex items-center justify-between">
+            <span>Administration</span>
+            <span class="text-[9px] bg-primary/15 text-primary border border-primary/30 px-1 py-0.2">Root</span>
+        </div>
+        <a href="/admin/overview" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'admin-overview' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
+            <span class="material-icons text-base <%= page === 'admin-overview' ? 'text-primary' : 'text-slate-400' %>">speed</span>
+            <span>Telemetry</span>
+        </a>
+        <a href="/admin/bots" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'admin-bots' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
+            <span class="material-icons text-base <%= page === 'admin-bots' ? 'text-primary' : 'text-slate-400' %>">smart_toy</span>
+            <span>Bot Fleet</span>
+        </a>
+        <a href="/admin/servers" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'admin-servers' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
+            <span class="material-icons text-base <%= page === 'admin-servers' ? 'text-primary' : 'text-slate-400' %>">dns</span>
+            <span>Server Profiles</span>
+        </a>
+        <a href="/admin/users" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'admin-users' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
+            <span class="material-icons text-base <%= page === 'admin-users' ? 'text-primary' : 'text-slate-400' %>">group</span>
+            <span>Users & Access</span>
+        </a>
+        <a href="/admin/logs" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'admin-logs' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
+            <span class="material-icons text-base <%= page === 'admin-logs' ? 'text-primary' : 'text-slate-400' %>">receipt_long</span>
+            <span>Audit Logs</span>
+        </a>
+        <a href="/admin/settings" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'admin-settings' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
+            <span class="material-icons text-base <%= page === 'admin-settings' ? 'text-primary' : 'text-slate-400' %>">settings</span>
+            <span>Settings</span>
         </a>
         <% } %>
     </nav>
@@ -63,7 +91,7 @@
             <span class="text-[10px] uppercase font-mono tracking-wider mt-0.5 font-medium">Profile</span>
         </a>
         <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
-        <a href="/admin" class="flex-1 flex flex-col items-center justify-center py-2.5 border-t-2 <%= page === 'admin' ? 'border-primary text-primary bg-primary/5 dark:bg-primary/10' : 'border-transparent text-slate-500 dark:text-slate-400' %> transition-colors">
+        <a href="/admin/overview" class="flex-1 flex flex-col items-center justify-center py-2.5 border-t-2 <%= typeof page !== 'undefined' && page.startsWith('admin') ? 'border-primary text-primary bg-primary/5 dark:bg-primary/10' : 'border-transparent text-slate-500 dark:text-slate-400' %> transition-colors">
             <span class="material-icons text-lg">admin_panel_settings</span>
             <span class="text-[10px] uppercase font-mono tracking-wider mt-0.5 font-medium">Admin</span>
         </a>

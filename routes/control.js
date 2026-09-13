@@ -500,4 +500,135 @@ router.post('/servers/assign-bot', async (req, res) => {
     }
 });
 
+// Admin Delete User
+router.post('/admin/delete-user', async (req, res) => {
+    const currentUser = await dataManager.getAdmin(req.session.user.username);
+    if (currentUser.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied. Only administrators can delete users.' });
+    }
+
+    const { username } = req.body;
+    if (!username) {
+        return res.json({ success: false, error: 'Username is required.' });
+    }
+
+    if (username === req.session.user.username) {
+        return res.json({ success: false, error: 'You cannot delete your own account.' });
+    }
+
+    if (username === 'root') {
+        return res.json({ success: false, error: 'Cannot delete the master root account.' });
+    }
+
+    try {
+        const deleted = await dataManager.deleteAdmin(username);
+        if (!deleted) {
+            return res.json({ success: false, error: 'User not found or deletion failed.' });
+        }
+        await dataManager.addAdminLog(req.session.user.username, 'delete_user', username, null);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error deleting user:', err);
+        res.json({ success: false, error: 'Failed to delete user.' });
+    }
+});
+
+// Admin Reset Password
+router.post('/admin/reset-password', async (req, res) => {
+    const currentUser = await dataManager.getAdmin(req.session.user.username);
+    if (currentUser.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied. Only administrators can reset passwords.' });
+    }
+
+    const { username, newPassword } = req.body;
+    if (!username || !newPassword) {
+        return res.json({ success: false, error: 'Username and new password are required.' });
+    }
+
+    if (newPassword.length < 6) {
+        return res.json({ success: false, error: 'Password must be at least 6 characters long.' });
+    }
+
+    try {
+        const updated = await dataManager.updateAdminPassword(username, newPassword);
+        if (!updated) {
+            return res.json({ success: false, error: 'User not found or update failed.' });
+        }
+        await dataManager.addAdminLog(req.session.user.username, 'reset_password', username, null);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error resetting password:', err);
+        res.json({ success: false, error: 'Failed to reset password.' });
+    }
+});
+
+// Admin Update Global Settings
+router.post('/admin/settings', async (req, res) => {
+    const currentUser = await dataManager.getAdmin(req.session.user.username);
+    if (currentUser.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied. Only administrators can update settings.' });
+    }
+
+    try {
+        const { autoReconnect, reconnectDelay, defaultVersion, passkeyEnforced, darkModeDefault } = req.body;
+        const newSettings = {};
+
+        if (typeof autoReconnect !== 'undefined') newSettings.autoReconnect = autoReconnect === true || autoReconnect === 'true';
+        if (typeof reconnectDelay !== 'undefined') newSettings.reconnectDelay = Math.max(1, parseInt(reconnectDelay) || 10);
+        if (defaultVersion) newSettings.defaultVersion = defaultVersion;
+        if (typeof passkeyEnforced !== 'undefined') newSettings.passkeyEnforced = passkeyEnforced === true || passkeyEnforced === 'true';
+        if (typeof darkModeDefault !== 'undefined') newSettings.darkMode = darkModeDefault === true || darkModeDefault === 'true';
+
+        const updated = await dataManager.updateSettings(newSettings);
+        await dataManager.addAdminLog(req.session.user.username, 'update_settings', 'global', newSettings);
+        res.json({ success: true, settings: updated });
+    } catch (err) {
+        console.error('Error updating settings:', err);
+        res.json({ success: false, error: 'Failed to update settings.' });
+    }
+});
+
+// Fleet Bulk Actions: Start All
+router.post('/admin/bots/start-all', async (req, res) => {
+    const currentUser = await dataManager.getAdmin(req.session.user.username);
+    if (currentUser.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+
+    const allBots = await dataManager.getBots();
+    let startedCount = 0;
+    allBots.forEach(b => {
+        const instance = botManager.getBotInstance(b.id);
+        if (instance && !instance.isRunning) {
+            instance.start();
+            startedCount++;
+        }
+    });
+
+    await dataManager.addAdminLog(req.session.user.username, 'fleet_start_all', 'fleet', { startedCount });
+    res.json({ success: true, startedCount });
+});
+
+// Fleet Bulk Actions: Stop All
+router.post('/admin/bots/stop-all', async (req, res) => {
+    const currentUser = await dataManager.getAdmin(req.session.user.username);
+    if (currentUser.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+
+    const allBots = await dataManager.getBots();
+    let stoppedCount = 0;
+    allBots.forEach(b => {
+        const instance = botManager.getBotInstance(b.id);
+        if (instance && instance.isRunning) {
+            instance.stop();
+            stoppedCount++;
+        }
+    });
+
+    await dataManager.addAdminLog(req.session.user.username, 'fleet_stop_all', 'fleet', { stoppedCount });
+    res.json({ success: true, stoppedCount });
+});
+
 module.exports = router;
+

@@ -1,0 +1,379 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<main class="flex-1 p-4 sm:p-6 md:p-8 min-h-screen pb-20 md:pb-8 flex flex-col gap-6">
+    <%- include('layout-nav') %>
+
+    <!-- Filter, Search & Action Bar -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 p-4 shadow-sm">
+        <div class="flex flex-wrap items-center gap-2 flex-1">
+            <div class="relative flex-1 max-w-sm">
+                <span class="material-icons absolute left-3 top-2.5 text-slate-400 text-sm">search</span>
+                <input type="text" id="botSearchInput" placeholder="Search bots by name, #ID, or server..." oninput="filterBots()" class="w-full pl-9 pr-3 py-2 text-xs font-mono bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+
+            <div class="flex items-center gap-1 font-mono text-xs">
+                <button onclick="setStatusFilter('all')" class="bot-filter-btn px-2.5 py-1.5 border border-primary bg-primary text-white text-[11px] font-bold uppercase transition-colors" data-filter="all">All</button>
+                <button onclick="setStatusFilter('online')" class="bot-filter-btn px-2.5 py-1.5 border border-slate-300 dark:border-obsidian-700 bg-white dark:bg-obsidian-900 text-slate-600 dark:text-slate-400 text-[11px] font-bold uppercase hover:text-slate-900 dark:hover:text-white transition-colors" data-filter="online">Online</button>
+                <button onclick="setStatusFilter('offline')" class="bot-filter-btn px-2.5 py-1.5 border border-slate-300 dark:border-obsidian-700 bg-white dark:bg-obsidian-900 text-slate-600 dark:text-slate-400 text-[11px] font-bold uppercase hover:text-slate-900 dark:hover:text-white transition-colors" data-filter="offline">Offline</button>
+                <button onclick="setStatusFilter('unassigned')" class="bot-filter-btn px-2.5 py-1.5 border border-slate-300 dark:border-obsidian-700 bg-white dark:bg-obsidian-900 text-slate-600 dark:text-slate-400 text-[11px] font-bold uppercase hover:text-slate-900 dark:hover:text-white transition-colors" data-filter="unassigned">Unassigned</button>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button onclick="openCreateBotModal()" class="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-mono text-xs uppercase font-bold transition-all border border-primary-hover flex items-center gap-1.5 active:translate-y-0.5 shadow-sm">
+                <span class="material-icons text-sm">add</span>
+                <span>Deploy New Bot</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Bots Fleet Grid -->
+    <div id="botsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <% bots.forEach(function(bot) { 
+            const isOnline = bot.liveStatus && bot.liveStatus.online;
+            const isRunning = bot.liveStatus && bot.liveStatus.isRunning;
+        %>
+        <div class="bot-card bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 p-5 shadow-sm flex flex-col justify-between"
+             data-name="<%= bot.name.toLowerCase() %>"
+             data-id="<%= bot.id %>"
+             data-online="<%= isOnline ? 'true' : 'false' %>"
+             data-assigned="<%= bot.assignedTo ? 'true' : 'false' %>"
+             data-server="<%= bot.server ? bot.server.ip.toLowerCase() : '' %>">
+            
+            <div>
+                <!-- Top Status Header -->
+                <div class="flex items-start justify-between gap-2 border-b border-slate-200 dark:border-obsidian-800 pb-3 mb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 bg-slate-100 dark:bg-obsidian-800 border border-slate-300 dark:border-obsidian-700 flex items-center justify-center font-mono font-bold text-xs text-primary">
+                            #<%= bot.id %>
+                        </div>
+                        <div>
+                            <h3 class="font-mono font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                                <span><%= bot.name %></span>
+                                <% if (bot.passkey) { %>
+                                    <span class="material-icons text-amber-400 text-xs" title="Passkey Protected">key</span>
+                                <% } %>
+                            </h3>
+                            <div class="text-[11px] font-mono text-slate-400 truncate max-w-[180px]">
+                                <%= bot.account && bot.account.email ? bot.account.email : 'No email' %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col items-end">
+                        <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase border <%= isOnline ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : (isRunning ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-slate-200 dark:bg-obsidian-800 text-slate-500 border-slate-300 dark:border-obsidian-700') %>">
+                            <%= isOnline ? 'Online' : (isRunning ? 'Starting' : 'Offline') %>
+                        </span>
+                        <span class="text-[10px] font-mono text-slate-500 mt-1">
+                            <%= bot.liveStatus && bot.liveStatus.uptime ? bot.liveStatus.uptime : '0s' %>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Server Info & Telemetry -->
+                <div class="bg-slate-50 dark:bg-obsidian-950 border border-slate-200 dark:border-obsidian-850 p-2.5 space-y-1.5 text-xs font-mono mb-4">
+                    <div class="flex items-center justify-between text-slate-500">
+                        <span class="text-[10px] uppercase tracking-wider">Host:</span>
+                        <span class="text-slate-800 dark:text-slate-200 font-semibold"><%= bot.server ? bot.server.ip + ':' + bot.server.port : 'None' %></span>
+                    </div>
+                    <div class="flex items-center justify-between text-slate-500">
+                        <span class="text-[10px] uppercase tracking-wider">Version:</span>
+                        <span class="text-slate-800 dark:text-slate-200"><%= bot.server ? bot.server.version : 'auto' %></span>
+                    </div>
+                    <% if (isOnline) { %>
+                        <div class="flex items-center justify-between text-slate-500 pt-1 border-t border-slate-200 dark:border-obsidian-800">
+                            <span class="text-[10px] uppercase tracking-wider">Health / Food:</span>
+                            <span class="text-emerald-500 font-bold"><%= bot.liveStatus.health %> HP · <%= bot.liveStatus.food %> Food</span>
+                        </div>
+                    <% } %>
+                </div>
+
+                <!-- Owner & Server Profile Links -->
+                <div class="space-y-2.5">
+                    <div>
+                        <label class="text-[10px] font-mono uppercase text-slate-400 font-semibold block mb-1">Assigned Owner:</label>
+                        <select onchange="assignBotToUser(<%= bot.id %>, this.value)" class="w-full text-xs font-mono bg-white dark:bg-obsidian-900 border border-slate-300 dark:border-obsidian-700 px-2.5 py-1.5 text-slate-900 dark:text-white outline-none focus:border-primary">
+                            <option value="" <%= !bot.assignedTo ? 'selected' : '' %>>-- Unassigned --</option>
+                            <% users.forEach(function(u) { %>
+                                <option value="<%= u.username %>" <%= bot.assignedTo === u.username ? 'selected' : '' %>><%= u.username %> (<%= u.role %>)</option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-mono uppercase text-slate-400 font-semibold block mb-1">Server Cluster Profile:</label>
+                        <div class="flex gap-1.5">
+                            <select class="server-select flex-1 text-xs font-mono bg-white dark:bg-obsidian-900 border border-slate-300 dark:border-obsidian-700 px-2 py-1.5 text-slate-900 dark:text-white outline-none focus:border-primary" data-bot-id="<%= bot.id %>" data-current-server="<%= bot.serverProfile ? String(bot.serverProfile) : '' %>">
+                                <option value="">-- Direct IP (No Profile) --</option>
+                                <% servers.forEach(function(server) { 
+                                    const serverId = String(server._id);
+                                    const assignedCount = serverCounts[serverId] || 0;
+                                    const maxBots = server.maxBots || 0;
+                                    const isCurrent = bot.serverProfile && String(bot.serverProfile) === serverId;
+                                    const isFull = maxBots > 0 && assignedCount >= maxBots && !isCurrent;
+                                %>
+                                    <option value="<%= server._id %>" data-max-bots="<%= maxBots %>" data-assigned-count="<%= assignedCount %>" <%= isFull ? 'disabled' : '' %> <%= isCurrent ? 'selected' : '' %>>
+                                        <%= server.name %><%= isFull ? ' (FULL)' : '' %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                            <button onclick="assignBotServer(<%= bot.id %>)" class="px-3 py-1 bg-primary hover:bg-primary-hover text-white font-mono text-xs uppercase font-bold transition-colors">
+                                Save
+                            </button>
+                        </div>
+                        <span class="server-warning hidden text-[11px] font-mono text-redstone-500 mt-1 block" data-bot-id="<%= bot.id %>">Max bots capacity reached.</span>
+                        <label class="flex items-center gap-2 text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-1 cursor-pointer">
+                            <input type="checkbox" class="apply-profile accent-primary" data-bot-id="<%= bot.id %>">
+                            <span>Overwrite host IP/Port from profile</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Bottom Actions -->
+            <div class="flex items-center justify-between border-t border-slate-200 dark:border-obsidian-800 pt-3 mt-4 gap-2">
+                <a href="/bot/<%= bot.id %>" class="px-3 py-1.5 bg-slate-100 dark:bg-obsidian-800 hover:bg-slate-200 dark:hover:bg-obsidian-700 text-slate-700 dark:text-slate-300 font-mono text-xs uppercase font-bold transition-colors flex items-center gap-1">
+                    <span class="material-icons text-xs">terminal</span>
+                    <span>Console</span>
+                </a>
+
+                <div class="flex items-center gap-1.5">
+                    <% if (isRunning) { %>
+                        <button onclick="botControlAction(<%= bot.id %>, 'restart')" class="p-1.5 text-amber-500 hover:bg-amber-500/10 border border-amber-500/30 transition-colors" title="Restart Bot">
+                            <span class="material-icons text-sm">restart_alt</span>
+                        </button>
+                        <button onclick="botControlAction(<%= bot.id %>, 'stop')" class="p-1.5 text-redstone-500 hover:bg-redstone-500/10 border border-redstone-500/30 transition-colors" title="Stop Bot">
+                            <span class="material-icons text-sm">stop</span>
+                        </button>
+                    <% } else { %>
+                        <button onclick="botControlAction(<%= bot.id %>, 'start')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs uppercase font-bold transition-colors flex items-center gap-1">
+                            <span class="material-icons text-xs">play_arrow</span>
+                            <span>Start</span>
+                        </button>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        <% }); %>
+    </div>
+
+    <!-- Empty State -->
+    <div id="noBotsMessage" class="hidden p-12 text-center bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 font-mono text-xs text-slate-400">
+        No bots match your active search or filter criteria.
+    </div>
+</main>
+
+<!-- Deploy New Bot Modal -->
+<div id="createBotModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 w-full max-w-lg shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-obsidian-700/60 pb-3 mb-4">
+            <h2 class="text-base font-mono uppercase font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span class="material-icons text-primary">add_circle</span>
+                <span>Deploy New Bot Instance</span>
+            </h2>
+            <button onclick="closeCreateBotModal()" class="text-slate-400 hover:text-slate-200">
+                <span class="material-icons text-lg">close</span>
+            </button>
+        </div>
+
+        <form onsubmit="handleCreateBot(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Instance Name</label>
+                <input type="text" name="name" placeholder="e.g. MinerBot_01" required class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Microsoft Account Email</label>
+                <input type="email" name="email" placeholder="xbox.account@live.com" required class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Server Host / IP</label>
+                <input type="text" name="ip" placeholder="play.server.net" required class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Port</label>
+                <input type="number" name="port" value="25565" required class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-mono uppercase text-slate-400 mb-1 font-semibold">Minecraft Version</label>
+                <select name="version" class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
+                    <option value="1.20.4">1.20.4 (Recommended)</option>
+                    <option value="1.20.1">1.20.1</option>
+                    <option value="1.19.4">1.19.4</option>
+                    <option value="1.18.2">1.18.2</option>
+                    <option value="1.12.2">1.12.2</option>
+                    <option value="auto">Auto-detect Version</option>
+                </select>
+            </div>
+
+            <div class="sm:col-span-2 flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-obsidian-800">
+                <button type="button" onclick="closeCreateBotModal()" class="px-4 py-2 bg-slate-100 dark:bg-obsidian-800 text-slate-700 dark:text-slate-300 font-mono text-xs uppercase font-bold border border-slate-300 dark:border-obsidian-700">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 bg-primary hover:bg-primary-hover text-white font-mono text-xs uppercase font-bold transition-all border border-primary-hover active:translate-y-0.5">
+                    Deploy Bot
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let activeStatusFilter = 'all';
+
+function setStatusFilter(filter) {
+    activeStatusFilter = filter;
+    document.querySelectorAll('.bot-filter-btn').forEach(btn => {
+        if (btn.getAttribute('data-filter') === filter) {
+            btn.classList.add('bg-primary', 'text-white', 'border-primary');
+            btn.classList.remove('bg-white', 'dark:bg-obsidian-900', 'text-slate-600', 'dark:text-slate-400');
+        } else {
+            btn.classList.remove('bg-primary', 'text-white', 'border-primary');
+            btn.classList.add('bg-white', 'dark:bg-obsidian-900', 'text-slate-600', 'dark:text-slate-400');
+        }
+    });
+    filterBots();
+}
+
+function filterBots() {
+    const query = (document.getElementById('botSearchInput').value || '').toLowerCase().trim();
+    const cards = document.querySelectorAll('.bot-card');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+        const name = card.getAttribute('data-name') || '';
+        const id = card.getAttribute('data-id') || '';
+        const server = card.getAttribute('data-server') || '';
+        const online = card.getAttribute('data-online') === 'true';
+        const assigned = card.getAttribute('data-assigned') === 'true';
+
+        const matchesQuery = !query || name.includes(query) || id.includes(query) || server.includes(query);
+
+        let matchesFilter = true;
+        if (activeStatusFilter === 'online') matchesFilter = online;
+        if (activeStatusFilter === 'offline') matchesFilter = !online;
+        if (activeStatusFilter === 'unassigned') matchesFilter = !assigned;
+
+        if (matchesQuery && matchesFilter) {
+            card.classList.remove('hidden');
+            visibleCount++;
+        } else {
+            card.classList.add('hidden');
+        }
+    });
+
+    const emptyMsg = document.getElementById('noBotsMessage');
+    if (emptyMsg) {
+        emptyMsg.classList.toggle('hidden', visibleCount > 0);
+    }
+}
+
+function openCreateBotModal() {
+    document.getElementById('createBotModal').classList.remove('hidden');
+}
+
+function closeCreateBotModal() {
+    document.getElementById('createBotModal').classList.add('hidden');
+}
+
+async function handleCreateBot(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const res = await fetch('/api/bots/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+            if (typeof showToast === 'function') showToast(`Bot '${data.name}' deployed successfully.`, 'success');
+            closeCreateBotModal();
+            setTimeout(() => window.location.reload(), 600);
+        } else {
+            const err = await res.json();
+            if (typeof showToast === 'function') showToast(err.error || 'Failed to deploy bot', 'error');
+        }
+    } catch (err) {
+        if (typeof showToast === 'function') showToast('Network error deploying bot', 'error');
+    }
+}
+
+async function assignBotToUser(botId, username) {
+    try {
+        const res = await fetch('/api/admin/assign-bot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ botId, username })
+        });
+        
+        if (res.ok) {
+            if (typeof showToast === 'function') {
+                showToast(`Bot #${botId} assigned to ${username || 'unassigned'}.`, 'success');
+            }
+        } else {
+            const err = await res.json();
+            if (typeof showToast === 'function') showToast(err.error || 'Failed to assign bot', 'error');
+            setTimeout(() => window.location.reload(), 800);
+        }
+    } catch (err) {
+        if (typeof showToast === 'function') showToast('Error assigning bot', 'error');
+    }
+}
+
+async function assignBotServer(botId) {
+    const select = document.querySelector(`.server-select[data-bot-id="${botId}"]`);
+    const apply = document.querySelector(`.apply-profile[data-bot-id="${botId}"]`);
+    const warning = document.querySelector(`.server-warning[data-bot-id="${botId}"]`);
+    const serverId = select ? select.value : '';
+    const applyProfile = apply ? apply.checked : false;
+
+    if (select && serverId) {
+        const opt = select.options[select.selectedIndex];
+        const maxBots = parseInt(opt.getAttribute('data-max-bots') || '0', 10);
+        const assignedCount = parseInt(opt.getAttribute('data-assigned-count') || '0', 10);
+        const curr = select.getAttribute('data-current-server') || '';
+        const isFull = maxBots > 0 && assignedCount >= maxBots && curr !== serverId;
+        if (isFull) {
+            if (warning) warning.classList.remove('hidden');
+            if (typeof showToast === 'function') showToast('Selected server is at max bot capacity.', 'warning');
+            return;
+        }
+    }
+
+    try {
+        const res = await fetch('/api/servers/assign-bot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ botId, serverId, applyProfile })
+        });
+        const result = await res.json();
+        if (res.ok && result.success) {
+            if (typeof showToast === 'function') showToast(`Bot #${botId} server profile assigned!`, 'success');
+        } else {
+            if (typeof showToast === 'function') showToast(result.error || 'Failed to assign server', 'error');
+        }
+    } catch (err) {
+        if (typeof showToast === 'function') showToast('Error assigning server profile', 'error');
+    }
+}
+
+async function botControlAction(botId, action) {
+    try {
+        const res = await fetch(`/api/bot/${botId}/${action}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+            if (typeof showToast === 'function') showToast(`Bot #${botId} ${action} triggered.`, 'success');
+            setTimeout(() => window.location.reload(), 700);
+        } else {
+            if (typeof showToast === 'function') showToast(data.error || `Failed to ${action} bot`, 'error');
+        }
+    } catch (err) {
+        if (typeof showToast === 'function') showToast(`Network error triggering ${action}`, 'error');
+    }
+}
+</script>
+
+<%- include('../partials/footer') %>

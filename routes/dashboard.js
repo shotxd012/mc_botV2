@@ -138,33 +138,9 @@ router.get('/profile', async (req, res) => {
     });
 });
 
-// Admin Management Route
-router.get('/admin', async (req, res) => {
-    // Check if user has admin privileges
-    const user = await dataManager.getAdmin(req.session.user.username);
-    if (user.role !== 'admin') {
-        return res.redirect('/');
-    }
-    
-    const allUsers = await dataManager.getAllAdmins();
-    const allBots = await dataManager.getBots();
-    const allServers = await dataManager.getServers();
-    const adminLogs = await dataManager.getAdminLogs(200);
-    const botStatuses = botManager.getAllBotsStatus();
-    const systemStats = await buildSystemStats({
-        bots: allBots,
-        botStatuses,
-        servers: allServers
-    });
-    
-    res.render('admin', {
-        page: 'admin',
-        users: allUsers,
-        bots: allBots,
-        servers: allServers,
-        logs: adminLogs,
-        systemStats
-    });
+// Admin Management Route (redirect to new modular admin router)
+router.get('/admin', (req, res) => {
+    res.redirect('/admin/overview');
 });
 
 module.exports = router;
