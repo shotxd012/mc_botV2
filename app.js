@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -7,7 +8,7 @@ const socketIo = require('socket.io');
 const dataManager = require('./utils/dataManager');
 const botManager = require('./bot/BotManager');
 const { connectDB, getMongoURI } = require('./utils/database');
-const MongoStore = require('connect-mongo');
+const { MongoStore } = require('connect-mongo');
 
 const app = express();
 const server = http.createServer(app);
