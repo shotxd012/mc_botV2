@@ -6,197 +6,179 @@
     const BOT_SECTION = "<%= section || 'config' %>";
 </script>
 
-<main class="flex-1 min-w-0 p-4 sm:p-6 md:p-8 min-h-screen pb-20 md:pb-8 flex flex-col gap-6">
-    <!-- Header -->
-    <header class="flex flex-col gap-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-4">
-        <div class="flex min-w-0 flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div class="flex items-center gap-3">
-            <a href="/" class="p-2 bg-slate-100 dark:bg-obsidian-850 hover:bg-slate-200 dark:hover:bg-obsidian-800 text-slate-600 dark:text-slate-300 transition-colors border border-slate-200 dark:border-obsidian-700 flex items-center justify-center">
-                <span class="material-icons text-base">arrow_back</span>
-            </a>
-            <div>
-                <div class="flex items-center gap-2.5">
-                    <h2 class="bot-title text-xl md:text-2xl font-bold uppercase tracking-tight text-slate-900 dark:text-white"><%= botConfig.name %></h2>
-                    <span class="px-1.5 py-0.5 font-mono text-[10px] bg-slate-100 dark:bg-obsidian-800 border border-slate-200 dark:border-obsidian-700 text-slate-500 dark:text-slate-400">#<%= botId %></span>
+<main class="flex-1 min-w-0 p-4 sm:p-6 md:p-8 max-w-[1280px] w-full mx-auto flex flex-col gap-6">
+    <!-- GitHub Repository Header Format -->
+    <header class="flex flex-col gap-4 border-b border-ghborder-default pb-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="material-icons text-xl text-fg-muted">dns</span>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <a href="/" class="text-accent-fg hover:underline text-lg font-semibold">bots</a>
+                    <span class="text-fg-muted text-lg">/</span>
+                    <h2 class="bot-title text-lg font-bold text-fg-default font-mono truncate"><%= botConfig.name %></h2>
+                    <span class="px-2 py-0.5 text-[11px] font-mono text-fg-muted bg-canvas-subtle border border-ghborder-default rounded-pill">#<%= botId %></span>
                     <% if (botConfig.autoStart) { %>
-                    <span class="px-1.5 py-0.5 font-mono text-[10px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">AUTO-START</span>
+                    <span class="px-2 py-0.5 text-[10px] font-mono bg-accent-subtle text-accent-fg border border-accent-muted rounded-pill">auto-start</span>
                     <% } %>
                 </div>
-                <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">
-                    <span id="status-dot" class="w-2 h-2 inline-block <%= status.online ? 'bg-emerald-500' : 'bg-redstone-500' %>"></span>
-                    <span id="status-text" class="font-bold"><%= status.online ? 'Online' : 'Offline' %></span>
-                    <span>•</span>
-                    <span class="truncate"><%= typeof status.server !== 'undefined' ? status.server.ip + ':' + status.server.port : 'No server configured' %></span>
-                </div>
+            </div>
+
+            <!-- Header Quick Action Buttons -->
+            <div class="flex items-center gap-2 self-end sm:self-auto">
+                <button id="start-stop-btn" onclick="toggleStartStop()" class="px-3 py-1.5 <%= status.isRunning ? 'bg-danger-emphasis hover:bg-danger-fg border-danger-emphasis' : 'bg-success-emphasis hover:bg-success-fg border-success-emphasis' %> text-white rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm">
+                    <span id="start-stop-icon" class="material-icons text-sm"><%= status.isRunning ? 'stop' : 'play_arrow' %></span>
+                    <span id="start-stop-text"><%= status.isRunning ? 'Stop Bot' : 'Start Bot' %></span>
+                </button>
+                <button onclick="controlBot('restart')" class="px-3 py-1.5 bg-canvas-subtle hover:bg-canvas-default text-fg-default border border-ghborder-default hover:border-ghborder-strong rounded-md text-xs font-medium flex items-center gap-1 transition-colors">
+                    <span class="material-icons text-sm text-fg-muted">refresh</span>
+                    <span>Restart</span>
+                </button>
+                <a href="/bot/<%= botId %>/settings" class="p-1.5 bg-canvas-subtle hover:bg-canvas-default text-fg-muted hover:text-fg-default border border-ghborder-default rounded-md transition-colors" title="Settings">
+                    <span class="material-icons text-base">settings</span>
+                </a>
             </div>
         </div>
 
-        <a href="/bot/<%= botId %>/settings" class="self-end sm:self-auto inline-flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-white hover:bg-obsidian-800 font-mono text-xs uppercase font-bold transition-all border border-obsidian-700 hover:border-obsidian-600">
-            <span class="material-icons text-sm">settings</span>
-            <span>Bot Settings</span>
-        </a>
+        <!-- Repository Status Indicator Sub-header -->
+        <div class="flex items-center gap-2 text-xs text-fg-muted font-mono">
+            <span id="status-dot" class="w-2 h-2 rounded-full <%= status.online ? 'bg-success-fg' : 'bg-danger-fg' %>"></span>
+            <span id="status-text" class="font-semibold text-fg-default"><%= status.online ? 'Online' : 'Offline' %></span>
+            <span>•</span>
+            <span class="truncate"><%= typeof status.server !== 'undefined' ? status.server.ip + ':' + status.server.port : 'No server configured' %></span>
         </div>
 
-        <nav class="flex w-full min-w-0 max-w-full items-center gap-1 overflow-x-auto border border-obsidian-700/80 bg-obsidian-900/70 p-1 shadow-sm" aria-label="Bot workspace">
-            <span class="hidden lg:flex items-center gap-2 px-3 text-[10px] font-mono uppercase tracking-widest text-slate-500 whitespace-nowrap">
-                <span class="material-icons text-sm text-primary">tune</span>
-                Workspace
-            </span>
-            <a href="/bot/<%= botId %>" aria-current="<%= section === 'console' ? 'page' : 'false' %>" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border <%= section === 'console' ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800' %> transition-colors">
-                <span class="material-icons text-sm">terminal</span> Console
+        <!-- GitHub Horizontal Navigation Tabs -->
+        <nav class="flex w-full min-w-0 items-center gap-1 overflow-x-auto border-b border-ghborder-default pt-2" aria-label="Bot workspace tabs">
+            <a href="/bot/<%= botId %>" aria-current="<%= section === 'console' ? 'page' : 'false' %>" class="px-3 py-2 text-xs font-semibold flex items-center gap-1.5 border-b-2 <%= section === 'console' ? 'border-accent-fg text-fg-default' : 'border-transparent text-fg-muted hover:text-fg-default hover:border-ghborder-muted' %> transition-colors">
+                <span class="material-icons text-base">terminal</span> Console
             </a>
-            <a href="/bot/<%= botId %>/config" aria-current="<%= section === 'config' ? 'page' : 'false' %>" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border <%= section === 'config' ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800' %> transition-colors">
-                <span class="material-icons text-sm">settings</span> Config
+            <a href="/bot/<%= botId %>/config" aria-current="<%= section === 'config' ? 'page' : 'false' %>" class="px-3 py-2 text-xs font-semibold flex items-center gap-1.5 border-b-2 <%= section === 'config' ? 'border-accent-fg text-fg-default' : 'border-transparent text-fg-muted hover:text-fg-default hover:border-ghborder-muted' %> transition-colors">
+                <span class="material-icons text-base">tune</span> Config
             </a>
-            <a href="/bot/<%= botId %>/analytics" aria-current="<%= section === 'analytics' ? 'page' : 'false' %>" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border <%= section === 'analytics' ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800' %> transition-colors">
-                <span class="material-icons text-sm">show_chart</span> Analytics
+            <a href="/bot/<%= botId %>/analytics" aria-current="<%= section === 'analytics' ? 'page' : 'false' %>" class="px-3 py-2 text-xs font-semibold flex items-center gap-1.5 border-b-2 <%= section === 'analytics' ? 'border-accent-fg text-fg-default' : 'border-transparent text-fg-muted hover:text-fg-default hover:border-ghborder-muted' %> transition-colors">
+                <span class="material-icons text-base">insights</span> Analytics
             </a>
-            <a href="/bot/<%= botId %>/events" aria-current="<%= section === 'events' ? 'page' : 'false' %>" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border <%= section === 'events' ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800' %> transition-colors">
-                <span class="material-icons text-sm">timeline</span> Events
+            <a href="/bot/<%= botId %>/events" aria-current="<%= section === 'events' ? 'page' : 'false' %>" class="px-3 py-2 text-xs font-semibold flex items-center gap-1.5 border-b-2 <%= section === 'events' ? 'border-accent-fg text-fg-default' : 'border-transparent text-fg-muted hover:text-fg-default hover:border-ghborder-muted' %> transition-colors">
+                <span class="material-icons text-base">history</span> Events
             </a>
-            <a href="/bot/<%= botId %>/game" aria-current="<%= section === 'game' ? 'page' : 'false' %>" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border <%= section === 'game' ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800' %> transition-colors">
-                <span class="material-icons text-sm">sports_esports</span> In-Game
+            <a href="/bot/<%= botId %>/game" aria-current="<%= section === 'game' ? 'page' : 'false' %>" class="px-3 py-2 text-xs font-semibold flex items-center gap-1.5 border-b-2 <%= section === 'game' ? 'border-accent-fg text-fg-default' : 'border-transparent text-fg-muted hover:text-fg-default hover:border-ghborder-muted' %> transition-colors">
+                <span class="material-icons text-base">sports_esports</span> In-Game
             </a>
-            <a href="/bot/<%= botId %>/settings" aria-current="<%= section === 'settings' ? 'page' : 'false' %>" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border <%= section === 'settings' ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800' %> transition-colors">
-                <span class="material-icons text-sm">tune</span> Settings
+            <a href="/bot/<%= botId %>/settings" aria-current="<%= section === 'settings' ? 'page' : 'false' %>" class="px-3 py-2 text-xs font-semibold flex items-center gap-1.5 border-b-2 <%= section === 'settings' ? 'border-accent-fg text-fg-default' : 'border-transparent text-fg-muted hover:text-fg-default hover:border-ghborder-muted' %> transition-colors">
+                <span class="material-icons text-base">settings</span> Settings
             </a>
         </nav>
     </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
-        <!-- Left Column: Controls & Console -->
-        <div class="<%= section === 'console' ? 'lg:col-span-3' : 'hidden' %> flex flex-col gap-5 min-h-0">
+        <!-- Main Column: Terminal Console & Telemetry HUD -->
+        <div class="<%= section === 'console' ? 'lg:col-span-3' : 'hidden' %> flex flex-col gap-5">
             <!-- Controls Box -->
-            <div class="bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700/80 p-5 shadow-sm">
+            <div class="bg-canvas-default border border-ghborder-default rounded-md p-4 shadow-sm">
                 <div class="flex flex-wrap gap-3">
-                    <!-- Start/Stop Button -->
-                    <button id="start-stop-btn" onclick="toggleStartStop()" class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 <%= status.isRunning ? 'bg-redstone-600 hover:bg-redstone-500 border-redstone-500/50' : 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500/50' %> text-white font-mono font-bold text-xs uppercase tracking-wider transition-all border shadow-sm active:translate-y-0.5 min-w-[120px]">
-                        <span id="start-stop-icon" class="material-icons text-sm"><%= status.isRunning ? 'stop' : 'play_arrow' %></span>
-                        <span id="start-stop-text"><%= status.isRunning ? 'Stop Bot' : 'Start Bot' %></span>
-                    </button>
-
-                    <!-- Restart Button -->
-                    <button onclick="controlBot('restart')" class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-mono font-bold text-xs uppercase tracking-wider transition-all border border-amber-500/50 shadow-sm active:translate-y-0.5 min-w-[120px]">
-                        <span class="material-icons text-sm">refresh</span>
-                        <span>Restart</span>
-                    </button>
-
-                    <div class="w-px h-8 bg-slate-200 dark:border-obsidian-700 hidden md:block self-center"></div>
-
                     <!-- AFK Toggle Button -->
-                    <button id="afk-btn" onclick="toggleAfk()" class="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 <%= status.isAfkActive ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 hover:bg-emerald-500/30' : 'bg-slate-100 dark:bg-obsidian-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-obsidian-700 hover:bg-slate-200 dark:hover:bg-obsidian-750' %> text-xs font-mono font-bold uppercase tracking-wider transition-all border min-w-[120px] active:translate-y-0.5">
-                        <span class="inline-block w-2 h-2 mr-1.5 <%= status.isAfkActive ? 'bg-emerald-400' : 'bg-slate-500' %>"></span>
-                        <span><%= status.isAfkActive ? 'Stop AFK' : 'Start AFK' %></span>
+                    <button id="afk-btn" onclick="toggleAfk()" class="px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 border transition-colors <%= status.isAfkActive ? 'bg-success-subtle text-success-fg border-success-subtle' : 'bg-canvas-subtle text-fg-default border-ghborder-default hover:bg-canvas-default' %>">
+                        <span class="w-2 h-2 rounded-full <%= status.isAfkActive ? 'bg-success-fg' : 'bg-fg-muted' %>"></span>
+                        <span><%= status.isAfkActive ? 'Stop AFK' : 'Start AFK Routine' %></span>
                     </button>
-                </div>
 
-                <!-- AFK Profile Selector -->
-                <div class="mt-4 flex items-center gap-3">
-                    <label class="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold whitespace-nowrap">AFK Profile:</label>
-                    <select id="afk-profile-select" onchange="setAfkProfile(this.value)" class="flex-1 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-1.5 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary transition-colors">
-                        <option value="random_look" <%= (status.afkProfile === 'random_look' || !status.afkProfile) ? 'selected' : '' %>>Random Look (Default)</option>
-                        <option value="spin" <%= status.afkProfile === 'spin' ? 'selected' : '' %>>Spin 360°</option>
-                        <option value="jump_spam" <%= status.afkProfile === 'jump_spam' ? 'selected' : '' %>>Jump Spam</option>
-                        <option value="circle_walk" <%= status.afkProfile === 'circle_walk' ? 'selected' : '' %>>Circle Walk</option>
-                    </select>
-                </div>
-
-                <!-- Status Row -->
-                <div class="grid grid-cols-3 gap-3 mt-5 pt-5 border-t border-slate-200 dark:border-obsidian-700/60">
-                    <div class="text-center p-2 bg-slate-50 dark:bg-obsidian-950/60 border border-slate-200 dark:border-obsidian-800">
-                        <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">Session Uptime</div>
-                        <div id="uptime-text" class="font-mono text-sm font-bold text-slate-900 dark:text-white"><%= status.uptime || '0s' %></div>
+                    <!-- AFK Profile Selector -->
+                    <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+                        <label class="text-xs font-medium text-fg-muted whitespace-nowrap">AFK Profile:</label>
+                        <select id="afk-profile-select" onchange="setAfkProfile(this.value)" class="flex-1 bg-canvas-default border border-ghborder-default rounded-md px-2.5 py-1.5 text-xs font-mono text-fg-default outline-none focus:border-accent-fg">
+                            <option value="random_look" <%= (status.afkProfile === 'random_look' || !status.afkProfile) ? 'selected' : '' %>>Random Look (Default)</option>
+                            <option value="spin" <%= status.afkProfile === 'spin' ? 'selected' : '' %>>Spin 360°</option>
+                            <option value="jump_spam" <%= status.afkProfile === 'jump_spam' ? 'selected' : '' %>>Jump Spam</option>
+                            <option value="circle_walk" <%= status.afkProfile === 'circle_walk' ? 'selected' : '' %>>Circle Walk</option>
+                        </select>
                     </div>
-                    <div class="text-center p-2 bg-slate-50 dark:bg-obsidian-950/60 border border-slate-200 dark:border-obsidian-800">
-                        <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">Auth Status</div>
-                        <div class="flex items-center justify-center mt-0.5">
-                            <span id="auth-status" class="font-mono text-xs uppercase px-2 py-0.5 border font-bold <%= status.authStatus === 'Verified' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : (status.authStatus === 'Pending' ? 'text-amber-400 border-amber-500/30 bg-amber-500/10 animate-pulse' : 'text-slate-400 border-slate-700 bg-slate-800') %>">
+                </div>
+
+                <!-- Status Metrics Cards -->
+                <div class="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-ghborder-muted">
+                    <div class="p-3 bg-canvas-subtle rounded-md border border-ghborder-muted text-center">
+                        <div class="text-[10px] font-mono text-fg-muted uppercase">Session Uptime</div>
+                        <div id="uptime-text" class="font-mono text-sm font-semibold text-fg-default mt-0.5"><%= status.uptime || '0s' %></div>
+                    </div>
+                    <div class="p-3 bg-canvas-subtle rounded-md border border-ghborder-muted text-center">
+                        <div class="text-[10px] font-mono text-fg-muted uppercase">Auth Status</div>
+                        <div class="flex items-center justify-center mt-1">
+                            <span id="auth-status" class="font-mono text-xs uppercase px-2 py-0.5 border rounded-pill font-semibold <%= status.authStatus === 'Verified' ? 'text-success-fg border-success-subtle bg-success-subtle' : (status.authStatus === 'Pending' ? 'text-attention-fg border-attention-subtle bg-attention-subtle animate-pulse' : 'text-fg-muted border-ghborder-default bg-canvas-default') %>">
                                 <%= status.authStatus || 'Offline' %>
                             </span>
                         </div>
                     </div>
-                    <div class="text-center p-2 bg-slate-50 dark:bg-obsidian-950/60 border border-slate-200 dark:border-obsidian-800">
-                        <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">Total Uptime</div>
-                        <div id="total-uptime" class="font-mono text-sm font-bold text-slate-900 dark:text-white"><%= Math.floor((status.totalUptime || 0) / 3600) %>h <%= Math.floor(((status.totalUptime || 0) % 3600) / 60) %>m</div>
+                    <div class="p-3 bg-canvas-subtle rounded-md border border-ghborder-muted text-center">
+                        <div class="text-[10px] font-mono text-fg-muted uppercase">Total Uptime</div>
+                        <div id="total-uptime" class="font-mono text-sm font-semibold text-fg-default mt-0.5"><%= Math.floor((status.totalUptime || 0) / 3600) %>h <%= Math.floor(((status.totalUptime || 0) % 3600) / 60) %>m</div>
                     </div>
                 </div>
 
-                <!-- Bot HUD — Health/Food with Progress Bars -->
-                <div class="mt-5 pt-5 border-t border-slate-200 dark:border-obsidian-700/60">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold">In-Game Telemetry</h3>
-                        <span class="text-[10px] font-mono text-slate-500">Live Entity Metrics</span>
-                    </div>
+                <!-- Entity Health/Food Progress Bars -->
+                <div class="mt-4 pt-4 border-t border-ghborder-muted">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                        <!-- Health Bar -->
-                        <div class="bg-slate-50 dark:bg-obsidian-950/60 p-3 border border-slate-200 dark:border-obsidian-800">
-                            <div class="flex items-center justify-between mb-1.5">
-                                <span class="text-[10px] font-mono uppercase text-slate-400 flex items-center gap-1">
-                                    <span class="text-redstone-400">❤</span> Health
-                                </span>
-                                <span id="detail-health" class="text-xs font-mono font-bold text-redstone-400">-</span>
+                        <div class="bg-canvas-subtle p-3 rounded-md border border-ghborder-muted">
+                            <div class="flex items-center justify-between mb-1 text-xs">
+                                <span class="font-medium text-fg-muted flex items-center gap-1"><span class="text-danger-fg">❤</span> Health</span>
+                                <span id="detail-health" class="font-mono font-bold text-danger-fg">-</span>
                             </div>
-                            <div class="w-full bg-slate-200 dark:bg-obsidian-800 h-2 overflow-hidden">
-                                <div id="health-bar" class="h-full bg-redstone-500 transition-all duration-700" style="width: 0%"></div>
+                            <div class="w-full bg-canvas-default rounded-full h-2 overflow-hidden border border-ghborder-muted">
+                                <div id="health-bar" class="h-full bg-danger-fg transition-all duration-500" style="width: 0%"></div>
                             </div>
                         </div>
-                        <!-- Food Bar -->
-                        <div class="bg-slate-50 dark:bg-obsidian-950/60 p-3 border border-slate-200 dark:border-obsidian-800">
-                            <div class="flex items-center justify-between mb-1.5">
-                                <span class="text-[10px] font-mono uppercase text-slate-400 flex items-center gap-1">
-                                    <span class="text-amber-400">🍗</span> Food
-                                </span>
-                                <span id="detail-food" class="text-xs font-mono font-bold text-emerald-400">-</span>
+                        <div class="bg-canvas-subtle p-3 rounded-md border border-ghborder-muted">
+                            <div class="flex items-center justify-between mb-1 text-xs">
+                                <span class="font-medium text-fg-muted flex items-center gap-1"><span class="text-attention-fg">🍗</span> Food</span>
+                                <span id="detail-food" class="font-mono font-bold text-success-fg">-</span>
                             </div>
-                            <div class="w-full bg-slate-200 dark:bg-obsidian-800 h-2 overflow-hidden">
-                                <div id="food-bar" class="h-full bg-emerald-500 transition-all duration-700" style="width: 0%"></div>
+                            <div class="w-full bg-canvas-default rounded-full h-2 overflow-hidden border border-ghborder-muted">
+                                <div id="food-bar" class="h-full bg-success-fg transition-all duration-500" style="width: 0%"></div>
                             </div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        <div class="bg-slate-50 dark:bg-obsidian-950/60 p-3 border border-slate-200 dark:border-obsidian-800 text-center">
-                            <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">Entity</div>
-                            <div id="detail-username" class="text-xs font-mono font-bold truncate text-slate-800 dark:text-slate-200"><%= (status.username && status.username !== 'N/A') ? status.username : '-' %></div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                        <div class="bg-canvas-subtle p-2.5 rounded-md border border-ghborder-muted text-center">
+                            <span class="text-fg-muted text-[10px] block">Entity Name</span>
+                            <span id="detail-username" class="font-mono font-semibold text-fg-default truncate block"><%= (status.username && status.username !== 'N/A') ? status.username : '-' %></span>
                         </div>
-                        <div class="bg-slate-50 dark:bg-obsidian-950/60 p-3 border border-slate-200 dark:border-obsidian-800 text-center">
-                            <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">Position</div>
-                            <div id="detail-position" class="text-xs font-mono font-bold truncate text-slate-800 dark:text-slate-200">-</div>
+                        <div class="bg-canvas-subtle p-2.5 rounded-md border border-ghborder-muted text-center">
+                            <span class="text-fg-muted text-[10px] block">Position</span>
+                            <span id="detail-position" class="font-mono font-semibold text-fg-default truncate block">-</span>
                         </div>
-                        <div class="bg-slate-50 dark:bg-obsidian-950/60 p-3 border border-slate-200 dark:border-obsidian-800 text-center">
-                            <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">Dimension</div>
-                            <div id="detail-dimension" class="text-xs font-mono font-bold uppercase text-slate-800 dark:text-slate-200">-</div>
+                        <div class="bg-canvas-subtle p-2.5 rounded-md border border-ghborder-muted text-center col-span-2 md:col-span-1">
+                            <span class="text-fg-muted text-[10px] block">Dimension</span>
+                            <span id="detail-dimension" class="font-mono font-semibold text-fg-default truncate block">-</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Terminal / Console -->
-            <div class="flex-none h-[320px] bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 flex flex-col overflow-hidden shadow-lg">
-                <div class="px-4 py-2.5 bg-obsidian-900 border-b border-obsidian-700/80 flex justify-between items-center select-none gap-3">
+            <!-- Terminal / Code Viewer Container (GitHub Monospace Console) -->
+            <div class="bg-canvas-inset border border-ghborder-default rounded-md flex flex-col shadow-sm overflow-hidden">
+                <div class="px-4 py-2 bg-canvas-subtle border-b border-ghborder-default flex justify-between items-center select-none gap-2">
                     <div class="flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 bg-emerald-500 inline-block"></span>
-                        <span class="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">Terminal Output Stream</span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-success-fg inline-block"></span>
+                        <span class="text-xs font-mono font-semibold text-fg-default">terminal.log</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <!-- Log Search -->
-                        <input type="text" id="log-search-input" placeholder="Search logs..." oninput="filterLogs(this.value)" class="bg-obsidian-950 border border-obsidian-700 text-white font-mono text-xs px-2 py-1 focus:border-primary outline-none w-32 transition-all focus:w-48 placeholder-slate-600">
-                        <button onclick="clearConsole()" class="text-[10px] font-mono uppercase px-2 py-0.5 text-slate-400 hover:text-white border border-obsidian-700 hover:border-slate-500 transition-colors">
-                            Clear Buffer
+                        <input type="text" id="log-search-input" placeholder="Filter console output..." oninput="filterLogs(this.value)" class="bg-canvas-default border border-ghborder-default text-fg-default font-mono text-xs px-2 py-1 rounded focus:border-accent-fg outline-none w-36 transition-all focus:w-48 placeholder-fg-muted">
+                        <button onclick="clearConsole()" class="text-[11px] font-mono px-2 py-1 text-fg-muted hover:text-fg-default border border-ghborder-default hover:border-ghborder-strong rounded transition-colors">
+                            Clear
                         </button>
                     </div>
                 </div>
 
-                <div id="console-logs" class="h-[220px] flex-none p-3.5 overflow-y-auto text-xs font-mono space-y-0.5 bg-obsidian-950 text-slate-300 console-logs leading-relaxed">
-                    <div class="console-placeholder text-slate-500 italic py-1">Connecting to console stream...</div>
+                <div id="console-logs" class="h-[300px] p-4 overflow-y-auto font-mono text-xs space-y-1 bg-canvas-inset text-fg-default console-logs leading-relaxed">
+                    <div class="console-placeholder text-fg-muted italic">Connecting to console stream...</div>
                 </div>
 
-                <div class="p-3 bg-obsidian-900 border-t border-obsidian-700/80">
+                <div class="p-2.5 bg-canvas-subtle border-t border-ghborder-default">
                     <form onsubmit="sendCommand(event)" class="flex gap-2">
                         <div class="relative flex-1">
-                            <span class="absolute left-3 top-2.5 font-mono text-xs text-primary select-none">></span>
-                            <input type="text" id="command-input" class="w-full pl-7 pr-3 py-2 bg-obsidian-950 border border-obsidian-700 text-white font-mono text-xs focus:border-primary outline-none transition-colors" placeholder="Type command or chat message... (↑↓ for history)" autocomplete="off">
+                            <span class="absolute left-2.5 top-2 font-mono text-xs text-accent-fg select-none">$</span>
+                            <input type="text" id="command-input" class="w-full pl-6 pr-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-fg-default font-mono text-xs focus:border-accent-fg outline-none transition-colors" placeholder="Type command or message... (↑↓ for history)" autocomplete="off">
                         </div>
-                        <button type="submit" class="px-5 py-2 bg-primary hover:bg-primary-hover text-white font-mono text-xs font-bold uppercase tracking-wider transition-colors border border-primary-hover active:translate-y-0.5">
+                        <button type="submit" class="px-4 py-1.5 bg-accent-emphasis hover:bg-accent-fg text-white font-semibold text-xs rounded-md transition-colors border border-accent-emphasis">
                             Send
                         </button>
                     </form>
@@ -204,157 +186,114 @@
             </div>
         </div>
 
-        <!-- Right Column: Settings & Analytics -->
-        <div class="<%= section === 'console' ? 'hidden' : 'lg:col-span-3 max-w-5xl w-full mx-auto' %> flex flex-col gap-5">
+        <!-- Panels for Config, Analytics, Events -->
+        <div class="<%= section === 'console' ? 'hidden' : 'lg:col-span-3 max-w-4xl w-full mx-auto' %> flex flex-col gap-5">
 
-            <!-- Config Tab -->
+            <!-- Config Tab Panel -->
             <div id="panel-config" class="<%= section === 'config' ? '' : 'hidden ' %>flex flex-col gap-4">
-                <!-- Configuration Box -->
-                <div class="bg-white dark:bg-obsidian-900 p-5 border border-slate-200 dark:border-obsidian-700/80 shadow-sm">
-                    <div class="flex items-center gap-2 mb-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-3">
-                        <span class="material-icons text-primary text-base">settings</span>
-                        <h3 class="text-xs font-mono uppercase tracking-wider font-bold text-slate-900 dark:text-white">Bot Configuration</h3>
-                    </div>
+                <div class="bg-canvas-default p-5 border border-ghborder-default rounded-md shadow-sm">
+                    <h3 class="text-sm font-semibold text-fg-default mb-4 border-b border-ghborder-muted pb-2">Bot Settings & Credentials</h3>
 
-                    <form onsubmit="updateBotConfig(event)" class="space-y-3.5">
+                    <form onsubmit="updateBotConfig(event)" class="space-y-4">
                         <div>
-                            <label class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 font-semibold">Instance Name</label>
-                            <input type="text" name="name" value="<%= botConfig.name %>" required class="w-full px-3 py-2 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs text-slate-900 dark:text-white outline-none focus:border-primary">
+                            <label class="block text-xs font-semibold text-fg-default mb-1">Instance Label</label>
+                            <input type="text" name="name" value="<%= botConfig.name %>" required class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs text-fg-default outline-none focus:border-accent-fg">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 font-semibold">Server Host IP</label>
-                            <input type="text" name="ip" value="<%= typeof botConfig.server !== 'undefined' ? botConfig.server.ip : '' %>" required class="w-full px-3 py-2 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
+                            <label class="block text-xs font-semibold text-fg-default mb-1">Server Target IP</label>
+                            <input type="text" name="ip" value="<%= typeof botConfig.server !== 'undefined' ? botConfig.server.ip : '' %>" required class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs font-mono text-fg-default outline-none focus:border-accent-fg">
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 font-semibold">Port</label>
-                                <input type="number" name="port" value="<%= typeof botConfig.server !== 'undefined' ? botConfig.server.port : '25565' %>" required class="w-full px-3 py-2 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
+                                <label class="block text-xs font-semibold text-fg-default mb-1">Port</label>
+                                <input type="number" name="port" value="<%= typeof botConfig.server !== 'undefined' ? botConfig.server.port : '25565' %>" required class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs font-mono text-fg-default outline-none focus:border-accent-fg">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 font-semibold">Version</label>
-                                <input type="text" name="version" value="<%= typeof botConfig.server !== 'undefined' ? botConfig.server.version : '1.20.4' %>" required class="w-full px-3 py-2 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary">
+                                <label class="block text-xs font-semibold text-fg-default mb-1">Minecraft Version</label>
+                                <input type="text" name="version" value="<%= typeof botConfig.server !== 'undefined' ? botConfig.server.version : '1.20.4' %>" required class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs font-mono text-fg-default outline-none focus:border-accent-fg">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 font-semibold">Microsoft Account Email</label>
-                            <input type="email" name="email" value="<%= typeof botConfig.account !== 'undefined' ? botConfig.account.email : '' %>" required class="w-full px-3 py-2 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs text-slate-900 dark:text-white outline-none focus:border-primary">
+                            <label class="block text-xs font-semibold text-fg-default mb-1">Microsoft Account Email</label>
+                            <input type="email" name="email" value="<%= typeof botConfig.account !== 'undefined' ? botConfig.account.email : '' %>" required class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs text-fg-default outline-none focus:border-accent-fg">
                         </div>
-                        <button type="submit" class="w-full bg-primary hover:bg-primary-hover text-white font-mono text-xs font-bold uppercase tracking-wider py-2.5 transition-all border border-primary-hover active:translate-y-0.5">
-                            Save Configuration
+                        <button type="submit" class="w-full bg-accent-emphasis hover:bg-accent-fg text-white font-semibold text-xs py-2 rounded-md transition-colors border border-accent-emphasis">
+                            Save Bot Configuration
                         </button>
                     </form>
                 </div>
 
-                <!-- Automation Settings -->
-                <div class="bg-white dark:bg-obsidian-900 p-5 border border-slate-200 dark:border-obsidian-700/80 shadow-sm">
-                    <div class="flex items-center gap-2 mb-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-3">
-                        <span class="material-icons text-primary text-base">auto_fix_high</span>
-                        <h3 class="text-xs font-mono uppercase tracking-wider font-bold text-slate-900 dark:text-white">Automation</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <!-- Auto-Eat Toggle -->
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Auto Eat</div>
-                                <div class="text-[10px] text-slate-400">Automatically eat food when hungry</div>
-                            </div>
-                            <button id="auto-eat-btn" onclick="toggleAutoEat()" class="relative w-10 h-5 transition-colors <%= botConfig.autoEat !== false ? 'bg-primary' : 'bg-slate-300 dark:bg-obsidian-700' %> border border-slate-300 dark:border-obsidian-600">
-                                <span id="auto-eat-knob" class="absolute top-0.5 h-4 w-4 bg-white transition-transform <%= botConfig.autoEat !== false ? 'translate-x-5' : 'translate-x-0.5' %>"></span>
-                            </button>
-                        </div>
-                        <!-- Auto-Start Toggle (admin only) -->
-                        <% if (user && user.role === 'admin') { %>
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Auto-Start on Boot</div>
-                                <div class="text-[10px] text-slate-400">Start this bot when server starts</div>
-                            </div>
-                            <button id="auto-start-btn" onclick="toggleAutoStart()" class="relative w-10 h-5 transition-colors <%= botConfig.autoStart ? 'bg-primary' : 'bg-slate-300 dark:bg-obsidian-700' %> border border-slate-300 dark:border-obsidian-600">
-                                <span id="auto-start-knob" class="absolute top-0.5 h-4 w-4 bg-white transition-transform <%= botConfig.autoStart ? 'translate-x-5' : 'translate-x-0.5' %>"></span>
-                            </button>
-                        </div>
-                        <% } %>
-                    </div>
-                </div>
+                <!-- Automation & Webhook Controls -->
+                <div class="bg-canvas-default p-5 border border-ghborder-default rounded-md shadow-sm space-y-4">
+                    <h3 class="text-sm font-semibold text-fg-default border-b border-ghborder-muted pb-2">Automation & Webhooks</h3>
 
-                <!-- Webhook & Login Commands -->
-                <div class="bg-white dark:bg-obsidian-900 p-5 border border-slate-200 dark:border-obsidian-700/80 shadow-sm">
-                    <div class="flex items-center gap-2 mb-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-3">
-                        <span class="material-icons text-primary text-base">notifications</span>
-                        <h3 class="text-xs font-mono uppercase tracking-wider font-bold text-slate-900 dark:text-white">Alerts & Commands</h3>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-semibold text-fg-default">Auto Eat Routine</div>
+                            <div class="text-[11px] text-fg-muted">Automatically eat food items when hunger drops</div>
+                        </div>
+                        <button id="auto-eat-btn" onclick="toggleAutoEat()" class="relative w-10 h-5 transition-colors <%= botConfig.autoEat !== false ? 'bg-accent-emphasis' : 'bg-ghborder-strong' %> rounded-pill">
+                            <span id="auto-eat-knob" class="absolute top-0.5 h-4 w-4 bg-white rounded-full transition-transform <%= botConfig.autoEat !== false ? 'translate-x-5' : 'translate-x-0.5' %>"></span>
+                        </button>
                     </div>
-                    <div class="space-y-3.5">
-                        <div>
-                            <label class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-1 font-semibold">Discord/Slack Webhook URL</label>
-                            <div class="flex gap-2">
-                                <input type="url" id="webhook-input" value="<%= botConfig.webhookUrl || '' %>" placeholder="https://discord.com/api/webhooks/..." class="flex-1 px-3 py-2 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs text-slate-900 dark:text-white outline-none focus:border-primary">
-                                <button onclick="saveWebhook()" class="px-3 py-2 bg-primary hover:bg-primary-hover text-white font-mono text-xs font-bold uppercase transition-all border border-primary-hover active:translate-y-0.5">Save</button>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-1 font-semibold">Login Commands (one per line)</label>
-                            <textarea id="login-commands-input" rows="3" placeholder="/login mypassword&#10;/kit starter" class="w-full px-3 py-2 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-primary resize-none"><%= (botConfig.loginCommands || []).join('\n') %></textarea>
-                            <button onclick="saveLoginCommands()" class="mt-2 w-full bg-slate-100 dark:bg-obsidian-800 hover:bg-slate-200 dark:hover:bg-obsidian-700 text-slate-700 dark:text-slate-300 font-mono text-xs font-bold uppercase py-2 transition-all border border-slate-300 dark:border-obsidian-700">Save Commands</button>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-1 font-semibold">Notes</label>
-                            <textarea id="notes-input" rows="2" placeholder="Bot notes..." class="w-full px-3 py-2 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs text-slate-900 dark:text-white outline-none focus:border-primary resize-none"><%= botConfig.notes || '' %></textarea>
-                            <button onclick="saveNotes()" class="mt-2 w-full bg-slate-100 dark:bg-obsidian-800 hover:bg-slate-200 dark:hover:bg-obsidian-700 text-slate-700 dark:text-slate-300 font-mono text-xs font-bold uppercase py-2 transition-all border border-slate-300 dark:border-obsidian-700">Save Notes</button>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Microsoft Auth Helper Notice -->
-                <div class="bg-white dark:bg-obsidian-900 p-4 border border-slate-200 dark:border-obsidian-700/80 text-xs space-y-1.5">
-                    <div class="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-bold uppercase font-mono text-[10px]">
-                        <span class="material-icons text-sm text-primary">security</span>
-                        <span>Authentication Protocol</span>
+                    <% if (user && user.role === 'admin') { %>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-semibold text-fg-default">Auto-Start on Boot</div>
+                            <div class="text-[11px] text-fg-muted">Automatically connect bot instance when system starts</div>
+                        </div>
+                        <button id="auto-start-btn" onclick="toggleAutoStart()" class="relative w-10 h-5 transition-colors <%= botConfig.autoStart ? 'bg-accent-emphasis' : 'bg-ghborder-strong' %> rounded-pill">
+                            <span id="auto-start-knob" class="absolute top-0.5 h-4 w-4 bg-white rounded-full transition-transform <%= botConfig.autoStart ? 'translate-x-5' : 'translate-x-0.5' %>"></span>
+                        </button>
                     </div>
-                    <p class="text-slate-500 dark:text-slate-400 leading-relaxed text-[11px]">
-                        Microsoft auth flows trigger automatic login tokens. If a verification code is prompted, copy the code and authenticate on the Microsoft portal.
-                    </p>
+                    <% } %>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-fg-default mb-1">Webhook URL (Discord/Slack)</label>
+                        <div class="flex gap-2">
+                            <input type="url" id="webhook-input" value="<%= botConfig.webhookUrl || '' %>" placeholder="https://discord.com/api/webhooks/..." class="flex-1 px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs text-fg-default outline-none focus:border-accent-fg">
+                            <button onclick="saveWebhook()" class="px-3 py-1.5 bg-accent-emphasis hover:bg-accent-fg text-white font-semibold text-xs rounded-md transition-colors">Save</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-fg-default mb-1">Login Commands (One per line)</label>
+                        <textarea id="login-commands-input" rows="3" placeholder="/login mypassword&#10;/kit starter" class="w-full px-3 py-2 bg-canvas-default border border-ghborder-default rounded-md text-xs font-mono text-fg-default outline-none focus:border-accent-fg resize-none"><%= (botConfig.loginCommands || []).join('\n') %></textarea>
+                        <button onclick="saveLoginCommands()" class="mt-2 w-full bg-canvas-subtle hover:bg-canvas-default text-fg-default font-semibold text-xs py-1.5 rounded-md border border-ghborder-default transition-colors">Save Commands</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Analytics Tab -->
+            <!-- Analytics Tab Panel -->
             <div id="panel-analytics" class="<%= section === 'analytics' ? '' : 'hidden ' %>flex flex-col gap-4">
-                <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <div class="bg-white dark:bg-obsidian-900 p-4 border border-slate-200 dark:border-obsidian-700/80">
-                        <div class="text-[10px] font-mono uppercase tracking-wider text-slate-500">CPU usage</div>
-                        <div id="runtime-cpu-current" class="mt-2 text-lg font-mono font-bold text-primary">--%</div>
-                        <div class="text-[10px] text-slate-500 mt-1">Bot process</div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-canvas-default p-4 border border-ghborder-default rounded-md">
+                        <div class="text-[11px] font-mono uppercase text-fg-muted">CPU usage</div>
+                        <div id="runtime-cpu-current" class="mt-1 text-lg font-mono font-bold text-accent-fg">--%</div>
                     </div>
-                    <div class="bg-white dark:bg-obsidian-900 p-4 border border-slate-200 dark:border-obsidian-700/80">
-                        <div class="text-[10px] font-mono uppercase tracking-wider text-slate-500">RAM usage</div>
-                        <div id="runtime-memory-current" class="mt-2 text-lg font-mono font-bold text-emerald-400">-- MB</div>
-                        <div class="text-[10px] text-slate-500 mt-1">RSS memory</div>
+                    <div class="bg-canvas-default p-4 border border-ghborder-default rounded-md">
+                        <div class="text-[11px] font-mono uppercase text-fg-muted">RAM usage</div>
+                        <div id="runtime-memory-current" class="mt-1 text-lg font-mono font-bold text-success-fg">-- MB</div>
                     </div>
-                    <div class="bg-white dark:bg-obsidian-900 p-4 border border-slate-200 dark:border-obsidian-700/80 col-span-2">
-                        <div class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Runtime scope</div>
-                        <div class="mt-2 text-sm font-mono font-bold text-slate-200">Node bot process</div>
-                        <div class="text-[10px] text-slate-500 mt-1">Shared process hosting this bot instance</div>
+                    <div class="bg-canvas-default p-4 border border-ghborder-default rounded-md col-span-2">
+                        <div class="text-[11px] font-mono uppercase text-fg-muted">Process Scope</div>
+                        <div class="mt-1 text-xs font-semibold text-fg-default">Shared Node Bot Instance</div>
                     </div>
                 </div>
-                <div class="bg-white dark:bg-obsidian-900 p-5 border border-slate-200 dark:border-obsidian-700/80 shadow-sm">
-                    <div class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="material-icons text-primary text-base">memory</span>
-                            <h3 class="text-xs font-mono uppercase tracking-wider font-bold text-slate-900 dark:text-white">CPU & RAM History</h3>
-                        </div>
-                        <span class="text-[10px] font-mono text-slate-500">CPU % / RAM MB</span>
-                    </div>
+
+                <div class="bg-canvas-default p-5 border border-ghborder-default rounded-md shadow-sm">
+                    <h3 class="text-sm font-semibold text-fg-default mb-4 border-b border-ghborder-muted pb-2">Resource Metrics History</h3>
                     <div class="h-52 relative">
                         <canvas id="runtime-chart"></canvas>
-                        <div id="runtime-empty" class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs font-mono hidden">No runtime samples yet.</div>
+                        <div id="runtime-empty" class="absolute inset-0 flex items-center justify-center text-fg-muted text-xs font-mono hidden">No metrics collected yet.</div>
                     </div>
                 </div>
-                <div class="bg-white dark:bg-obsidian-900 p-5 border border-slate-200 dark:border-obsidian-700/80 shadow-sm">
-                    <div class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="material-icons text-primary text-base">show_chart</span>
-                            <h3 class="text-xs font-mono uppercase tracking-wider font-bold text-slate-900 dark:text-white">Health & Food History</h3>
-                        </div>
-                        <select id="metrics-hours" onchange="loadMetrics()" class="bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs font-mono px-2 py-1 text-slate-700 dark:text-white outline-none">
+
+                <div class="bg-canvas-default p-5 border border-ghborder-default rounded-md shadow-sm">
+                    <div class="flex items-center justify-between mb-4 border-b border-ghborder-muted pb-2">
+                        <h3 class="text-sm font-semibold text-fg-default">Health & Food History</h3>
+                        <select id="metrics-hours" onchange="loadMetrics()" class="bg-canvas-default border border-ghborder-default rounded px-2 py-1 text-xs font-mono text-fg-default outline-none">
                             <option value="6">6h</option>
                             <option value="24" selected>24h</option>
                             <option value="72">3d</option>
@@ -362,44 +301,20 @@
                     </div>
                     <div class="h-48 relative">
                         <canvas id="metrics-chart"></canvas>
-                        <div id="metrics-empty" class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs font-mono hidden">No data yet. Bot must be online to collect metrics.</div>
-                    </div>
-                </div>
-                <div class="bg-white dark:bg-obsidian-900 p-5 border border-slate-200 dark:border-obsidian-700/80 shadow-sm">
-                    <div class="flex items-center gap-2 mb-3 border-b border-slate-200 dark:border-obsidian-700/60 pb-3">
-                        <span class="material-icons text-primary text-base">search</span>
-                        <h3 class="text-xs font-mono uppercase tracking-wider font-bold text-slate-900 dark:text-white">Log Search</h3>
-                    </div>
-                    <div class="flex gap-2 mb-3">
-                        <input type="text" id="search-keyword" placeholder="Keyword..." class="flex-1 px-3 py-2 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs text-slate-900 dark:text-white outline-none focus:border-primary">
-                        <select id="search-type" class="bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs font-mono px-2 py-2 text-slate-700 dark:text-white outline-none">
-                            <option value="">All Types</option>
-                            <option value="info">Info</option>
-                            <option value="error">Error</option>
-                            <option value="warning">Warning</option>
-                            <option value="chat">Chat</option>
-                            <option value="action">Action</option>
-                        </select>
-                        <button onclick="searchLogs()" class="px-3 py-2 bg-primary hover:bg-primary-hover text-white font-mono text-xs font-bold uppercase transition-all border border-primary-hover">Go</button>
-                    </div>
-                    <div id="search-results" class="max-h-40 overflow-y-auto text-xs font-mono space-y-0.5 bg-obsidian-950 p-2 min-h-[60px]">
-                        <div class="text-slate-500 italic">Search results will appear here</div>
+                        <div id="metrics-empty" class="absolute inset-0 flex items-center justify-center text-fg-muted text-xs font-mono hidden">No metric records found.</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Events Tab -->
+            <!-- Events Tab Panel -->
             <div id="panel-events" class="<%= section === 'events' ? '' : 'hidden ' %>flex flex-col gap-4">
-                <div class="bg-white dark:bg-obsidian-900 p-5 border border-slate-200 dark:border-obsidian-700/80 shadow-sm">
-                    <div class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="material-icons text-primary text-base">timeline</span>
-                            <h3 class="text-xs font-mono uppercase tracking-wider font-bold text-slate-900 dark:text-white">Event Timeline</h3>
-                        </div>
-                        <button onclick="loadEvents()" class="text-[10px] font-mono uppercase px-2 py-1 text-primary border border-primary/30 hover:bg-primary/10 transition-colors">Refresh</button>
+                <div class="bg-canvas-default p-5 border border-ghborder-default rounded-md shadow-sm">
+                    <div class="flex items-center justify-between mb-4 border-b border-ghborder-muted pb-2">
+                        <h3 class="text-sm font-semibold text-fg-default">Event Activity Feed</h3>
+                        <button onclick="loadEvents()" class="text-xs text-accent-fg hover:underline font-semibold">Refresh</button>
                     </div>
                     <div id="event-timeline" class="space-y-2 max-h-96 overflow-y-auto">
-                        <div class="text-slate-400 text-xs font-mono italic">Loading events...</div>
+                        <div class="text-fg-muted text-xs font-mono italic">Loading events...</div>
                     </div>
                 </div>
             </div>
@@ -407,57 +322,58 @@
     </div>
 </main>
 
-<!-- Microsoft Auth Modal -->
-<div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
-    <div class="bg-white dark:bg-obsidian-900 border-2 border-slate-300 dark:border-obsidian-700 p-6 w-full max-w-md mx-4 shadow-2xl transform scale-95 transition-transform duration-200" id="auth-modal-content">
-        <div class="text-center mb-5">
-            <div class="w-12 h-12 bg-primary/10 border border-primary/20 text-primary mx-auto flex items-center justify-center mb-3">
-                <span class="material-icons text-2xl">vpn_key</span>
+<!-- Microsoft Auth Modal Dialog -->
+<div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs hidden opacity-0 transition-opacity duration-150">
+    <div class="bg-canvas-default border border-ghborder-default rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl transform scale-95 transition-transform duration-150" id="auth-modal-content">
+        <div class="text-center mb-4">
+            <div class="w-10 h-10 bg-accent-subtle text-accent-fg rounded-full mx-auto flex items-center justify-center mb-2">
+                <span class="material-icons text-xl">vpn_key</span>
             </div>
-            <h3 class="text-base font-bold uppercase tracking-wider text-slate-900 dark:text-white">Microsoft Auth Required</h3>
-            <p class="text-slate-500 dark:text-slate-400 mt-1 text-xs">Verify your Minecraft account credentials below.</p>
+            <h3 class="text-sm font-semibold text-fg-default">Microsoft Authentication Required</h3>
+            <p class="text-fg-muted text-xs mt-1">Authenticate your Minecraft account using the code below.</p>
         </div>
-        <div class="bg-slate-50 dark:bg-obsidian-950 p-4 mb-5 border border-slate-300 dark:border-obsidian-700">
-            <span class="block text-[10px] font-mono uppercase text-slate-400 tracking-wider mb-1">One-Time Verification Code</span>
-            <div class="flex items-center justify-between gap-2">
-                <code id="auth-code" class="text-xl font-mono font-bold tracking-widest text-primary"></code>
-                <button id="copy-code-btn" onclick="copyCode()" class="p-2 bg-slate-200 dark:bg-obsidian-800 hover:bg-slate-300 dark:hover:bg-obsidian-700 text-slate-700 dark:text-slate-300 transition-colors border border-slate-300 dark:border-obsidian-700" title="Copy Code">
+        <div class="bg-canvas-subtle p-3 mb-4 rounded-md border border-ghborder-default text-center">
+            <span class="block text-[10px] font-mono text-fg-muted uppercase mb-1">One-Time Code</span>
+            <div class="flex items-center justify-center gap-2">
+                <code id="auth-code" class="text-lg font-mono font-bold text-accent-fg tracking-widest"></code>
+                <button id="copy-code-btn" onclick="copyCode()" class="p-1 text-fg-muted hover:text-fg-default rounded hover:bg-canvas-default transition-colors" title="Copy Code">
                     <span class="material-icons text-sm">content_copy</span>
                 </button>
             </div>
         </div>
-        <a id="auth-link" href="#" target="_blank" class="block w-full bg-primary hover:bg-primary-hover text-white text-center font-mono text-xs font-bold uppercase tracking-wider py-2.5 mb-3 transition-colors border border-primary-hover">
-            Open Microsoft Device Login ->
+        <a id="auth-link" href="#" target="_blank" class="block w-full bg-accent-emphasis hover:bg-accent-fg text-white text-center text-xs font-semibold py-2 rounded-md mb-2 transition-colors">
+            Open Microsoft Verification Page →
         </a>
-        <button onclick="closeAuthModal()" class="w-full text-slate-500 hover:text-slate-300 font-mono text-xs uppercase tracking-wider py-2 border border-transparent hover:border-slate-700 transition-colors">
+        <button onclick="closeAuthModal()" class="w-full text-xs text-fg-muted hover:text-fg-default py-1.5">
             Close Dialog
         </button>
     </div>
 </div>
 
 <script>
-// ===== Command History =====
+// Command History
 let cmdHistory = [];
 let cmdHistoryIdx = -1;
 const cmdInput = document.getElementById('command-input');
-cmdInput.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (cmdHistory.length === 0) return;
-        cmdHistoryIdx = Math.min(cmdHistoryIdx + 1, cmdHistory.length - 1);
-        cmdInput.value = cmdHistory[cmdHistoryIdx];
-    } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (cmdHistoryIdx <= 0) { cmdHistoryIdx = -1; cmdInput.value = ''; return; }
-        cmdHistoryIdx--;
-        cmdInput.value = cmdHistory[cmdHistoryIdx];
-    }
-});
+if (cmdInput) {
+    cmdInput.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (cmdHistory.length === 0) return;
+            cmdHistoryIdx = Math.min(cmdHistoryIdx + 1, cmdHistory.length - 1);
+            cmdInput.value = cmdHistory[cmdHistoryIdx];
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (cmdHistoryIdx <= 0) { cmdHistoryIdx = -1; cmdInput.value = ''; return; }
+            cmdHistoryIdx--;
+            cmdInput.value = cmdHistory[cmdHistoryIdx];
+        }
+    });
+}
 
-// ===== Log Filter =====
 function filterLogs(keyword) {
     const logs = document.querySelectorAll('#console-logs > div');
-    const kw = keyword.toLowerCase();
+    const kw = (keyword || '').toLowerCase();
     logs.forEach(el => {
         if (!kw || el.textContent.toLowerCase().includes(kw)) {
             el.style.display = '';
@@ -467,19 +383,6 @@ function filterLogs(keyword) {
     });
 }
 
-// ===== Tab Switching =====
-function switchTab(tab) {
-    ['config','analytics','events'].forEach(t => {
-        const panel = document.getElementById('panel-' + t);
-        if (panel) panel.classList.add('hidden');
-    });
-    const panel = document.getElementById('panel-' + tab);
-    if (panel) panel.classList.remove('hidden');
-    if (tab === 'analytics') loadMetrics();
-    if (tab === 'events') loadEvents();
-}
-
-// ===== AFK Profile =====
 async function setAfkProfile(profile) {
     const res = await fetch(`/api/bot/${BOT_ID}/afk-profile`, {
         method: 'POST',
@@ -491,14 +394,15 @@ async function setAfkProfile(profile) {
     else showToast(data.error || 'Failed to set AFK profile', 'error');
 }
 
-// ===== Auto-Eat Toggle =====
 let autoEatEnabled = <%= botConfig.autoEat !== false ? 'true' : 'false' %>;
 async function toggleAutoEat() {
     autoEatEnabled = !autoEatEnabled;
     const btn = document.getElementById('auto-eat-btn');
     const knob = document.getElementById('auto-eat-knob');
-    btn.className = btn.className.replace(autoEatEnabled ? 'bg-slate-300 dark:bg-obsidian-700' : 'bg-primary', autoEatEnabled ? 'bg-primary' : 'bg-slate-300 dark:bg-obsidian-700');
-    knob.className = knob.className.replace(autoEatEnabled ? 'translate-x-0.5' : 'translate-x-5', autoEatEnabled ? 'translate-x-5' : 'translate-x-0.5');
+    if (btn && knob) {
+        btn.className = `relative w-10 h-5 transition-colors ${autoEatEnabled ? 'bg-accent-emphasis' : 'bg-ghborder-strong'} rounded-pill`;
+        knob.className = `absolute top-0.5 h-4 w-4 bg-white rounded-full transition-transform ${autoEatEnabled ? 'translate-x-5' : 'translate-x-0.5'}`;
+    }
     const res = await fetch(`/api/bot/${BOT_ID}/auto-eat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -509,15 +413,14 @@ async function toggleAutoEat() {
     else showToast(`Auto-eat ${autoEatEnabled ? 'enabled' : 'disabled'}`, 'success');
 }
 
-// ===== Auto-Start Toggle =====
 let autoStartEnabled = <%= botConfig.autoStart ? 'true' : 'false' %>;
 async function toggleAutoStart() {
     autoStartEnabled = !autoStartEnabled;
     const btn = document.getElementById('auto-start-btn');
     const knob = document.getElementById('auto-start-knob');
-    if (btn) {
-        btn.className = btn.className.replace(autoStartEnabled ? 'bg-slate-300 dark:bg-obsidian-700' : 'bg-primary', autoStartEnabled ? 'bg-primary' : 'bg-slate-300 dark:bg-obsidian-700');
-        knob.className = knob.className.replace(autoStartEnabled ? 'translate-x-0.5' : 'translate-x-5', autoStartEnabled ? 'translate-x-5' : 'translate-x-0.5');
+    if (btn && knob) {
+        btn.className = `relative w-10 h-5 transition-colors ${autoStartEnabled ? 'bg-accent-emphasis' : 'bg-ghborder-strong'} rounded-pill`;
+        knob.className = `absolute top-0.5 h-4 w-4 bg-white rounded-full transition-transform ${autoStartEnabled ? 'translate-x-5' : 'translate-x-0.5'}`;
     }
     const res = await fetch(`/api/bot/${BOT_ID}/auto-start`, {
         method: 'POST',
@@ -529,7 +432,6 @@ async function toggleAutoStart() {
     else showToast(`Auto-start ${autoStartEnabled ? 'enabled' : 'disabled'}`, 'success');
 }
 
-// ===== Webhook Save =====
 async function saveWebhook() {
     const webhookUrl = document.getElementById('webhook-input').value;
     const res = await fetch(`/api/bot/${BOT_ID}/webhook`, {
@@ -542,7 +444,6 @@ async function saveWebhook() {
     else showToast(data.error || 'Failed to save webhook', 'error');
 }
 
-// ===== Login Commands Save =====
 async function saveLoginCommands() {
     const raw = document.getElementById('login-commands-input').value;
     const commands = raw.split('\n').map(c => c.trim()).filter(Boolean);
@@ -556,20 +457,6 @@ async function saveLoginCommands() {
     else showToast(data.error || 'Failed', 'error');
 }
 
-// ===== Notes Save =====
-async function saveNotes() {
-    const notes = document.getElementById('notes-input').value;
-    const res = await fetch(`/api/bot/${BOT_ID}/notes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes })
-    });
-    const data = await res.json();
-    if (data.success) showToast('Notes saved!', 'success');
-    else showToast(data.error || 'Failed', 'error');
-}
-
-// ===== Health/Food Chart =====
 let metricsChart = null;
 let runtimeChart = null;
 async function loadMetrics() {
@@ -588,131 +475,47 @@ async function loadMetrics() {
     if (cpuCurrent) cpuCurrent.textContent = `${Number(latestMetric.cpu || 0).toFixed(1)}%`;
     if (memoryCurrent) memoryCurrent.textContent = `${Number(latestMetric.memory || 0).toFixed(1)} MB`;
     const labels = data.metrics.map(m => new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
-    const healthData = data.metrics.map(m => m.health);
-    const foodData = data.metrics.map(m => m.food);
 
-    const ctx = document.getElementById('metrics-chart').getContext('2d');
-    if (metricsChart) metricsChart.destroy();
-    metricsChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [
-                { label: 'Health', data: healthData, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.4, fill: true, pointRadius: 1 },
-                { label: 'Food', data: foodData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.4, fill: true, pointRadius: 1 }
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
-            scales: {
-                x: { ticks: { color: '#64748b', font: { size: 9 }, maxTicksLimit: 8 }, grid: { color: 'rgba(100,116,139,0.1)' } },
-                y: { min: 0, max: 20, ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(100,116,139,0.1)' } }
-            }
-        }
-    });
-
-    const runtimeEmpty = document.getElementById('runtime-empty');
-    if (runtimeEmpty) runtimeEmpty.classList.add('hidden');
-    const runtimeCtx = document.getElementById('runtime-chart')?.getContext('2d');
-    if (runtimeCtx) {
-        if (runtimeChart) runtimeChart.destroy();
-        runtimeChart = new Chart(runtimeCtx, {
+    const ctx = document.getElementById('metrics-chart')?.getContext('2d');
+    if (ctx) {
+        if (metricsChart) metricsChart.destroy();
+        metricsChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels,
                 datasets: [
-                    { label: 'CPU %', data: data.metrics.map(m => Number(m.cpu || 0)), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', yAxisID: 'cpu', tension: 0.35, fill: true, pointRadius: 1 },
-                    { label: 'RAM MB', data: data.metrics.map(m => Number(m.memory || 0)), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', yAxisID: 'memory', tension: 0.35, fill: true, pointRadius: 1 }
+                    { label: 'Health', data: data.metrics.map(m => m.health), borderColor: '#cf222e', backgroundColor: 'rgba(207,34,46,0.1)', tension: 0.3, fill: true, pointRadius: 1 },
+                    { label: 'Food', data: data.metrics.map(m => m.food), borderColor: '#1a7f37', backgroundColor: 'rgba(26,127,55,0.1)', tension: 0.3, fill: true, pointRadius: 1 }
                 ]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
+                plugins: { legend: { labels: { color: '#8b949e', font: { size: 10 } } } },
                 scales: {
-                    x: { ticks: { color: '#64748b', font: { size: 9 }, maxTicksLimit: 8 }, grid: { color: 'rgba(100,116,139,0.1)' } },
-                    cpu: { position: 'left', beginAtZero: true, ticks: { color: '#60a5fa', font: { size: 9 } }, grid: { color: 'rgba(100,116,139,0.1)' } },
-                    memory: { position: 'right', beginAtZero: true, ticks: { color: '#34d399', font: { size: 9 } }, grid: { drawOnChartArea: false } }
+                    x: { ticks: { color: '#6e7681', font: { size: 9 }, maxTicksLimit: 8 }, grid: { color: 'rgba(110,118,129,0.1)' } },
+                    y: { min: 0, max: 20, ticks: { color: '#6e7681', font: { size: 9 } }, grid: { color: 'rgba(110,118,129,0.1)' } }
                 }
             }
         });
     }
 }
 
-// ===== Log Search =====
-async function searchLogs() {
-    const keyword = document.getElementById('search-keyword').value;
-    const type = document.getElementById('search-type').value;
-    const params = new URLSearchParams({ limit: 100 });
-    if (keyword) params.set('keyword', keyword);
-    if (type) params.set('type', type);
-    const res = await fetch(`/api/bot/${BOT_ID}/history/search?${params}`);
-    const data = await res.json();
-    const container = document.getElementById('search-results');
-    if (!data.success || data.logs.length === 0) {
-        container.innerHTML = '<div class="text-slate-500 italic">No results found.</div>';
-        return;
-    }
-    const typeColors = { error: 'text-redstone-400', warning: 'text-amber-400', chat: 'text-emerald-400', info: 'text-slate-300', action: 'text-primary', output: 'text-blue-400' };
-    container.innerHTML = data.logs.map(l => {
-        const color = typeColors[l.type] || 'text-slate-300';
-        const ts = new Date(l.timestamp).toLocaleTimeString();
-        return `<div class="${color}">[${ts}] ${escapeHtml(l.message)}</div>`;
-    }).join('');
-}
-function escapeHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-// ===== Event Timeline =====
-const eventIcons = { login:'login', kicked:'block', disconnect:'wifi_off', reconnect:'wifi', afk_start:'bedtime', afk_stop:'wb_sunny', spawn:'person_pin', error:'error' };
-const eventColors = { login:'text-emerald-400', kicked:'text-redstone-400', disconnect:'text-amber-400', reconnect:'text-blue-400', afk_start:'text-purple-400', afk_stop:'text-slate-400', spawn:'text-primary', error:'text-redstone-500' };
 async function loadEvents() {
     const res = await fetch(`/api/bot/${BOT_ID}/events?limit=50`);
     const data = await res.json();
     const container = document.getElementById('event-timeline');
     if (!data.success || data.events.length === 0) {
-        container.innerHTML = '<div class="text-slate-400 text-xs font-mono italic">No events recorded yet.</div>';
+        container.innerHTML = '<div class="text-fg-muted text-xs font-mono italic">No events recorded yet.</div>';
         return;
     }
     container.innerHTML = [...data.events].reverse().map(ev => {
-        const icon = eventIcons[ev.event] || 'info';
-        const color = eventColors[ev.event] || 'text-slate-300';
         const ts = new Date(ev.timestamp).toLocaleString();
-        return `<div class="flex items-start gap-2 py-1.5 border-b border-slate-100 dark:border-obsidian-800 last:border-0">
-            <span class="material-icons text-sm ${color} flex-shrink-0 mt-0.5">${icon}</span>
-            <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-mono uppercase font-bold ${color}">${ev.event}</span>
-                    <span class="text-[9px] text-slate-400 font-mono">${ts}</span>
-                </div>
-                ${ev.details ? `<div class="text-[10px] text-slate-500 truncate">${escapeHtml(ev.details)}</div>` : ''}
-            </div>
+        return `<div class="flex items-start gap-2 py-1.5 border-b border-ghborder-muted last:border-0 text-xs">
+            <span class="font-mono text-accent-fg font-semibold uppercase">${ev.event}</span>
+            <span class="text-fg-muted text-[10px]">${ts}</span>
+            ${ev.details ? `<span class="text-fg-default truncate">${ev.details}</span>` : ''}
         </div>`;
     }).join('');
-}
-
-// Listen for live events
-if (typeof socket !== 'undefined') {
-    socket.on('bot-event', (data) => {
-        if (String(data.botId) !== String(BOT_ID)) return;
-        // Refresh events panel if open
-        const panel = document.getElementById('panel-events');
-        if (panel && !panel.classList.contains('hidden')) loadEvents();
-    });
-}
-
-// Update health/food bars on status update
-function updateHealthFoodBars(status) {
-    const health = parseFloat(status.health) || 0;
-    const food = parseFloat(status.food) || 0;
-    const healthEl = document.getElementById('detail-health');
-    const foodEl = document.getElementById('detail-food');
-    const healthBar = document.getElementById('health-bar');
-    const foodBar = document.getElementById('food-bar');
-    if (healthEl) healthEl.textContent = health + '/20';
-    if (foodEl) foodEl.textContent = food + '/20';
-    if (healthBar) healthBar.style.width = Math.min(100, (health / 20) * 100) + '%';
-    if (foodBar) foodBar.style.width = Math.min(100, (food / 20) * 100) + '%';
 }
 
 if (BOT_SECTION === 'analytics') loadMetrics();
