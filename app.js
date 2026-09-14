@@ -80,8 +80,10 @@ const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const controlRoutes = require('./routes/control');
 const adminRoutes = require('./routes/admin');
+const healthRoutes = require('./routes/health');
 
 // Use Routes
+app.use('/health', healthRoutes); // Public — no auth required
 app.use('/', authRoutes);
 app.use('/admin', requireAuth, adminRoutes);
 app.use('/', requireAuth, dashboardRoutes);

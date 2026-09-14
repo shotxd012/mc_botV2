@@ -1,8 +1,13 @@
 const mineflayer = require('mineflayer');
 const mineflayerPathfinder = require('mineflayer-pathfinder');
-const autoEat = require('mineflayer-auto-eat').loader;
+const autoEatLoader = require('mineflayer-auto-eat').loader;
 const dataManager = require('../utils/dataManager');
 const BotLog = require('../models/BotLog');
+const BotEvent = require('../models/BotEvent');
+const BotMetric = require('../models/BotMetric');
+const Bot = require('../models/Bot');
+const https = require('https');
+const http = require('http');
 
 class BotInstance {
     constructor(id, botConfig, io) {
@@ -18,13 +23,13 @@ class BotInstance {
         this.startTime = null;
         this.uptimeInterval = null; // Interval for periodic uptime updates
         this.authStatus = 'Offline'; // Offline, Pending, Verified
-        this.uptimeInterval = null; // Interval for periodic uptime updates
         this.isAfkActive = false; // Track AFK state
-        
+        this.metricInterval = null; // Health/food sampling interval
+
         // Console history
         this.consoleHistory = [];
         this.maxHistorySize = 1000; // Maximum number of log entries to keep in memory
-        
+
         this.loadConsoleHistory();
 
         // Bind methods to this
@@ -39,11 +44,10 @@ class BotInstance {
     log(message, type = 'info') {
         const timestamp = new Date().toLocaleTimeString();
         const logEntry = `[${timestamp}] ${message}`;
-        // console.log(`[Bot ${this.id}] ${logEntry}`);
         if (this.io) {
             this.io.emit('log', { botId: this.id, message: logEntry, type });
         }
-        
+
         // Add to console history
         this.addLogToHistory(logEntry, type);
     }
@@ -69,13 +73,11 @@ class BotInstance {
     }
 
     getStatus() {
-        // Initialize default values
         let health = '-';
         let food = '-';
         let position = '-';
         let dimension = '-';
-        
-        // Get actual values if bot is available
+
         if (this.bot && this.bot.entity) {
             health = this.bot.health || 20;
             food = this.bot.food || 20;
@@ -84,7 +86,7 @@ class BotInstance {
             }
             dimension = this.bot.game.dimension || 'overworld';
         }
-        
+
         return {
             id: this.id,
             name: this.botConfig.name,
@@ -95,16 +97,129 @@ class BotInstance {
             uptime: this.isRunning && this.startTime ? this.formatUptime(this.startTime) : '0s',
             authStatus: this.authStatus,
             isAfkActive: this.isAfkActive,
+            afkProfile: this.botConfig.afkProfile || 'random_look',
+            autoEat: this.botConfig.autoEat !== false,
+            autoStart: this.botConfig.autoStart === true,
             health: health,
             food: food,
             position: position,
-            dimension: dimension
+            dimension: dimension,
+            notes: this.botConfig.notes || '',
+            totalUptime: this.botConfig.totalUptime || 0
         };
     }
 
     updateConfig(newConfig) {
         this.botConfig = newConfig;
         this.emitStatus();
+    }
+
+    // --- Webhook Alerts ---
+    sendWebhook(eventType, details = '') {
+        const url = this.botConfig.webhookUrl;
+        if (!url || url.trim() === '') return;
+
+        const embed = {
+            embeds: [{
+                title: `🤖 Bot Alert: ${this.botConfig.name}`,
+                color: eventType === 'kicked' ? 0xef4444 : eventType === 'login' ? 0x10b981 : 0xf59e0b,
+                fields: [
+                    { name: 'Event', value: eventType.toUpperCase(), inline: true },
+                    { name: 'Bot', value: this.botConfig.name, inline: true },
+                    { name: 'Server', value: `${this.botConfig.server?.ip}:${this.botConfig.server?.port}`, inline: true },
+                ],
+                description: details || '',
+                timestamp: new Date().toISOString(),
+                footer: { text: 'MC Bot Dashboard' }
+            }]
+        };
+
+        try {
+            const payload = JSON.stringify(embed);
+            const parsedUrl = new URL(url);
+            const isHttps = parsedUrl.protocol === 'https:';
+            const lib = isHttps ? https : http;
+
+            const req = lib.request({
+                hostname: parsedUrl.hostname,
+                path: parsedUrl.pathname + parsedUrl.search,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(payload)
+                }
+            }, (res) => {
+                // Consume response to prevent socket hang
+                res.resume();
+            });
+
+            req.on('error', (err) => {
+                console.error(`[Bot ${this.id}] Webhook error: ${err.message}`);
+            });
+
+            req.write(payload);
+            req.end();
+        } catch (err) {
+            console.error(`[Bot ${this.id}] Failed to send webhook: ${err.message}`);
+        }
+    }
+
+    // --- Event Logging ---
+    async logEvent(event, details = '') {
+        try {
+            await BotEvent.create({ botId: this.id, event, details });
+            // Emit to frontend for live timeline
+            if (this.io) {
+                this.io.emit('bot-event', {
+                    botId: this.id,
+                    event,
+                    details,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        } catch (err) {
+            console.error(`[Bot ${this.id}] Failed to log event: ${err.message}`);
+        }
+    }
+
+    // --- Metric Sampling ---
+    startMetricSampling() {
+        if (this.metricInterval) clearInterval(this.metricInterval);
+        this.metricInterval = setInterval(async () => {
+            if (!this.bot || !this.bot.entity) return;
+            try {
+                await BotMetric.create({
+                    botId: this.id,
+                    health: Math.round(this.bot.health || 0),
+                    food: Math.round(this.bot.food || 0)
+                });
+            } catch (err) {
+                // silently fail metric saves
+            }
+        }, 60000); // sample every 60 seconds
+    }
+
+    stopMetricSampling() {
+        if (this.metricInterval) {
+            clearInterval(this.metricInterval);
+            this.metricInterval = null;
+        }
+    }
+
+    // --- Total Uptime Accumulation ---
+    async accumulateUptime() {
+        if (!this.startTime) return;
+        const sessionSeconds = Math.floor((Date.now() - this.startTime) / 1000);
+        if (sessionSeconds <= 0) return;
+        try {
+            await Bot.updateOne({ id: this.id }, { $inc: { totalUptime: sessionSeconds } });
+            // Update local config cache too
+            if (this.botConfig) {
+                this.botConfig.totalUptime = (this.botConfig.totalUptime || 0) + sessionSeconds;
+            }
+        } catch (err) {
+            console.error(`[Bot ${this.id}] Failed to accumulate uptime: ${err.message}`);
+        }
     }
 
     start() {
@@ -137,7 +252,7 @@ class BotInstance {
             version: config.version === 'auto' ? false : config.version,
             username: account.email,
             auth: 'microsoft',
-            profilesFolder: `./data/nmp-cache-${this.id}`, // Unique cache per bot
+            profilesFolder: `./data/nmp-cache-${this.id}`,
             onMsaCode: (data) => {
                 this.log(`Microsoft Auth Code: ${data.user_code}`, 'action');
                 this.log(`Please visit ${data.verification_uri}`, 'action');
@@ -154,11 +269,23 @@ class BotInstance {
         try {
             this.bot = mineflayer.createBot(options);
             this.isRunning = true;
-            // Don't reset startTime here, it will be set on login
             this.emitStatus();
 
             this.bot.loadPlugin(mineflayerPathfinder.pathfinder);
-            this.bot.loadPlugin(autoEat);
+
+            // Conditionally load auto-eat based on botConfig
+            if (this.botConfig.autoEat !== false) {
+                this.bot.loadPlugin(autoEatLoader);
+                this.bot.once('autoEat:options', () => {
+                    try {
+                        this.bot.autoEat.options = {
+                            priority: 'foodPoints',
+                            startAt: 14,
+                            bannedFood: []
+                        };
+                    } catch (e) { /* ignore */ }
+                });
+            }
 
             this.bindEvents();
         } catch (err) {
@@ -176,11 +303,15 @@ class BotInstance {
         this.log("Stopping bot...");
         this.shouldReconnect = false;
         this.stopAfk();
+        this.stopMetricSampling();
 
         if (this.reconnectTimeout) {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
         }
+
+        // Accumulate uptime before stopping
+        this.accumulateUptime();
 
         try {
             this.bot.quit();
@@ -214,26 +345,42 @@ class BotInstance {
             this.startTime = Date.now();
             this.authStatus = 'Verified';
             this.emitStatus();
-            
-            // Start periodic uptime updates to console
+            this.logEvent('login', `Logged in as ${this.bot.username}`);
+            this.sendWebhook('login', `Bot connected to ${this.botConfig.server?.ip}`);
+            this.startMetricSampling();
+
+            // Periodic uptime log
             if (this.uptimeInterval) clearInterval(this.uptimeInterval);
             this.uptimeInterval = setInterval(() => {
                 if (this.isRunning && this.startTime) {
                     this.log(`Uptime: ${this.formatUptime(this.startTime)}`, 'info');
                 }
-            }, 60000); // Update every minute
-
-            // Update email in config if it changed/was auto-detected (unlikely but good practice)
-            // Actually, we don't want to write to disk here unnecessarily.
+            }, 60000);
         });
 
         this.bot.on('spawn', () => {
             this.log("Bot spawned.");
             this.emitStatus();
+            this.logEvent('spawn', 'Bot entity spawned in world');
+
+            // Execute login commands sequentially
+            const cmds = this.botConfig.loginCommands || [];
+            if (cmds.length > 0) {
+                this.log(`Executing ${cmds.length} login command(s)...`, 'action');
+                cmds.forEach((cmd, i) => {
+                    setTimeout(() => {
+                        if (this.bot) {
+                            this.bot.chat(cmd);
+                            this.log(`[Login Cmd] ${cmd}`, 'output');
+                        }
+                    }, (i + 1) * 1500); // 1.5s delay between each command
+                });
+            }
         });
 
         this.bot.on('end', (reason) => {
             this.log(`Bot disconnected: ${reason}`, 'warning');
+            const wasRunning = this.isRunning;
             this.isRunning = false;
             this.bot = null;
             this.startTime = null;
@@ -242,12 +389,20 @@ class BotInstance {
                 this.uptimeInterval = null;
             }
             this.stopAfk();
+            this.stopMetricSampling();
+
+            // Accumulate uptime
+            if (wasRunning) this.accumulateUptime();
+
+            this.logEvent('disconnect', `Disconnected: ${reason}`);
+            this.sendWebhook('disconnect', `Bot disconnected: ${reason}`);
 
             const settings = dataManager.getSettings();
             if (this.shouldReconnect && settings.autoReconnect) {
                 this.log("Auto-reconnecting in 10 seconds...");
                 this.authStatus = 'Reconnecting';
                 this.emitStatus();
+                this.logEvent('reconnect', 'Scheduled auto-reconnect in 10s');
                 this.reconnectTimeout = setTimeout(this.start, 10000);
             } else {
                 this.authStatus = 'Offline';
@@ -256,26 +411,21 @@ class BotInstance {
         });
 
         this.bot.on('kicked', (reason, loggedIn) => {
-            // Recursively extract plain text from NBT compound/chat JSON structures.
-            // Servers like BungeeCord/Velocity send reasons as NBT: { type, value } wrappers.
             const extractText = (node) => {
                 if (node === null || node === undefined) return '';
                 if (typeof node === 'string') return node;
                 if (typeof node === 'number' || typeof node === 'boolean') return String(node);
                 if (Array.isArray(node)) return node.map(extractText).join('');
                 if (typeof node === 'object') {
-                    // NBT-style { type: 'string'|'compound'|'list', value: ... }
                     if ('type' in node && 'value' in node) {
                         if (node.type === 'list' && node.value && Array.isArray(node.value.value)) {
                             return node.value.value.map(extractText).join('');
                         }
                         return extractText(node.value);
                     }
-                    // Standard Minecraft chat JSON { text, extra, ... }
                     let out = '';
                     if (node.text) out += extractText(node.text);
                     if (node.extra) out += extractText(node.extra);
-                    // Collect any other nested compound fields
                     for (const key of Object.keys(node)) {
                         if (key !== 'text' && key !== 'extra' && typeof node[key] === 'object') {
                             out += extractText(node[key]);
@@ -299,76 +449,127 @@ class BotInstance {
 
             reasonText = reasonText.trim().replace(/\n+/g, ' | ') || 'Unknown reason';
             this.log(`Bot kicked: ${reasonText}`, 'error');
+            this.logEvent('kicked', reasonText);
+            this.sendWebhook('kicked', `Kicked: ${reasonText}`);
         });
 
         this.bot.on('error', (err) => {
             this.log(`Bot error: ${err.message}`, 'error');
+            this.logEvent('error', err.message);
         });
 
-        // Raw message event (includes system messages, chat, etc.)
+        // Raw message event
         this.bot.on('message', (jsonMsg) => {
             const message = jsonMsg.toString();
-            // Log to console
             this.log(`[MSG] ${message}`, 'chat');
-            // Also emit to frontend
             if (this.io) {
                 this.io.emit('log', { botId: this.id, message: `[MSG] ${message}`, type: 'chat' });
             }
         });
-        
-        // Player chat messages specifically
+
+        // Player chat messages
         this.bot.on('chat', (username, message) => {
-            // Log player chat to console
             this.log(`[${username}] ${message}`, 'chat');
-            // Also emit to frontend
             if (this.io) {
                 this.io.emit('log', { botId: this.id, message: `[${username}] ${message}`, type: 'chat' });
             }
         });
-        
-        // Health update event
+
+        // Health update
         this.bot.on('health', () => {
             this.emitStatus();
         });
-        
-        // Experience update event (food level changes trigger health event in newer versions, but we'll add this too)
+
+        // Entity movement
         this.bot.on('entityMoved', (entity) => {
-            // Only emit status update if it's the bot's own entity that moved
             if (this.bot && entity.id === this.bot.entity.id) {
                 this.emitStatus();
             }
         });
-        
-        // Dimension change event
+
+        // Dimension change
         this.bot.on('game', () => {
             this.emitStatus();
         });
     }
 
-    // --- AFK Logic ---
+    // --- AFK Logic (Profile-based strategy) ---
     startAfk() {
         if (!this.bot || !this.bot.entity) return;
-        this.log("Starting AFK mode...");
+        const profile = this.botConfig.afkProfile || 'random_look';
+        this.log(`Starting AFK mode [${profile}]...`);
         this.isAfkActive = true;
-        this.emitStatus(); // Emit status update so frontend knows AFK state changed
+        this.emitStatus();
+        this.logEvent('afk_start', `AFK profile: ${profile}`);
 
         if (this.afkInterval) clearInterval(this.afkInterval);
 
+        switch (profile) {
+            case 'spin':
+                this._startAfkSpin();
+                break;
+            case 'jump_spam':
+                this._startAfkJumpSpam();
+                break;
+            case 'circle_walk':
+                this._startAfkCircleWalk();
+                break;
+            case 'random_look':
+            default:
+                this._startAfkRandomLook();
+                break;
+        }
+    }
+
+    _startAfkRandomLook() {
         this.afkInterval = setInterval(() => {
             if (!this.bot || !this.bot.entity) return;
-
-            const yaw = Math.random() * Math.PI - (0.5 * Math.PI);
-            const pitch = Math.random() * Math.PI - (0.5 * Math.PI);
+            const yaw = Math.random() * Math.PI * 2 - Math.PI;
+            const pitch = (Math.random() - 0.5) * Math.PI;
             this.bot.look(yaw, pitch);
-
             if (Math.random() > 0.8) {
                 this.bot.setControlState('jump', true);
-                setTimeout(() => this.bot.setControlState('jump', false), 500);
+                setTimeout(() => { if (this.bot) this.bot.setControlState('jump', false); }, 500);
             }
-
             this.bot.swingArm();
-
         }, 5000);
+    }
+
+    _startAfkSpin() {
+        let yaw = 0;
+        this.afkInterval = setInterval(() => {
+            if (!this.bot || !this.bot.entity) return;
+            yaw += Math.PI / 8; // rotate 22.5 degrees each tick
+            if (yaw > Math.PI) yaw -= Math.PI * 2;
+            this.bot.look(yaw, 0);
+        }, 500);
+    }
+
+    _startAfkJumpSpam() {
+        this.afkInterval = setInterval(() => {
+            if (!this.bot || !this.bot.entity) return;
+            this.bot.setControlState('jump', true);
+            setTimeout(() => { if (this.bot) this.bot.setControlState('jump', false); }, 300);
+            this.bot.swingArm();
+        }, 2000);
+    }
+
+    _startAfkCircleWalk() {
+        const { pathfinder, goals } = mineflayerPathfinder;
+        let angle = 0;
+        const radius = 3;
+        this.afkInterval = setInterval(() => {
+            if (!this.bot || !this.bot.entity) return;
+            try {
+                angle += Math.PI / 8;
+                if (angle > Math.PI * 2) angle = 0;
+                const origin = this.bot.entity.position;
+                const tx = Math.round(origin.x + Math.cos(angle) * radius);
+                const tz = Math.round(origin.z + Math.sin(angle) * radius);
+                const ty = Math.round(origin.y);
+                this.bot.pathfinder.setGoal(new goals.GoalXZ(tx, tz), true);
+            } catch (e) { /* pathfinder may not be ready */ }
+        }, 4000);
     }
 
     stopAfk() {
@@ -376,9 +577,21 @@ class BotInstance {
             clearInterval(this.afkInterval);
             this.afkInterval = null;
         }
-        this.isAfkActive = false;
-        this.log("AFK mode stopped.");
-        this.emitStatus(); // Emit status update so frontend knows AFK state changed
+        // Stop any movement
+        if (this.bot) {
+            try {
+                this.bot.setControlState('forward', false);
+                this.bot.setControlState('back', false);
+                this.bot.setControlState('jump', false);
+                if (this.bot.pathfinder) this.bot.pathfinder.stop();
+            } catch (e) { /* ignore */ }
+        }
+        if (this.isAfkActive) {
+            this.isAfkActive = false;
+            this.log("AFK mode stopped.");
+            this.emitStatus();
+            this.logEvent('afk_stop', 'AFK mode deactivated');
+        }
     }
 
     chat(message) {
@@ -398,12 +611,10 @@ class BotInstance {
 
         this.consoleHistory.push({ ...logEntry, timestamp: logEntry.timestamp.toISOString() });
 
-        // Limit history size
         if (this.consoleHistory.length > this.maxHistorySize) {
             this.consoleHistory = this.consoleHistory.slice(-this.maxHistorySize);
         }
 
-        // Save to MongoDB asynchronously
         try {
             await BotLog.create(logEntry);
         } catch (err) {
@@ -412,7 +623,6 @@ class BotInstance {
     }
 
     getLogHistory(count = 100) {
-        // Return the last 'count' entries, or all if count is greater than available
         const startIndex = Math.max(0, this.consoleHistory.length - count);
         return this.consoleHistory.slice(startIndex);
     }
@@ -423,8 +633,7 @@ class BotInstance {
                 .sort({ timestamp: -1 })
                 .limit(this.maxHistorySize)
                 .lean();
-            
-            // Reverse so oldest is first
+
             this.consoleHistory = logs.reverse().map(log => ({
                 timestamp: new Date(log.timestamp).toISOString(),
                 message: log.message,

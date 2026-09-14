@@ -143,4 +143,41 @@ router.get('/admin', (req, res) => {
     res.redirect('/admin/overview');
 });
 
+// Multi-Console Grid Route
+router.get('/console', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    let bots;
+
+    if (user.role === 'admin') {
+        bots = botManager.getAllBotsStatus();
+    } else {
+        const assignedBots = await dataManager.getBotsByUser(req.session.user.username);
+        bots = assignedBots.map(bot => botManager.getStatus(bot.id)).filter(Boolean);
+    }
+
+    res.render('console-grid', {
+        page: 'console',
+        user,
+        bots
+    });
+});
+
+// Templates Route
+router.get('/templates', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    if (user.role !== 'admin') {
+        return res.redirect('/');
+    }
+    const templates = await botManager.getTemplates();
+    const allBots = await dataManager.getBots();
+
+    res.render('templates', {
+        page: 'templates',
+        user,
+        templates,
+        bots: allBots
+    });
+});
+
 module.exports = router;
+
