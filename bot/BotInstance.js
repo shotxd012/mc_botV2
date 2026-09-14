@@ -9,6 +9,37 @@ const Bot = require('../models/Bot');
 const https = require('https');
 const http = require('http');
 
+let runtimeSnapshot = null;
+let runtimeSnapshotAt = 0;
+
+function getRuntimeMetrics() {
+    const now = Date.now();
+    if (!runtimeSnapshot || now - runtimeSnapshotAt >= 5000) {
+        const currentUsage = process.cpuUsage();
+        const currentTime = process.hrtime.bigint();
+        let cpu = 0;
+
+        if (runtimeSnapshot) {
+            const elapsedMicroseconds = Number(currentTime - runtimeSnapshot.time) / 1000;
+            const cpuMicroseconds = (currentUsage.user - runtimeSnapshot.usage.user) +
+                (currentUsage.system - runtimeSnapshot.usage.system);
+            const coreCount = require('os').cpus()?.length || 1;
+            cpu = elapsedMicroseconds > 0
+                ? Math.min(100, (cpuMicroseconds / (elapsedMicroseconds * coreCount)) * 100)
+                : 0;
+        }
+
+        runtimeSnapshot = { time: currentTime, usage: currentUsage };
+        runtimeSnapshotAt = now;
+        getRuntimeMetrics.cached = {
+            cpu: Number(cpu.toFixed(2)),
+            memory: Number((process.memoryUsage().rss / 1024 / 1024).toFixed(2))
+        };
+    }
+
+    return getRuntimeMetrics.cached;
+}
+
 class BotInstance {
     constructor(id, botConfig, io) {
         this.id = id;
@@ -185,18 +216,24 @@ class BotInstance {
     // --- Metric Sampling ---
     startMetricSampling() {
         if (this.metricInterval) clearInterval(this.metricInterval);
-        this.metricInterval = setInterval(async () => {
+        const sampleMetric = async () => {
             if (!this.bot || !this.bot.entity) return;
             try {
+                const runtime = getRuntimeMetrics();
                 await BotMetric.create({
                     botId: this.id,
                     health: Math.round(this.bot.health || 0),
-                    food: Math.round(this.bot.food || 0)
+                    food: Math.round(this.bot.food || 0),
+                    cpu: runtime.cpu,
+                    memory: runtime.memory
                 });
             } catch (err) {
                 // silently fail metric saves
             }
-        }, 60000); // sample every 60 seconds
+        };
+
+        sampleMetric();
+        this.metricInterval = setInterval(sampleMetric, 60000); // sample every 60 seconds
     }
 
     stopMetricSampling() {

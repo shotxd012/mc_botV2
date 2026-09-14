@@ -172,8 +172,9 @@ router.post('/bot/:id/settings', async (req, res) => {
     const passkeyBlock = await enforcePasskey(req, res, bot);
     if (passkeyBlock) return;
     
-    const { server, account } = req.body;
+    const { name, server, account } = req.body;
     const updates = {};
+    if (typeof name === 'string' && name.trim()) updates.name = name.trim();
     if (server) updates.server = server;
     if (account) updates.account = account;
 

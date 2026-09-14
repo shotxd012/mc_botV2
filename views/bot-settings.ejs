@@ -1,0 +1,126 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<script>
+    const BOT_ID = "<%= botId %>";
+    const BOT_SECTION = 'settings';
+</script>
+
+<main class="flex-1 min-w-0 p-4 sm:p-6 md:p-8 min-h-screen pb-20 md:pb-8 flex flex-col gap-6">
+    <header class="flex flex-col gap-4 border-b border-obsidian-700/60 pb-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="flex items-center gap-3 min-w-0">
+                <a href="/bot/<%= botId %>" class="p-2 bg-obsidian-850 hover:bg-obsidian-800 text-slate-300 border border-obsidian-700 flex items-center justify-center" title="Back to console">
+                    <span class="material-icons text-base">arrow_back</span>
+                </a>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2.5">
+                        <h2 class="text-xl md:text-2xl font-bold uppercase tracking-tight text-white truncate"><%= botConfig.name %></h2>
+                        <span class="px-1.5 py-0.5 font-mono text-[10px] bg-obsidian-800 border border-obsidian-700 text-slate-400">#<%= botId %></span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-slate-500 mt-1 font-mono">
+                        <span class="w-2 h-2 inline-block <%= status.online ? 'bg-emerald-500' : 'bg-redstone-500' %>"></span>
+                        <span class="font-bold"><%= status.online ? 'Online' : 'Offline' %></span>
+                        <span>•</span>
+                        <span class="truncate"><%= status.server ? status.server.ip + ':' + status.server.port : 'No server configured' %></span>
+                    </div>
+                </div>
+            </div>
+            <span class="text-[10px] font-mono uppercase tracking-widest text-primary border border-primary/30 bg-primary/10 px-2 py-1">Bot Settings</span>
+        </div>
+
+        <nav class="flex w-full min-w-0 max-w-full items-center gap-1 overflow-x-auto border border-obsidian-700/80 bg-obsidian-900/70 p-1" aria-label="Bot workspace">
+            <a href="/bot/<%= botId %>" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800 transition-colors"><span class="material-icons text-sm">terminal</span> Console</a>
+            <a href="/bot/<%= botId %>/config" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800 transition-colors"><span class="material-icons text-sm">settings</span> Config</a>
+            <a href="/bot/<%= botId %>/analytics" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800 transition-colors"><span class="material-icons text-sm">show_chart</span> Analytics</a>
+            <a href="/bot/<%= botId %>/events" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800 transition-colors"><span class="material-icons text-sm">timeline</span> Events</a>
+            <a href="/bot/<%= botId %>/settings" aria-current="page" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border border-primary text-primary bg-primary/10 transition-colors"><span class="material-icons text-sm">tune</span> Settings</a>
+        </nav>
+    </header>
+
+    <div class="max-w-4xl w-full mx-auto grid gap-5">
+        <section class="bg-obsidian-900 border border-obsidian-700/80 p-5 shadow-sm">
+            <div class="flex items-center gap-2 mb-5 border-b border-obsidian-700/60 pb-3">
+                <span class="material-icons text-primary text-base">edit</span>
+                <h3 class="text-xs font-mono uppercase tracking-wider font-bold text-white">Identity</h3>
+            </div>
+            <form onsubmit="renameBot(event)" class="flex flex-col sm:flex-row gap-3">
+                <input id="bot-name-input" type="text" value="<%= botConfig.name %>" required maxlength="80" class="flex-1 px-3 py-2.5 bg-obsidian-950 border border-obsidian-700 text-xs text-white outline-none focus:border-primary" placeholder="Bot display name">
+                <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-mono text-xs font-bold uppercase tracking-wider border border-primary-hover">
+                    <span class="material-icons text-sm">save</span> Save Name
+                </button>
+            </form>
+        </section>
+
+        <section class="bg-obsidian-900 border border-obsidian-700/80 p-5 shadow-sm">
+            <div class="flex items-center gap-2 mb-5 border-b border-obsidian-700/60 pb-3">
+                <span class="material-icons text-primary text-base">file_download</span>
+                <h3 class="text-xs font-mono uppercase tracking-wider font-bold text-white">Data & Operations</h3>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <a href="/api/bot/<%= botId %>/history/export?format=txt" class="flex items-center gap-3 p-3 border border-obsidian-700 hover:border-primary hover:bg-obsidian-800 transition-colors">
+                    <span class="material-icons text-primary">download</span>
+                    <span><strong class="block text-xs text-slate-200">Download TXT</strong><small class="text-[10px] text-slate-500">Export the console history</small></span>
+                </a>
+                <a href="/api/bot/<%= botId %>/history/export?format=csv" class="flex items-center gap-3 p-3 border border-obsidian-700 hover:border-primary hover:bg-obsidian-800 transition-colors">
+                    <span class="material-icons text-primary">table_chart</span>
+                    <span><strong class="block text-xs text-slate-200">Download CSV</strong><small class="text-[10px] text-slate-500">Export logs for analysis</small></span>
+                </a>
+                <button onclick="restartFromSettings()" class="flex items-center gap-3 p-3 text-left border border-obsidian-700 hover:border-amber-500 hover:bg-obsidian-800 transition-colors">
+                    <span class="material-icons text-amber-400">restart_alt</span>
+                    <span><strong class="block text-xs text-slate-200">Restart Bot</strong><small class="text-[10px] text-slate-500">Reconnect using current config</small></span>
+                </button>
+                <button onclick="clearFromSettings()" class="flex items-center gap-3 p-3 text-left border border-obsidian-700 hover:border-amber-500 hover:bg-obsidian-800 transition-colors">
+                    <span class="material-icons text-amber-400">delete_sweep</span>
+                    <span><strong class="block text-xs text-slate-200">Clear Console History</strong><small class="text-[10px] text-slate-500">Remove stored log messages</small></span>
+                </button>
+            </div>
+        </section>
+
+        <section class="border border-redstone-500/40 bg-redstone-900/10 p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="material-icons text-redstone-400">warning</span>
+                <h3 class="text-xs font-mono uppercase tracking-wider font-bold text-redstone-400">Danger Zone</h3>
+            </div>
+            <p class="text-xs text-slate-400 mb-4">Deleting this bot permanently removes its configuration and stored console history.</p>
+            <button onclick="deleteBot()" class="inline-flex items-center gap-2 px-4 py-2.5 text-redstone-400 hover:text-white hover:bg-redstone-600 border border-redstone-500/40 hover:border-redstone-600 font-mono text-xs font-bold uppercase tracking-wider">
+                <span class="material-icons text-sm">delete_forever</span> Delete Bot
+            </button>
+        </section>
+    </div>
+</main>
+
+<script>
+async function renameBot(event) {
+    event.preventDefault();
+    const name = document.getElementById('bot-name-input').value.trim();
+    if (!name) return;
+    const response = await fetch(`/api/bot/${BOT_ID}/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+    });
+    const result = await response.json();
+    if (response.ok && result.success) {
+        showToast('Bot name saved.', 'success');
+        setTimeout(() => window.location.reload(), 500);
+    } else {
+        showToast(result.error || 'Failed to save bot name.', 'error');
+    }
+}
+
+async function restartFromSettings() {
+    const response = await fetch(`/api/bot/${BOT_ID}/restart`, { method: 'POST' });
+    const result = await response.json();
+    showToast(result.success ? 'Bot restart dispatched.' : (result.error || 'Failed to restart bot.'), result.success ? 'success' : 'error');
+}
+
+async function clearFromSettings() {
+    if (!confirm('Clear all stored console history for this bot?')) return;
+    const response = await fetch(`/api/bot/${BOT_ID}/history/clear`, { method: 'POST' });
+    const result = await response.json();
+    showToast(result.success ? 'Console history cleared.' : (result.error || 'Failed to clear history.'), result.success ? 'success' : 'error');
+}
+</script>
+
+<%- include('partials/footer') %>

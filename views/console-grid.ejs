@@ -1,0 +1,66 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<main class="flex-1 p-4 sm:p-6 md:p-8 min-h-screen pb-20 md:pb-8">
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-obsidian-700/60 pb-5">
+        <div>
+            <div class="flex items-center gap-3">
+                <h2 class="text-xl sm:text-2xl font-bold tracking-tight uppercase text-white">Multi-Console</h2>
+                <span class="px-2 py-0.5 text-xs font-mono font-bold bg-primary/10 text-primary border border-primary/20">
+                    <%= bots.length %> <%= bots.length === 1 ? 'BOT' : 'BOTS' %>
+                </span>
+            </div>
+            <p class="text-slate-400 mt-1 text-xs sm:text-sm">Monitor your bot fleet and jump directly into any terminal.</p>
+        </div>
+        <span class="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-slate-500">
+            <span class="w-2 h-2 bg-emerald-500 inline-block"></span>
+            Live status
+        </span>
+    </header>
+
+    <% if (bots.length === 0) { %>
+        <div class="border border-dashed border-obsidian-700 bg-obsidian-900/60 p-10 text-center">
+            <span class="material-icons text-3xl text-slate-600 mb-2">terminal</span>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300">No bots available</h3>
+            <p class="text-xs text-slate-500 mt-1">Create or assign a bot to populate the console grid.</p>
+        </div>
+    <% } else { %>
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            <% bots.forEach(function(bot) { %>
+                <article class="bg-obsidian-900 border border-obsidian-700/80 shadow-sm overflow-hidden">
+                    <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-obsidian-700/80">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="w-2.5 h-2.5 flex-shrink-0 <%= bot.online ? 'bg-emerald-500' : 'bg-redstone-500' %>"></span>
+                            <div class="min-w-0">
+                                <h3 class="text-sm font-bold text-white truncate"><%= bot.name || 'Unnamed Bot' %></h3>
+                                <span class="text-[10px] font-mono text-slate-500">ID: #<%= bot.id %></span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-mono uppercase font-bold <%= bot.online ? 'text-emerald-400' : 'text-slate-500' %>">
+                            <%= bot.online ? 'Online' : 'Offline' %>
+                        </span>
+                    </div>
+
+                    <div class="h-40 bg-obsidian-950 p-3 font-mono text-xs text-slate-500 overflow-hidden">
+                        <div class="flex items-center gap-2 text-slate-400 mb-2">
+                            <span class="text-primary">&gt;</span>
+                            <span><%= bot.online ? 'Ready for terminal output' : 'Bot is offline' %></span>
+                        </div>
+                        <div class="text-slate-600">Server: <%= bot.server ? bot.server.ip + ':' + bot.server.port : 'Not configured' %></div>
+                        <div class="text-slate-600">Player: <%= bot.username && bot.username !== 'N/A' ? bot.username : 'Not connected' %></div>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 px-4 py-3 border-t border-obsidian-700/80">
+                        <span class="text-[10px] font-mono uppercase text-slate-500">Version: <%= bot.server ? bot.server.version : 'Auto' %></span>
+                        <a href="/bot/<%= bot.id %>" class="inline-flex items-center gap-1.5 px-3 py-2 bg-primary hover:bg-primary-hover text-white border border-primary-hover text-[10px] font-mono font-bold uppercase tracking-wider transition-colors">
+                            <span class="material-icons text-sm">terminal</span>
+                            Open Console
+                        </a>
+                    </div>
+                </article>
+            <% }); %>
+        </div>
+    <% } %>
+</main>
+
+<%- include('partials/footer') %>

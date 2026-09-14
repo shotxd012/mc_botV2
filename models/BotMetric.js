@@ -14,6 +14,14 @@ const botMetricSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    cpu: {
+        type: Number,
+        default: 0
+    },
+    memory: {
+        type: Number,
+        default: 0
+    },
     timestamp: {
         type: Date,
         default: Date.now,
