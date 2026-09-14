@@ -357,15 +357,51 @@ class BotInstance {
             return { success: false, error: 'Bot must be online to view its inventory.' };
         }
 
-        return {
-            success: true,
-            slots: this.bot.inventory.slots.map((item, slot) => item ? {
-                slot,
-                name: item.name,
-                displayName: item.displayName || item.name,
-                count: item.count
-            } : null)
-        };
+        try {
+            const slots = Array.isArray(this.bot.inventory.slots)
+                ? this.bot.inventory.slots.map((item, slot) => item ? {
+                    slot,
+                    name: item.name,
+                    displayName: item.displayName || item.name,
+                    count: item.count
+                } : null)
+                : [];
+
+            return { success: true, slots };
+        } catch (error) {
+            console.error(`[Bot ${this.id}] Failed to read inventory: ${error.message}`);
+            return { success: false, error: 'Inventory is temporarily unavailable. Please refresh.' };
+        }
+    }
+
+    async moveInventorySlots(sourceSlot, destinationSlot) {
+        if (!this.bot || !this.bot.entity || !this.bot.inventory) {
+            return { success: false, error: 'Bot must be online to arrange its inventory.' };
+        }
+
+        if (!Number.isInteger(sourceSlot) || !Number.isInteger(destinationSlot) ||
+            sourceSlot < 0 || destinationSlot < 0 ||
+            sourceSlot >= this.bot.inventory.slots.length ||
+            destinationSlot >= this.bot.inventory.slots.length) {
+            return { success: false, error: 'Invalid inventory slot.' };
+        }
+
+        if (sourceSlot === destinationSlot) {
+            return { success: true };
+        }
+
+        if (!this.bot.inventory.slots[sourceSlot]) {
+            return { success: false, error: 'The selected slot is empty.' };
+        }
+
+        try {
+            await this.bot.clickWindow(sourceSlot, 0, 0);
+            await this.bot.clickWindow(destinationSlot, 0, 0);
+            return { success: true };
+        } catch (error) {
+            console.error(`[Bot ${this.id}] Failed to move inventory item: ${error.message}`);
+            return { success: false, error: 'Inventory move failed. Please try again.' };
+        }
     }
 
     stop() {
