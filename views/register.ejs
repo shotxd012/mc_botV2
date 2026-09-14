@@ -1,18 +1,18 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
 
-<main class="flex-1 flex items-center justify-center p-4 min-h-screen">
-    <div class="bg-white dark:bg-obsidian-900 border-2 border-slate-300 dark:border-obsidian-700 shadow-2xl w-full max-w-md p-7 relative">
+<main class="flex-1 flex items-center justify-center p-4 min-h-[calc(100vh-64px)] bg-canvas-subtle">
+    <div class="bg-canvas-default border border-ghborder-default rounded-lg shadow-lg w-full max-w-sm p-6 relative">
         <div class="text-center mb-6">
-            <div class="w-12 h-12 bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto mb-3">
-                <span class="material-icons text-2xl">person_add</span>
+            <div class="w-10 h-10 bg-accent-subtle text-accent-fg rounded-full flex items-center justify-center mx-auto mb-2">
+                <span class="material-icons text-xl">person_add</span>
             </div>
-            <h2 class="text-lg font-bold uppercase tracking-wider text-slate-900 dark:text-white">Create Operator Account</h2>
-            <p class="text-slate-500 dark:text-slate-400 text-xs mt-1 font-mono">Register credentials for bot administration</p>
+            <h2 class="text-lg font-semibold text-fg-default">Create your account</h2>
+            <p class="text-fg-muted text-xs mt-1">Register credentials for bot administration</p>
         </div>
 
         <% if (error) { %>
-            <div class="border-l-4 border-redstone-500 bg-redstone-500/10 text-redstone-400 border border-redstone-500/20 p-3 mb-5 text-xs font-mono flex items-center gap-2">
+            <div class="border border-danger-emphasis/30 bg-danger-subtle text-danger-fg rounded-md p-3 mb-4 text-xs flex items-center gap-2">
                 <span class="material-icons text-sm">error</span>
                 <span><%= error %></span>
             </div>
@@ -20,26 +20,26 @@
 
         <form action="/register" method="POST" class="space-y-4">
             <div>
-                <label class="block text-xs font-mono uppercase text-slate-700 dark:text-slate-300 mb-1.5 font-semibold">Desired Username</label>
-                <input type="text" name="username" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs text-slate-900 dark:text-white outline-none focus:border-primary transition-colors" placeholder="Enter username" required autocomplete="username">
+                <label class="block text-xs font-semibold text-fg-default mb-1">Username</label>
+                <input type="text" name="username" class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs text-fg-default outline-none focus:border-accent-fg focus:ring-1 focus:ring-accent-fg transition-all" placeholder="Choose username" required autocomplete="username">
             </div>
             <div>
-                <label class="block text-xs font-mono uppercase text-slate-700 dark:text-slate-300 mb-1.5 font-semibold">Password (min. 6 chars)</label>
-                <input type="password" name="password" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs text-slate-900 dark:text-white outline-none focus:border-primary transition-colors" placeholder="••••••••" required autocomplete="new-password">
+                <label class="block text-xs font-semibold text-fg-default mb-1">Password</label>
+                <input type="password" name="password" class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs text-fg-default outline-none focus:border-accent-fg focus:ring-1 focus:ring-accent-fg transition-all" placeholder="••••••••" required autocomplete="new-password">
             </div>
             <div>
-                <label class="block text-xs font-mono uppercase text-slate-700 dark:text-slate-300 mb-1.5 font-semibold">Confirm Password</label>
-                <input type="password" name="confirmPassword" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 text-xs text-slate-900 dark:text-white outline-none focus:border-primary transition-colors" placeholder="••••••••" required autocomplete="new-password">
+                <label class="block text-xs font-semibold text-fg-default mb-1">Confirm Password</label>
+                <input type="password" name="confirmPassword" class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs text-fg-default outline-none focus:border-accent-fg focus:ring-1 focus:ring-accent-fg transition-all" placeholder="••••••••" required autocomplete="new-password">
             </div>
-            <button type="submit" class="w-full bg-primary hover:bg-primary-hover text-white font-mono text-xs uppercase font-bold tracking-wider py-2.5 transition-all border border-primary-hover shadow-sm active:translate-y-0.5 mt-2">
-                Register Operator ->
+            <button type="submit" class="w-full bg-success-emphasis hover:bg-success-fg text-white font-semibold text-xs py-2 rounded-md transition-colors border border-success-emphasis shadow-sm mt-2">
+                Create account
             </button>
         </form>
         
-        <div class="mt-6 pt-4 border-t border-slate-200 dark:border-obsidian-700 text-center text-xs font-mono">
-            <p class="text-slate-500 dark:text-slate-400">
-                Already registered? 
-                <a href="/login" class="text-primary font-bold hover:underline ml-1">Sign in here</a>
+        <div class="mt-6 pt-4 border-t border-ghborder-muted text-center text-xs text-fg-muted">
+            <p>
+                Already have an account?
+                <a href="/login" class="text-accent-fg font-semibold hover:underline ml-1">Sign in</a>
             </p>
         </div>
     </div>
