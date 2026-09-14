@@ -113,7 +113,10 @@
     .inventory-grid { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 0.35rem; }
     .inventory-slot { position: relative; min-width: 0; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 1px solid #233454; background: #070a11; color: #64748b; font-family: 'JetBrains Mono', Consolas, monospace; font-size: clamp(9px, 2vw, 12px); text-align: center; padding: 0.2rem; }
     .inventory-slot.filled { color: #e2e8f0; border-color: #344b74; background: #141e33; }
+    .inventory-item-image { width: 72%; height: 72%; object-fit: contain; image-rendering: pixelated; }
+    .inventory-item-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .inventory-slot:hover { border-color: #3b82f6; color: #fff; }
+    .inventory-slot.selected { border-color: #f59e0b; box-shadow: inset 0 0 0 1px #f59e0b; }
     .inventory-count { position: absolute; right: 0.2rem; bottom: 0.1rem; color: #34d399; font-size: 10px; font-weight: 700; }
     .inventory-slot-number { position: absolute; left: 0.2rem; top: 0.1rem; color: #475569; font-size: 8px; }
 </style>
@@ -137,22 +140,69 @@ function inventoryLabel(item) {
     return item.displayName || item.name;
 }
 
+const INVENTORY_ASSET_VERSION = <%- JSON.stringify(botConfig.server?.version && botConfig.server.version !== 'auto' ? botConfig.server.version : '1.21.4') %>;
+
+function inventoryImageUrl(item) {
+    const itemName = String(item.name || '').split(':').pop();
+    return `https://mcasset.cloud/${encodeURIComponent(INVENTORY_ASSET_VERSION)}/assets/minecraft/textures/item/${encodeURIComponent(itemName)}.png`;
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 async function loadInventory() {
     const grid = document.getElementById('inventory-grid');
     if (!grid) return;
     try {
         const response = await fetch(`/api/bot/${BOT_ID}/inventory`);
         const result = await response.json();
+        if (!response.ok) {
+            throw new Error(result.error || 'Inventory request failed.');
+        }
         if (!result.success) {
             grid.innerHTML = `<div class="col-span-full text-center text-xs font-mono text-redstone-400 py-6">${escapeHtml(result.error || 'Inventory unavailable.')}</div>`;
             return;
         }
         grid.innerHTML = result.slots.map((item, slot) => item
-            ? `<div class="inventory-slot filled" title="${escapeHtml(inventoryLabel(item))} x${item.count}"><span class="inventory-slot-number">${slot}</span><span>${escapeHtml(item.displayName || item.name)}</span><span class="inventory-count">${item.count}</span></div>`
-            : `<div class="inventory-slot" title="Empty slot"><span class="inventory-slot-number">${slot}</span></div>`
+            ? `<button type="button" class="inventory-slot filled${selectedInventorySlot === slot ? ' selected' : ''}" data-slot="${slot}" onclick="selectInventorySlot(${slot})" title="${escapeHtml(inventoryLabel(item))} x${item.count}"><span class="inventory-slot-number">${slot}</span><img class="inventory-item-image" src="${inventoryImageUrl(item)}" alt="${escapeHtml(inventoryLabel(item))}" onerror="this.hidden=true; this.nextElementSibling.hidden=false"><span class="inventory-item-name" hidden>${escapeHtml(item.displayName || item.name)}</span><span class="inventory-count">${item.count}</span></button>`
+            : `<button type="button" class="inventory-slot${selectedInventorySlot === slot ? ' selected' : ''}" data-slot="${slot}" onclick="selectInventorySlot(${slot})" title="Empty slot"><span class="inventory-slot-number">${slot}</span></button>`
         ).join('');
     } catch (error) {
-        grid.innerHTML = '<div class="col-span-full text-center text-xs font-mono text-redstone-400 py-6">Could not load inventory.</div>';
+        grid.innerHTML = `<div class="col-span-full text-center text-xs font-mono text-redstone-400 py-6">${escapeHtml(error.message || 'Could not load inventory.')}</div>`;
+    }
+}
+
+let selectedInventorySlot = null;
+
+async function selectInventorySlot(slot) {
+    if (selectedInventorySlot === null) {
+        selectedInventorySlot = slot;
+        await loadInventory();
+        return;
+    }
+
+    const sourceSlot = selectedInventorySlot;
+    selectedInventorySlot = null;
+    try {
+        const response = await fetch(`/api/bot/${BOT_ID}/inventory/move`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sourceSlot, destinationSlot: slot })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Inventory move failed.');
+        }
+        await loadInventory();
+    } catch (error) {
+        await loadInventory();
+        showToast(error.message || 'Inventory move failed.', 'error');
     }
 }
 

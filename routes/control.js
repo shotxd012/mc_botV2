@@ -137,6 +137,25 @@ router.get('/bot/:id/inventory', async (req, res) => {
     res.json(instance.getInventory());
 });
 
+router.post('/bot/:id/inventory/move', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    const bot = await dataManager.getBot(req.params.id);
+    if (!bot) return res.status(404).json({ success: false, error: 'Bot not found' });
+    if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+    const passkeyBlock = await enforcePasskey(req, res, bot);
+    if (passkeyBlock) return;
+
+    const instance = botManager.getBotInstance(req.params.id);
+    if (!instance) return res.status(404).json({ success: false, error: 'Bot instance not found' });
+
+    const sourceSlot = Number(req.body.sourceSlot);
+    const destinationSlot = Number(req.body.destinationSlot);
+    const result = await instance.moveInventorySlots(sourceSlot, destinationSlot);
+    res.status(result.success ? 200 : 400).json(result);
+});
+
 router.post('/bot/:id/command', async (req, res) => {
     // Check if user has admin privileges or is assigned to this bot
     const user = await dataManager.getAdmin(req.session.user.username);
