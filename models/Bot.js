@@ -55,6 +55,40 @@ const botSchema = new mongoose.Schema({
         type: String, // Username of the user assigned to this bot
         ref: 'Admin',
         default: null // Initially not assigned to any user
+    },
+    // AFK & Automation
+    afkProfile: {
+        type: String,
+        enum: ['random_look', 'circle_walk', 'jump_spam', 'spin'],
+        default: 'random_look'
+    },
+    autoEat: {
+        type: Boolean,
+        default: true
+    },
+    autoStart: {
+        type: Boolean,
+        default: false
+    },
+    // Notifications
+    webhookUrl: {
+        type: String,
+        default: ''
+    },
+    // On-spawn command queue
+    loginCommands: {
+        type: [String],
+        default: []
+    },
+    // Meta
+    notes: {
+        type: String,
+        default: ''
+    },
+    // Accumulated uptime in seconds across all sessions
+    totalUptime: {
+        type: Number,
+        default: 0
     }
 });
 

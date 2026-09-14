@@ -22,6 +22,10 @@
             <span class="material-icons text-base <%= page === 'home' || page === 'bot' ? 'text-primary' : 'text-slate-400' %>">dashboard</span>
             <span>All Bots</span>
         </a>
+        <a href="/console" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'console' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
+            <span class="material-icons text-base <%= page === 'console' ? 'text-primary' : 'text-slate-400' %>">grid_view</span>
+            <span>Multi-Console</span>
+        </a>
         <a href="/profile" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'profile' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
             <span class="material-icons text-base <%= page === 'profile' ? 'text-primary' : 'text-slate-400' %>">person</span>
             <span>Profile</span>
@@ -56,6 +60,10 @@
             <span class="material-icons text-base <%= page === 'admin-settings' ? 'text-primary' : 'text-slate-400' %>">settings</span>
             <span>Settings</span>
         </a>
+        <a href="/templates" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'templates' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
+            <span class="material-icons text-base <%= page === 'templates' ? 'text-primary' : 'text-slate-400' %>">content_copy</span>
+            <span>Bot Templates</span>
+        </a>
         <% } %>
     </nav>
 
@@ -68,9 +76,15 @@
                 </div>
                 <span class="text-xs font-medium truncate text-slate-700 dark:text-slate-300"><%= user.username %></span>
             </div>
-            <span class="text-[10px] font-mono uppercase px-1.5 py-0.2 bg-primary/10 text-primary border border-primary/20">
-                <%= user.role || 'user' %>
-            </span>
+            <div class="flex items-center gap-1">
+                <!-- Per-user Dark/Light Toggle -->
+                <button id="theme-toggle-btn" onclick="toggleUserTheme()" title="Toggle dark/light mode" class="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 border border-transparent hover:border-slate-300 dark:hover:border-obsidian-600 transition-colors">
+                    <span class="material-icons text-base" id="theme-icon">dark_mode</span>
+                </button>
+                <span class="text-[10px] font-mono uppercase px-1.5 py-0.2 bg-primary/10 text-primary border border-primary/20">
+                    <%= user.role || 'user' %>
+                </span>
+            </div>
         </div>
         <a href="/logout" class="flex items-center justify-center gap-2 w-full px-3 py-2 text-xs font-medium text-redstone-500 hover:text-white hover:bg-redstone-600 border border-redstone-500/20 hover:border-redstone-600 transition-colors">
             <span class="material-icons text-sm">logout</span>
@@ -78,6 +92,26 @@
         </a>
     </div>
 </aside>
+<script>
+function toggleUserTheme() {
+    const html = document.documentElement;
+    const isDark = html.classList.contains('dark');
+    if (isDark) {
+        html.classList.remove('dark');
+        localStorage.setItem('userTheme', 'light');
+    } else {
+        html.classList.add('dark');
+        localStorage.setItem('userTheme', 'dark');
+    }
+    updateThemeIcon();
+}
+function updateThemeIcon() {
+    const icon = document.getElementById('theme-icon');
+    if (!icon) return;
+    icon.textContent = document.documentElement.classList.contains('dark') ? 'light_mode' : 'dark_mode';
+}
+document.addEventListener('DOMContentLoaded', updateThemeIcon);
+</script>
 
 <!-- Mobile Navigation -->
 <div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-obsidian-900 border-t border-slate-200 dark:border-obsidian-700/80 md:hidden z-50 pb-safe-bottom">

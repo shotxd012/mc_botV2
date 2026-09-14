@@ -630,5 +630,313 @@ router.post('/admin/bots/stop-all', async (req, res) => {
     res.json({ success: true, stoppedCount });
 });
 
+// ===== NEW FEATURE ENDPOINTS =====
+
+// Set AFK Profile
+router.post('/bot/:id/afk-profile', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    const bot = await dataManager.getBot(req.params.id);
+    if (!bot) return res.json({ success: false, error: 'Bot not found' });
+    if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+    const { profile } = req.body;
+    const valid = ['random_look', 'circle_walk', 'jump_spam', 'spin'];
+    if (!valid.includes(profile)) {
+        return res.json({ success: false, error: 'Invalid AFK profile.' });
+    }
+    const updated = await dataManager.updateBot(req.params.id, { afkProfile: profile });
+    if (!updated) return res.json({ success: false, error: 'Failed to update.' });
+    const instance = botManager.getBotInstance(req.params.id);
+    if (instance) instance.updateConfig(updated);
+    await dataManager.addAdminLog(req.session.user.username, 'set_afk_profile', String(req.params.id), { profile });
+    res.json({ success: true, profile });
+});
+
+// Toggle Auto-Eat
+router.post('/bot/:id/auto-eat', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    const bot = await dataManager.getBot(req.params.id);
+    if (!bot) return res.json({ success: false, error: 'Bot not found' });
+    if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+    const { enabled } = req.body;
+    const autoEat = enabled === true || enabled === 'true';
+    const updated = await dataManager.updateBot(req.params.id, { autoEat });
+    if (!updated) return res.json({ success: false, error: 'Failed to update.' });
+    const instance = botManager.getBotInstance(req.params.id);
+    if (instance) instance.updateConfig(updated);
+    res.json({ success: true, autoEat });
+});
+
+// Toggle Auto-Start
+router.post('/bot/:id/auto-start', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    if (user.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied. Only admins can change auto-start.' });
+    }
+    const bot = await dataManager.getBot(req.params.id);
+    if (!bot) return res.json({ success: false, error: 'Bot not found' });
+    const { enabled } = req.body;
+    const autoStart = enabled === true || enabled === 'true';
+    const updated = await dataManager.updateBot(req.params.id, { autoStart });
+    if (!updated) return res.json({ success: false, error: 'Failed to update.' });
+    const instance = botManager.getBotInstance(req.params.id);
+    if (instance) instance.updateConfig(updated);
+    res.json({ success: true, autoStart });
+});
+
+// Set Webhook URL
+router.post('/bot/:id/webhook', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    const bot = await dataManager.getBot(req.params.id);
+    if (!bot) return res.json({ success: false, error: 'Bot not found' });
+    if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+    const { webhookUrl } = req.body;
+    const updated = await dataManager.updateBot(req.params.id, { webhookUrl: webhookUrl || '' });
+    if (!updated) return res.json({ success: false, error: 'Failed to update.' });
+    const instance = botManager.getBotInstance(req.params.id);
+    if (instance) instance.updateConfig(updated);
+    res.json({ success: true });
+});
+
+// Set Login Commands
+router.post('/bot/:id/login-commands', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    const bot = await dataManager.getBot(req.params.id);
+    if (!bot) return res.json({ success: false, error: 'Bot not found' });
+    if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+    let { commands } = req.body;
+    if (typeof commands === 'string') {
+        commands = commands.split('\n').map(c => c.trim()).filter(Boolean);
+    }
+    if (!Array.isArray(commands)) commands = [];
+    const updated = await dataManager.updateBot(req.params.id, { loginCommands: commands });
+    if (!updated) return res.json({ success: false, error: 'Failed to update.' });
+    const instance = botManager.getBotInstance(req.params.id);
+    if (instance) instance.updateConfig(updated);
+    res.json({ success: true, commands });
+});
+
+// Set Notes
+router.post('/bot/:id/notes', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    const bot = await dataManager.getBot(req.params.id);
+    if (!bot) return res.json({ success: false, error: 'Bot not found' });
+    if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+    const { notes } = req.body;
+    const updated = await dataManager.updateBot(req.params.id, { notes: notes || '' });
+    if (!updated) return res.json({ success: false, error: 'Failed to update.' });
+    const instance = botManager.getBotInstance(req.params.id);
+    if (instance) instance.updateConfig(updated);
+    res.json({ success: true });
+});
+
+// Get Bot Events (Timeline)
+router.get('/bot/:id/events', async (req, res) => {
+    const bot = await dataManager.getBot(req.params.id);
+    if (!bot) return res.json({ success: false, error: 'Bot not found' });
+    const BotEvent = require('../models/BotEvent');
+    const { limit = 50 } = req.query;
+    const events = await BotEvent.find({ botId: parseInt(req.params.id) })
+        .sort({ timestamp: -1 })
+        .limit(parseInt(limit))
+        .lean();
+    res.json({ success: true, events: events.reverse() });
+});
+
+// Get Bot Metrics (Health/Food History)
+router.get('/bot/:id/metrics', async (req, res) => {
+    const bot = await dataManager.getBot(req.params.id);
+    if (!bot) return res.json({ success: false, error: 'Bot not found' });
+    const BotMetric = require('../models/BotMetric');
+    const { hours = 24 } = req.query;
+    const since = new Date(Date.now() - parseInt(hours) * 60 * 60 * 1000);
+    const metrics = await BotMetric.find({
+        botId: parseInt(req.params.id),
+        timestamp: { $gte: since }
+    }).sort({ timestamp: 1 }).lean();
+    res.json({ success: true, metrics });
+});
+
+// Search Console Logs
+router.get('/bot/:id/history/search', async (req, res) => {
+    const bot = await dataManager.getBot(req.params.id);
+    if (!bot) return res.json({ success: false, error: 'Bot not found' });
+    const BotLog = require('../models/BotLog');
+    const { keyword, type, from, to, limit = 200 } = req.query;
+
+    const query = { botId: parseInt(req.params.id) };
+    if (keyword) query.message = { $regex: keyword, $options: 'i' };
+    if (type) query.type = type;
+    if (from || to) {
+        query.timestamp = {};
+        if (from) query.timestamp.$gte = new Date(from);
+        if (to) query.timestamp.$lte = new Date(to);
+    }
+
+    const logs = await BotLog.find(query)
+        .sort({ timestamp: -1 })
+        .limit(parseInt(limit))
+        .lean();
+    res.json({ success: true, logs: logs.reverse(), total: logs.length });
+});
+
+// Export Console Logs as .txt or .csv
+router.get('/bot/:id/history/export', async (req, res) => {
+    const bot = await dataManager.getBot(req.params.id);
+    if (!bot) return res.status(404).send('Bot not found');
+    const BotLog = require('../models/BotLog');
+    const { format = 'txt' } = req.query;
+    const logs = await BotLog.find({ botId: parseInt(req.params.id) })
+        .sort({ timestamp: 1 })
+        .lean();
+
+    if (format === 'csv') {
+        const header = 'timestamp,type,message\n';
+        const rows = logs.map(l => {
+            const ts = new Date(l.timestamp).toISOString();
+            const msg = `"${(l.message || '').replace(/"/g, '""')}"`;
+            return `${ts},${l.type},${msg}`;
+        }).join('\n');
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="bot_${req.params.id}_logs.csv"`);
+        return res.send(header + rows);
+    } else {
+        const content = logs.map(l => {
+            const ts = new Date(l.timestamp).toISOString();
+            return `[${ts}] [${(l.type || 'info').toUpperCase()}] ${l.message}`;
+        }).join('\n');
+        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Content-Disposition', `attachment; filename="bot_${req.params.id}_logs.txt"`);
+        return res.send(content);
+    }
+});
+
+// Clone Bot
+router.post('/bots/clone/:id', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    if (user.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+    const cloned = await botManager.cloneBot(req.params.id);
+    if (!cloned) return res.json({ success: false, error: 'Failed to clone bot.' });
+    await dataManager.addAdminLog(req.session.user.username, 'clone_bot', String(req.params.id), { newId: cloned.id });
+    res.json({ success: true, bot: cloned });
+});
+
+// Export All Bots as JSON
+router.get('/bots/export', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    if (user.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+    const bots = await dataManager.getBots();
+    const exportData = bots.map(b => ({
+        name: b.name,
+        server: b.server,
+        account: { email: b.account?.email || '' },
+        afkProfile: b.afkProfile || 'random_look',
+        autoEat: b.autoEat !== false,
+        autoStart: b.autoStart === true,
+        loginCommands: b.loginCommands || [],
+        notes: b.notes || '',
+        webhookUrl: b.webhookUrl || ''
+    }));
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="bots_export_${Date.now()}.json"`);
+    res.send(JSON.stringify(exportData, null, 2));
+});
+
+// Import Bots from JSON
+router.post('/bots/import', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    if (user.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+    const { bots } = req.body;
+    if (!Array.isArray(bots) || bots.length === 0) {
+        return res.json({ success: false, error: 'Invalid import data. Expected array of bot configs.' });
+    }
+    let imported = 0;
+    const errors = [];
+    for (const botData of bots) {
+        try {
+            const newBot = await botManager.createBot({
+                name: botData.name || 'Imported Bot',
+                ip: botData.server?.ip || 'localhost',
+                port: botData.server?.port || 25565,
+                version: botData.server?.version || '1.20.4',
+                email: botData.account?.email || '',
+                afkProfile: botData.afkProfile || 'random_look',
+                autoEat: botData.autoEat !== false,
+                autoStart: false, // never auto-start imports
+                loginCommands: botData.loginCommands || [],
+                notes: botData.notes || '',
+                webhookUrl: botData.webhookUrl || ''
+            });
+            if (newBot) imported++;
+        } catch (err) {
+            errors.push(err.message);
+        }
+    }
+    await dataManager.addAdminLog(req.session.user.username, 'import_bots', 'bulk', { imported, errors: errors.length });
+    res.json({ success: true, imported, errors });
+});
+
+// --- Template Routes ---
+
+// List Templates
+router.get('/templates', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    if (user.role !== 'admin') return res.status(403).json({ success: false, error: 'Permission denied.' });
+    const templates = await botManager.getTemplates();
+    res.json({ success: true, templates });
+});
+
+// Create Template from Bot
+router.post('/templates/create', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    if (user.role !== 'admin') return res.status(403).json({ success: false, error: 'Permission denied.' });
+    const { botId, templateName } = req.body;
+    if (!botId) return res.json({ success: false, error: 'Bot ID is required.' });
+    const template = await botManager.createTemplateFromBot(botId, templateName, req.session.user.username);
+    if (!template) return res.json({ success: false, error: 'Failed to create template.' });
+    await dataManager.addAdminLog(req.session.user.username, 'create_template', String(botId), { templateName });
+    res.json({ success: true, template });
+});
+
+// Spawn Bot from Template
+router.post('/templates/spawn', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    if (user.role !== 'admin') return res.status(403).json({ success: false, error: 'Permission denied.' });
+    const { templateId } = req.body;
+    if (!templateId) return res.json({ success: false, error: 'Template ID is required.' });
+    const newBot = await botManager.createBotFromTemplate(templateId);
+    if (!newBot) return res.json({ success: false, error: 'Failed to spawn bot from template.' });
+    await dataManager.addAdminLog(req.session.user.username, 'spawn_from_template', templateId, { newBotId: newBot.id });
+    res.json({ success: true, bot: newBot });
+});
+
+// Delete Template
+router.post('/templates/delete', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    if (user.role !== 'admin') return res.status(403).json({ success: false, error: 'Permission denied.' });
+    const { templateId } = req.body;
+    if (!templateId) return res.json({ success: false, error: 'Template ID is required.' });
+    const deleted = await botManager.deleteTemplate(templateId);
+    if (!deleted) return res.json({ success: false, error: 'Failed to delete template.' });
+    await dataManager.addAdminLog(req.session.user.username, 'delete_template', templateId, null);
+    res.json({ success: true });
+});
+
 module.exports = router;
+
 
