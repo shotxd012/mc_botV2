@@ -1,20 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" id="html-root" class="<%= (typeof settings !== 'undefined' && settings.darkMode) ? 'dark' : 'light' %>">
+<html lang="en" id="html-root" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MC Bot Dashboard</title>
-    <!-- Per-user theme preference (runs before page paint to avoid flicker) -->
-    <script>
-        (function() {
-            const saved = localStorage.getItem('userTheme');
-            if (saved === 'dark') document.documentElement.classList.add('dark');
-            else if (saved === 'light') document.documentElement.classList.remove('dark');
-        })();
-    </script>
+    <meta name="color-scheme" content="dark">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js for analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -55,6 +47,8 @@
             }
         }
     </script>
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,11 +61,7 @@
 
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background-color: #f8fafc;
-        }
-
-        .dark body {
-            background-color: #080c16;
+            background-color: #070a11;
             color: #e2e8f0;
         }
 
@@ -80,7 +70,7 @@
             scrollbar-width: thin;
             scrollbar-color: #64748b transparent;
         }
-        .dark * {
+        * {
             scrollbar-color: #334155 transparent;
         }
 
@@ -95,14 +85,14 @@
             background: #cbd5e1;
             border-radius: 0 !important;
         }
-        .dark ::-webkit-scrollbar-thumb {
+        ::-webkit-scrollbar-thumb {
             background: #233454;
             border-radius: 0 !important;
         }
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
-        .dark ::-webkit-scrollbar-thumb:hover {
+        ::-webkit-scrollbar-thumb:hover {
             background: #3b82f6;
         }
 
@@ -155,7 +145,7 @@
             background-image: linear-gradient(to right, rgba(148, 163, 184, 0.05) 1px, transparent 1px),
                               linear-gradient(to bottom, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
         }
-        .dark .bg-grid-pattern {
+        .bg-grid-pattern {
             background-image: linear-gradient(to right, rgba(30, 41, 59, 0.4) 1px, transparent 1px),
                               linear-gradient(to bottom, rgba(30, 41, 59, 0.4) 1px, transparent 1px);
         }

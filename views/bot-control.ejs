@@ -3,11 +3,13 @@
 
 <script>
     const BOT_ID = "<%= botId %>";
+    const BOT_SECTION = "<%= section || 'config' %>";
 </script>
 
-<main class="flex-1 p-4 sm:p-6 md:p-8 min-h-screen pb-20 md:pb-8 flex flex-col gap-6">
+<main class="flex-1 min-w-0 p-4 sm:p-6 md:p-8 min-h-screen pb-20 md:pb-8 flex flex-col gap-6">
     <!-- Header -->
-    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-5">
+    <header class="flex flex-col gap-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-4">
+        <div class="flex min-w-0 flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div class="flex items-center gap-3">
             <a href="/" class="p-2 bg-slate-100 dark:bg-obsidian-850 hover:bg-slate-200 dark:hover:bg-obsidian-800 text-slate-600 dark:text-slate-300 transition-colors border border-slate-200 dark:border-obsidian-700 flex items-center justify-center">
                 <span class="material-icons text-base">arrow_back</span>
@@ -29,26 +31,38 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-2 self-end sm:self-auto">
-            <!-- Export Logs Buttons -->
-            <a href="/api/bot/<%= botId %>/history/export?format=txt" class="px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white font-mono text-xs uppercase font-bold transition-all border border-slate-300 dark:border-obsidian-700 hover:border-slate-500 flex items-center gap-1.5 active:translate-y-0.5" title="Export logs as TXT">
-                <span class="material-icons text-sm">download</span>
-                <span class="hidden sm:inline">TXT</span>
-            </a>
-            <a href="/api/bot/<%= botId %>/history/export?format=csv" class="px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white font-mono text-xs uppercase font-bold transition-all border border-slate-300 dark:border-obsidian-700 hover:border-slate-500 flex items-center gap-1.5 active:translate-y-0.5" title="Export logs as CSV">
-                <span class="material-icons text-sm">table_chart</span>
-                <span class="hidden sm:inline">CSV</span>
-            </a>
-            <button onclick="deleteBot()" class="px-3 py-2 text-redstone-500 hover:text-white hover:bg-redstone-600 font-mono text-xs uppercase font-bold transition-all border border-redstone-500/30 hover:border-redstone-600 flex items-center gap-1.5 active:translate-y-0.5">
-                <span class="material-icons text-sm">delete</span>
-                <span>Delete</span>
-            </button>
+        <a href="/bot/<%= botId %>/settings" class="self-end sm:self-auto inline-flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-white hover:bg-obsidian-800 font-mono text-xs uppercase font-bold transition-all border border-obsidian-700 hover:border-obsidian-600">
+            <span class="material-icons text-sm">settings</span>
+            <span>Bot Settings</span>
+        </a>
         </div>
+
+        <nav class="flex w-full min-w-0 max-w-full items-center gap-1 overflow-x-auto border border-obsidian-700/80 bg-obsidian-900/70 p-1 shadow-sm" aria-label="Bot workspace">
+            <span class="hidden lg:flex items-center gap-2 px-3 text-[10px] font-mono uppercase tracking-widest text-slate-500 whitespace-nowrap">
+                <span class="material-icons text-sm text-primary">tune</span>
+                Workspace
+            </span>
+            <a href="/bot/<%= botId %>" aria-current="<%= section === 'console' ? 'page' : 'false' %>" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border <%= section === 'console' ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800' %> transition-colors">
+                <span class="material-icons text-sm">terminal</span> Console
+            </a>
+            <a href="/bot/<%= botId %>/config" aria-current="<%= section === 'config' ? 'page' : 'false' %>" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border <%= section === 'config' ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800' %> transition-colors">
+                <span class="material-icons text-sm">settings</span> Config
+            </a>
+            <a href="/bot/<%= botId %>/analytics" aria-current="<%= section === 'analytics' ? 'page' : 'false' %>" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border <%= section === 'analytics' ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800' %> transition-colors">
+                <span class="material-icons text-sm">show_chart</span> Analytics
+            </a>
+            <a href="/bot/<%= botId %>/events" aria-current="<%= section === 'events' ? 'page' : 'false' %>" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border <%= section === 'events' ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800' %> transition-colors">
+                <span class="material-icons text-sm">timeline</span> Events
+            </a>
+            <a href="/bot/<%= botId %>/settings" aria-current="<%= section === 'settings' ? 'page' : 'false' %>" class="flex min-w-[108px] flex-1 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-mono uppercase tracking-wider font-bold whitespace-nowrap border <%= section === 'settings' ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-obsidian-800' %> transition-colors">
+                <span class="material-icons text-sm">tune</span> Settings
+            </a>
+        </nav>
     </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
         <!-- Left Column: Controls & Console -->
-        <div class="lg:col-span-2 flex flex-col gap-5 min-h-0">
+        <div class="<%= section === 'console' ? 'lg:col-span-3' : 'hidden' %> flex flex-col gap-5 min-h-0">
             <!-- Controls Box -->
             <div class="bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700/80 p-5 shadow-sm">
                 <div class="flex flex-wrap gap-3">
@@ -154,7 +168,7 @@
             </div>
 
             <!-- Terminal / Console -->
-            <div class="flex-1 bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 flex flex-col overflow-hidden min-h-[380px] shadow-lg">
+            <div class="flex-none h-[320px] bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 flex flex-col overflow-hidden shadow-lg">
                 <div class="px-4 py-2.5 bg-obsidian-900 border-b border-obsidian-700/80 flex justify-between items-center select-none gap-3">
                     <div class="flex items-center gap-2">
                         <span class="w-2.5 h-2.5 bg-emerald-500 inline-block"></span>
@@ -169,7 +183,7 @@
                     </div>
                 </div>
 
-                <div id="console-logs" class="flex-1 p-3.5 overflow-y-auto text-xs font-mono space-y-0.5 bg-obsidian-950 text-slate-300 console-logs leading-relaxed">
+                <div id="console-logs" class="h-[220px] flex-none p-3.5 overflow-y-auto text-xs font-mono space-y-0.5 bg-obsidian-950 text-slate-300 console-logs leading-relaxed">
                     <div class="console-placeholder text-slate-500 italic py-1">Connecting to console stream...</div>
                 </div>
 
@@ -188,16 +202,10 @@
         </div>
 
         <!-- Right Column: Settings & Analytics -->
-        <div class="flex flex-col gap-5">
-            <!-- Tabs -->
-            <div class="flex border-b border-slate-200 dark:border-obsidian-700">
-                <button onclick="switchTab('config')" id="tab-config" class="flex-1 py-2 text-xs font-mono uppercase tracking-wider font-bold border-b-2 border-primary text-primary transition-colors">Config</button>
-                <button onclick="switchTab('analytics')" id="tab-analytics" class="flex-1 py-2 text-xs font-mono uppercase tracking-wider font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">Analytics</button>
-                <button onclick="switchTab('events')" id="tab-events" class="flex-1 py-2 text-xs font-mono uppercase tracking-wider font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">Events</button>
-            </div>
+        <div class="<%= section === 'console' ? 'hidden' : 'lg:col-span-3 max-w-5xl w-full mx-auto' %> flex flex-col gap-5">
 
             <!-- Config Tab -->
-            <div id="panel-config" class="flex flex-col gap-4">
+            <div id="panel-config" class="<%= section === 'config' ? '' : 'hidden ' %>flex flex-col gap-4">
                 <!-- Configuration Box -->
                 <div class="bg-white dark:bg-obsidian-900 p-5 border border-slate-200 dark:border-obsidian-700/80 shadow-sm">
                     <div class="flex items-center gap-2 mb-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-3">
@@ -306,7 +314,37 @@
             </div>
 
             <!-- Analytics Tab -->
-            <div id="panel-analytics" class="hidden flex flex-col gap-4">
+            <div id="panel-analytics" class="<%= section === 'analytics' ? '' : 'hidden ' %>flex flex-col gap-4">
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div class="bg-white dark:bg-obsidian-900 p-4 border border-slate-200 dark:border-obsidian-700/80">
+                        <div class="text-[10px] font-mono uppercase tracking-wider text-slate-500">CPU usage</div>
+                        <div id="runtime-cpu-current" class="mt-2 text-lg font-mono font-bold text-primary">--%</div>
+                        <div class="text-[10px] text-slate-500 mt-1">Bot process</div>
+                    </div>
+                    <div class="bg-white dark:bg-obsidian-900 p-4 border border-slate-200 dark:border-obsidian-700/80">
+                        <div class="text-[10px] font-mono uppercase tracking-wider text-slate-500">RAM usage</div>
+                        <div id="runtime-memory-current" class="mt-2 text-lg font-mono font-bold text-emerald-400">-- MB</div>
+                        <div class="text-[10px] text-slate-500 mt-1">RSS memory</div>
+                    </div>
+                    <div class="bg-white dark:bg-obsidian-900 p-4 border border-slate-200 dark:border-obsidian-700/80 col-span-2">
+                        <div class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Runtime scope</div>
+                        <div class="mt-2 text-sm font-mono font-bold text-slate-200">Node bot process</div>
+                        <div class="text-[10px] text-slate-500 mt-1">Shared process hosting this bot instance</div>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-obsidian-900 p-5 border border-slate-200 dark:border-obsidian-700/80 shadow-sm">
+                    <div class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-primary text-base">memory</span>
+                            <h3 class="text-xs font-mono uppercase tracking-wider font-bold text-slate-900 dark:text-white">CPU & RAM History</h3>
+                        </div>
+                        <span class="text-[10px] font-mono text-slate-500">CPU % / RAM MB</span>
+                    </div>
+                    <div class="h-52 relative">
+                        <canvas id="runtime-chart"></canvas>
+                        <div id="runtime-empty" class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs font-mono hidden">No runtime samples yet.</div>
+                    </div>
+                </div>
                 <div class="bg-white dark:bg-obsidian-900 p-5 border border-slate-200 dark:border-obsidian-700/80 shadow-sm">
                     <div class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-3">
                         <div class="flex items-center gap-2">
@@ -348,7 +386,7 @@
             </div>
 
             <!-- Events Tab -->
-            <div id="panel-events" class="hidden flex flex-col gap-4">
+            <div id="panel-events" class="<%= section === 'events' ? '' : 'hidden ' %>flex flex-col gap-4">
                 <div class="bg-white dark:bg-obsidian-900 p-5 border border-slate-200 dark:border-obsidian-700/80 shadow-sm">
                     <div class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-obsidian-700/60 pb-3">
                         <div class="flex items-center gap-2">
@@ -429,13 +467,11 @@ function filterLogs(keyword) {
 // ===== Tab Switching =====
 function switchTab(tab) {
     ['config','analytics','events'].forEach(t => {
-        document.getElementById('panel-' + t).classList.add('hidden');
-        document.getElementById('tab-' + t).classList.remove('border-primary','text-primary');
-        document.getElementById('tab-' + t).classList.add('border-transparent','text-slate-400');
+        const panel = document.getElementById('panel-' + t);
+        if (panel) panel.classList.add('hidden');
     });
-    document.getElementById('panel-' + tab).classList.remove('hidden');
-    document.getElementById('tab-' + tab).classList.add('border-primary','text-primary');
-    document.getElementById('tab-' + tab).classList.remove('border-transparent','text-slate-400');
+    const panel = document.getElementById('panel-' + tab);
+    if (panel) panel.classList.remove('hidden');
     if (tab === 'analytics') loadMetrics();
     if (tab === 'events') loadEvents();
 }
@@ -532,6 +568,7 @@ async function saveNotes() {
 
 // ===== Health/Food Chart =====
 let metricsChart = null;
+let runtimeChart = null;
 async function loadMetrics() {
     const hours = document.getElementById('metrics-hours')?.value || 24;
     const res = await fetch(`/api/bot/${BOT_ID}/metrics?hours=${hours}`);
@@ -542,6 +579,11 @@ async function loadMetrics() {
         return;
     }
     if (empty) empty.classList.add('hidden');
+    const latestMetric = data.metrics[data.metrics.length - 1];
+    const cpuCurrent = document.getElementById('runtime-cpu-current');
+    const memoryCurrent = document.getElementById('runtime-memory-current');
+    if (cpuCurrent) cpuCurrent.textContent = `${Number(latestMetric.cpu || 0).toFixed(1)}%`;
+    if (memoryCurrent) memoryCurrent.textContent = `${Number(latestMetric.memory || 0).toFixed(1)} MB`;
     const labels = data.metrics.map(m => new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
     const healthData = data.metrics.map(m => m.health);
     const foodData = data.metrics.map(m => m.food);
@@ -566,6 +608,33 @@ async function loadMetrics() {
             }
         }
     });
+
+    const runtimeEmpty = document.getElementById('runtime-empty');
+    if (runtimeEmpty) runtimeEmpty.classList.add('hidden');
+    const runtimeCtx = document.getElementById('runtime-chart')?.getContext('2d');
+    if (runtimeCtx) {
+        if (runtimeChart) runtimeChart.destroy();
+        runtimeChart = new Chart(runtimeCtx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'CPU %', data: data.metrics.map(m => Number(m.cpu || 0)), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', yAxisID: 'cpu', tension: 0.35, fill: true, pointRadius: 1 },
+                    { label: 'RAM MB', data: data.metrics.map(m => Number(m.memory || 0)), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', yAxisID: 'memory', tension: 0.35, fill: true, pointRadius: 1 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
+                scales: {
+                    x: { ticks: { color: '#64748b', font: { size: 9 }, maxTicksLimit: 8 }, grid: { color: 'rgba(100,116,139,0.1)' } },
+                    cpu: { position: 'left', beginAtZero: true, ticks: { color: '#60a5fa', font: { size: 9 } }, grid: { color: 'rgba(100,116,139,0.1)' } },
+                    memory: { position: 'right', beginAtZero: true, ticks: { color: '#34d399', font: { size: 9 } }, grid: { drawOnChartArea: false } }
+                }
+            }
+        });
+    }
 }
 
 // ===== Log Search =====
@@ -642,6 +711,9 @@ function updateHealthFoodBars(status) {
     if (healthBar) healthBar.style.width = Math.min(100, (health / 20) * 100) + '%';
     if (foodBar) foodBar.style.width = Math.min(100, (food / 20) * 100) + '%';
 }
+
+if (BOT_SECTION === 'analytics') loadMetrics();
+if (BOT_SECTION === 'events') loadEvents();
 </script>
 
 <%- include('partials/footer') %>
