@@ -1,118 +1,118 @@
 <% if (typeof user !== 'undefined') { %>
-<!-- Desktop Sidebar -->
-<aside class="w-60 bg-white dark:bg-obsidian-900 border-r border-slate-200 dark:border-obsidian-700/60 flex flex-col hidden md:flex fixed h-full z-20 select-none">
-    <div class="p-4 border-b border-slate-200 dark:border-obsidian-700/60 flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 bg-primary text-white flex items-center justify-center">
-                <span class="material-icons text-base">smart_toy</span>
-            </div>
-            <div>
-                <h1 class="text-sm font-bold tracking-wider uppercase text-slate-900 dark:text-white">Bot Admin</h1>
-                <span class="text-[10px] font-mono text-slate-400 dark:text-slate-500 uppercase tracking-widest block -mt-0.5">Control Hub</span>
-            </div>
+<!-- Layout Container: Flex row with Sidebar + Main Content Area -->
+<div class="flex-1 flex flex-col md:flex-row w-full min-h-[calc(100vh-64px)]">
+<!-- Desktop Sidebar (Width 260px, GitHub Primer styled) -->
+<aside class="w-64 bg-canvas-subtle border-r border-ghborder-default hidden md:flex flex-col flex-shrink-0 select-none">
+    <div class="p-4 border-b border-ghborder-muted flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <span class="material-icons text-base text-accent-fg">dns</span>
+            <span class="text-xs font-semibold text-fg-default uppercase tracking-wider font-mono">Workspace</span>
         </div>
-        <span class="text-[10px] font-mono bg-slate-100 dark:bg-obsidian-800 border border-slate-200 dark:border-obsidian-700 px-1.5 py-0.5 text-slate-500 dark:text-slate-400">v2.0</span>
+        <span class="text-[10px] font-mono bg-canvas-default border border-ghborder-default px-1.5 py-0.5 rounded text-fg-muted">v2.0</span>
     </div>
 
     <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
-        <div class="px-3 py-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            Main
+        <div class="px-2 py-1 text-[11px] font-semibold text-fg-muted uppercase tracking-wider">
+            Overview
         </div>
-        <a href="/" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'home' || page === 'bot' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
-            <span class="material-icons text-base <%= page === 'home' || page === 'bot' ? 'text-primary' : 'text-slate-400' %>">dashboard</span>
-            <span>All Bots</span>
+        <a href="/" class="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors <%= page === 'home' || page === 'bot' ? 'bg-accent-subtle text-accent-fg font-semibold' : 'text-fg-default hover:bg-canvas-default hover:text-accent-fg' %>">
+            <span class="material-icons text-base opacity-80">view_list</span>
+            <span>Repositories (Bots)</span>
         </a>
-        <a href="/console" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'console' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
-            <span class="material-icons text-base <%= page === 'console' ? 'text-primary' : 'text-slate-400' %>">grid_view</span>
+        <a href="/console" class="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors <%= page === 'console' ? 'bg-accent-subtle text-accent-fg font-semibold' : 'text-fg-default hover:bg-canvas-default hover:text-accent-fg' %>">
+            <span class="material-icons text-base opacity-80">grid_view</span>
             <span>Multi-Console</span>
         </a>
-        <a href="/profile" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'profile' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
-            <span class="material-icons text-base <%= page === 'profile' ? 'text-primary' : 'text-slate-400' %>">person</span>
+        <a href="/profile" class="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors <%= page === 'profile' ? 'bg-accent-subtle text-accent-fg font-semibold' : 'text-fg-default hover:bg-canvas-default hover:text-accent-fg' %>">
+            <span class="material-icons text-base opacity-80">account_circle</span>
             <span>Profile</span>
         </a>
 
         <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
-        <div class="pt-4 px-3 py-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-primary flex items-center justify-between">
+        <div class="pt-4 px-2 py-1 text-[11px] font-semibold text-fg-muted uppercase tracking-wider flex items-center justify-between">
             <span>Administration</span>
-            <span class="text-[9px] bg-primary/15 text-primary border border-primary/30 px-1 py-0.2">Root</span>
+            <span class="text-[9px] bg-accent-subtle text-accent-fg border border-accent-muted px-1.5 py-0.2 rounded-pill font-mono">Admin</span>
         </div>
-        <a href="/admin/overview" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'admin-overview' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
-            <span class="material-icons text-base <%= page === 'admin-overview' ? 'text-primary' : 'text-slate-400' %>">speed</span>
+        <a href="/admin/overview" class="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors <%= page === 'admin-overview' ? 'bg-accent-subtle text-accent-fg font-semibold' : 'text-fg-default hover:bg-canvas-default hover:text-accent-fg' %>">
+            <span class="material-icons text-base opacity-80">speed</span>
             <span>Telemetry</span>
         </a>
-        <a href="/admin/bots" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'admin-bots' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
-            <span class="material-icons text-base <%= page === 'admin-bots' ? 'text-primary' : 'text-slate-400' %>">smart_toy</span>
+        <a href="/admin/bots" class="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors <%= page === 'admin-bots' ? 'bg-accent-subtle text-accent-fg font-semibold' : 'text-fg-default hover:bg-canvas-default hover:text-accent-fg' %>">
+            <span class="material-icons text-base opacity-80">smart_toy</span>
             <span>Bot Fleet</span>
         </a>
-        <a href="/admin/servers" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'admin-servers' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
-            <span class="material-icons text-base <%= page === 'admin-servers' ? 'text-primary' : 'text-slate-400' %>">dns</span>
+        <a href="/admin/servers" class="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors <%= page === 'admin-servers' ? 'bg-accent-subtle text-accent-fg font-semibold' : 'text-fg-default hover:bg-canvas-default hover:text-accent-fg' %>">
+            <span class="material-icons text-base opacity-80">dns</span>
             <span>Server Profiles</span>
         </a>
-        <a href="/admin/users" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'admin-users' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
-            <span class="material-icons text-base <%= page === 'admin-users' ? 'text-primary' : 'text-slate-400' %>">group</span>
+        <a href="/admin/users" class="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors <%= page === 'admin-users' ? 'bg-accent-subtle text-accent-fg font-semibold' : 'text-fg-default hover:bg-canvas-default hover:text-accent-fg' %>">
+            <span class="material-icons text-base opacity-80">group</span>
             <span>Users & Access</span>
         </a>
-        <a href="/admin/logs" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'admin-logs' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
-            <span class="material-icons text-base <%= page === 'admin-logs' ? 'text-primary' : 'text-slate-400' %>">receipt_long</span>
+        <a href="/admin/logs" class="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors <%= page === 'admin-logs' ? 'bg-accent-subtle text-accent-fg font-semibold' : 'text-fg-default hover:bg-canvas-default hover:text-accent-fg' %>">
+            <span class="material-icons text-base opacity-80">receipt_long</span>
             <span>Audit Logs</span>
         </a>
-        <a href="/admin/settings" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'admin-settings' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
-            <span class="material-icons text-base <%= page === 'admin-settings' ? 'text-primary' : 'text-slate-400' %>">settings</span>
+        <a href="/admin/settings" class="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors <%= page === 'admin-settings' ? 'bg-accent-subtle text-accent-fg font-semibold' : 'text-fg-default hover:bg-canvas-default hover:text-accent-fg' %>">
+            <span class="material-icons text-base opacity-80">settings</span>
             <span>Settings</span>
         </a>
-        <a href="/templates" class="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-l-2 <%= page === 'templates' ? 'border-primary bg-slate-100 dark:bg-obsidian-800 text-slate-900 dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-obsidian-850 hover:text-slate-900 dark:hover:text-slate-200' %>">
-            <span class="material-icons text-base <%= page === 'templates' ? 'text-primary' : 'text-slate-400' %>">content_copy</span>
+        <a href="/templates" class="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors <%= page === 'templates' ? 'bg-accent-subtle text-accent-fg font-semibold' : 'text-fg-default hover:bg-canvas-default hover:text-accent-fg' %>">
+            <span class="material-icons text-base opacity-80">content_copy</span>
             <span>Bot Templates</span>
         </a>
         <% } %>
     </nav>
 
-    <!-- User / Session footer -->
-    <div class="p-3 border-t border-slate-200 dark:border-obsidian-700/60 bg-slate-50/50 dark:bg-obsidian-950/40">
+    <!-- User / Session Footer -->
+    <div class="p-3 border-t border-ghborder-default bg-canvas-default/50">
         <div class="flex items-center justify-between mb-2 px-1">
             <div class="flex items-center gap-2 truncate">
-                <div class="w-6 h-6 bg-slate-200 dark:bg-obsidian-800 border border-slate-300 dark:border-obsidian-700 flex items-center justify-center text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
+                <div class="w-6 h-6 rounded-full bg-accent-emphasis text-white flex items-center justify-center text-xs font-mono font-bold">
                     <%= user.username ? user.username.charAt(0).toUpperCase() : 'U' %>
                 </div>
-                <span class="text-xs font-medium truncate text-slate-700 dark:text-slate-300"><%= user.username %></span>
+                <span class="text-xs font-semibold truncate text-fg-default"><%= user.username %></span>
             </div>
-            <div class="flex items-center gap-1">
-                <span class="text-[10px] font-mono uppercase px-1.5 py-0.2 bg-primary/10 text-primary border border-primary/20">
-                    <%= user.role || 'user' %>
-                </span>
-            </div>
+            <span class="text-[10px] font-mono capitalize px-2 py-0.5 bg-canvas-subtle text-fg-muted border border-ghborder-default rounded-pill">
+                <%= user.role || 'user' %>
+            </span>
         </div>
-        <a href="/logout" class="flex items-center justify-center gap-2 w-full px-3 py-2 text-xs font-medium text-redstone-500 hover:text-white hover:bg-redstone-600 border border-redstone-500/20 hover:border-redstone-600 transition-colors">
+        <a href="/logout" class="flex items-center justify-center gap-1.5 w-full px-3 py-1.5 text-xs font-medium text-danger-fg hover:text-white hover:bg-danger-emphasis border border-ghborder-default rounded-md transition-colors">
             <span class="material-icons text-sm">logout</span>
             <span>Sign Out</span>
         </a>
     </div>
 </aside>
-<!-- Mobile Navigation -->
-<div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-obsidian-900 border-t border-slate-200 dark:border-obsidian-700/80 md:hidden z-50 pb-safe-bottom">
+
+<!-- Mobile Navigation (Bottom Bar / Header Collapsible) -->
+<div class="fixed bottom-0 left-0 right-0 bg-canvas-subtle border-t border-ghborder-default md:hidden z-50 pb-safe-bottom shadow-lg">
     <div class="flex justify-around items-stretch">
-        <a href="/" class="flex-1 flex flex-col items-center justify-center py-2.5 border-t-2 <%= page === 'home' || page === 'bot' ? 'border-primary text-primary bg-primary/5 dark:bg-primary/10' : 'border-transparent text-slate-500 dark:text-slate-400' %> transition-colors">
-            <span class="material-icons text-lg">dashboard</span>
-            <span class="text-[10px] uppercase font-mono tracking-wider mt-0.5 font-medium">Bots</span>
+        <a href="/" class="flex-1 flex flex-col items-center justify-center py-2 text-xs font-medium <%= page === 'home' || page === 'bot' ? 'text-accent-fg font-semibold' : 'text-fg-muted' %> transition-colors">
+            <span class="material-icons text-lg">view_list</span>
+            <span class="text-[10px] mt-0.5">Bots</span>
         </a>
-        <a href="/profile" class="flex-1 flex flex-col items-center justify-center py-2.5 border-t-2 <%= page === 'profile' ? 'border-primary text-primary bg-primary/5 dark:bg-primary/10' : 'border-transparent text-slate-500 dark:text-slate-400' %> transition-colors">
-            <span class="material-icons text-lg">person</span>
-            <span class="text-[10px] uppercase font-mono tracking-wider mt-0.5 font-medium">Profile</span>
+        <a href="/console" class="flex-1 flex flex-col items-center justify-center py-2 text-xs font-medium <%= page === 'console' ? 'text-accent-fg font-semibold' : 'text-fg-muted' %> transition-colors">
+            <span class="material-icons text-lg">grid_view</span>
+            <span class="text-[10px] mt-0.5">Console</span>
+        </a>
+        <a href="/profile" class="flex-1 flex flex-col items-center justify-center py-2 text-xs font-medium <%= page === 'profile' ? 'text-accent-fg font-semibold' : 'text-fg-muted' %> transition-colors">
+            <span class="material-icons text-lg">account_circle</span>
+            <span class="text-[10px] mt-0.5">Profile</span>
         </a>
         <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
-        <a href="/admin/overview" class="flex-1 flex flex-col items-center justify-center py-2.5 border-t-2 <%= typeof page !== 'undefined' && page.startsWith('admin') ? 'border-primary text-primary bg-primary/5 dark:bg-primary/10' : 'border-transparent text-slate-500 dark:text-slate-400' %> transition-colors">
+        <a href="/admin/overview" class="flex-1 flex flex-col items-center justify-center py-2 text-xs font-medium <%= typeof page !== 'undefined' && page.startsWith('admin') ? 'text-accent-fg font-semibold' : 'text-fg-muted' %> transition-colors">
             <span class="material-icons text-lg">admin_panel_settings</span>
-            <span class="text-[10px] uppercase font-mono tracking-wider mt-0.5 font-medium">Admin</span>
+            <span class="text-[10px] mt-0.5">Admin</span>
         </a>
         <% } %>
-        <a href="/logout" class="flex-1 flex flex-col items-center justify-center py-2.5 border-t-2 border-transparent text-redstone-500 transition-colors" onclick="event.preventDefault(); if(confirm('Are you sure you want to sign out?')) window.location.href='/logout';">
+        <a href="/logout" class="flex-1 flex flex-col items-center justify-center py-2 text-xs font-medium text-danger-fg transition-colors" onclick="event.preventDefault(); if(confirm('Are you sure you want to sign out?')) window.location.href='/logout';">
             <span class="material-icons text-lg">logout</span>
-            <span class="text-[10px] uppercase font-mono tracking-wider mt-0.5 font-medium">Exit</span>
+            <span class="text-[10px] mt-0.5">Exit</span>
         </a>
     </div>
 </div>
 
-<div class="md:pl-60 w-full flex flex-col min-h-screen pb-16 md:pb-0">
+<div class="flex-1 min-w-0 flex flex-col min-h-0 pb-16 md:pb-0">
 <% } else { %>
 <div class="w-full flex flex-col min-h-screen">
 <% } %>

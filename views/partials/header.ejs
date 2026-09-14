@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MC Bot Dashboard</title>
-    <meta name="color-scheme" content="dark">
+    <meta name="color-scheme" content="dark light">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -12,36 +12,72 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: {
-                            DEFAULT: '#3b82f6',
-                            hover: '#2563eb',
-                            dark: '#1d4ed8'
+                        // Semantic tokens matching GitHub Primer system
+                        canvas: {
+                            default: 'var(--canvas-default)',
+                            subtle: 'var(--canvas-subtle)',
+                            inset: 'var(--canvas-inset)',
                         },
-                        obsidian: {
-                            950: '#070a11',
-                            900: '#0b101c',
-                            850: '#0f172a',
-                            800: '#141e33',
-                            750: '#1a2742',
-                            700: '#233454',
-                            600: '#344b74'
+                        fg: {
+                            default: 'var(--fg-default)',
+                            muted: 'var(--fg-muted)',
+                            subtle: 'var(--fg-subtle)',
+                            onEmphasis: 'var(--fg-on-emphasis)'
                         },
-                        emerald: {
-                            400: '#34d399',
-                            500: '#10b981',
-                            600: '#059669',
-                            900: '#064e3b'
+                        ghborder: {
+                            default: 'var(--border-default)',
+                            muted: 'var(--border-muted)',
+                            strong: 'var(--border-strong)'
                         },
-                        redstone: {
-                            400: '#f87171',
-                            500: '#ef4444',
-                            600: '#dc2626',
-                            900: '#7f1d1d'
+                        accent: {
+                            fg: 'var(--accent-fg)',
+                            emphasis: 'var(--accent-emphasis)',
+                            muted: 'var(--accent-muted)',
+                            subtle: 'var(--accent-subtle)'
+                        },
+                        success: {
+                            fg: 'var(--success-fg)',
+                            emphasis: 'var(--success-emphasis)',
+                            subtle: 'var(--success-subtle)'
+                        },
+                        attention: {
+                            fg: 'var(--attention-fg)',
+                            emphasis: 'var(--attention-emphasis)',
+                            subtle: 'var(--attention-subtle)'
+                        },
+                        danger: {
+                            fg: 'var(--danger-fg)',
+                            emphasis: 'var(--danger-emphasis)',
+                            subtle: 'var(--danger-subtle)'
                         }
                     },
                     fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        mono: ['"JetBrains Mono"', 'Consolas', 'monospace']
+                        sans: [
+                            '-apple-system',
+                            'BlinkMacSystemFont',
+                            '"Segoe UI"',
+                            '"Noto Sans"',
+                            'Helvetica',
+                            'Arial',
+                            'sans-serif'
+                        ],
+                        mono: [
+                            'ui-monospace',
+                            'SFMono-Regular',
+                            '"SF Mono"',
+                            'Menlo',
+                            'Monaco',
+                            'Consolas',
+                            '"Liberation Mono"',
+                            '"Courier New"',
+                            'monospace'
+                        ]
+                    },
+                    borderRadius: {
+                        'sm': '4px',
+                        'md': '6px',
+                        'lg': '8px',
+                        'pill': '9999px'
                     }
                 }
             }
@@ -50,105 +86,258 @@
     <!-- Chart.js for analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Strict square aesthetic: Absolutely zero curves */
-        *, *::before, *::after {
-            border-radius: 0 !important;
+        :root {
+            /* Light theme variables */
+            --canvas-default: #ffffff;
+            --canvas-subtle: #f6f8fa;
+            --canvas-inset: #f6f8fa;
+
+            --fg-default: #1f2328;
+            --fg-muted: #656d76;
+            --fg-subtle: #6e7781;
+            --fg-on-emphasis: #ffffff;
+
+            --border-default: #d0d7de;
+            --border-muted: #d8dee4;
+            --border-strong: #8c959f;
+
+            --accent-fg: #0969da;
+            --accent-emphasis: #0969da;
+            --accent-muted: rgba(54, 150, 255, 0.15);
+            --accent-subtle: #ddf4ff;
+
+            --success-fg: #1a7f37;
+            --success-emphasis: #1f883d;
+            --success-subtle: #dafbe1;
+
+            --attention-fg: #9a6700;
+            --attention-emphasis: #9a6700;
+            --attention-subtle: #fff8c5;
+
+            --danger-fg: #cf222e;
+            --danger-emphasis: #d1242f;
+            --danger-subtle: #ffebe9;
+
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+            --radius-pill: 9999px;
+        }
+
+        .dark {
+            /* Dark theme variables */
+            --canvas-default: #0d1117;
+            --canvas-subtle: #161b22;
+            --canvas-inset: #010409;
+
+            --fg-default: #f0f6fc;
+            --fg-muted: #8b949e;
+            --fg-subtle: #6e7681;
+            --fg-on-emphasis: #ffffff;
+
+            --border-default: #30363d;
+            --border-muted: #21262d;
+            --border-strong: #6e7681;
+
+            --accent-fg: #58a6ff;
+            --accent-emphasis: #1f6feb;
+            --accent-muted: rgba(56, 139, 253, 0.15);
+            --accent-subtle: rgba(56, 139, 253, 0.1);
+
+            --success-fg: #3fb950;
+            --success-emphasis: #238636;
+            --success-subtle: rgba(46, 160, 67, 0.15);
+
+            --attention-fg: #d29922;
+            --attention-emphasis: #9e6a03;
+            --attention-subtle: rgba(187, 128, 9, 0.15);
+
+            --danger-fg: #f85149;
+            --danger-emphasis: #da3633;
+            --danger-subtle: rgba(248, 81, 73, 0.15);
         }
 
         body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background-color: #070a11;
-            color: #e2e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+            background-color: var(--canvas-default);
+            color: var(--fg-default);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
         }
 
-        /* Square custom scrollbars */
+        /* Focus rings - WCAG compliant Primer focus ring */
+        :focus-visible {
+            outline: 2px solid var(--accent-fg);
+            outline-offset: 2px;
+        }
+
+        /* Custom GitHub-style scrollbar */
         * {
             scrollbar-width: thin;
-            scrollbar-color: #64748b transparent;
-        }
-        * {
-            scrollbar-color: #334155 transparent;
+            scrollbar-color: var(--border-default) transparent;
         }
 
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
         }
         ::-webkit-scrollbar-track {
             background: transparent;
         }
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 0 !important;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #233454;
-            border-radius: 0 !important;
+            background: var(--border-default);
+            border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3b82f6;
+            background: var(--fg-muted);
         }
 
-        /* Console log specific styling */
-        .console-logs {
-            font-family: 'JetBrains Mono', Consolas, monospace;
-        }
-
-        /* Focus outlines - crisp square */
-        input:focus, select:focus, textarea:focus, button:focus-visible {
-            outline: 1px solid #3b82f6;
-            outline-offset: 0px;
+        /* Monospace code styling */
+        .font-mono, code, pre, .console-logs {
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
         }
 
         .pb-safe-bottom {
             padding-bottom: max(env(safe-area-inset-bottom, 0), 0.5rem);
         }
 
-        /* Smooth square toast animations */
+        /* Toast animations */
         @keyframes toastSlideIn {
             from {
                 opacity: 0;
-                transform: translateX(20px);
+                transform: translateY(12px);
             }
             to {
                 opacity: 1;
-                transform: translateX(0);
+                transform: translateY(0);
             }
         }
         @keyframes toastFadeOut {
             from {
                 opacity: 1;
-                transform: translateX(0);
+                transform: translateY(0);
             }
             to {
                 opacity: 0;
-                transform: translateX(20px);
+                transform: translateY(12px);
             }
         }
         .toast-enter {
-            animation: toastSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: toastSlideIn 0.15s cubic-bezier(0, 0, 0.2, 1) forwards;
         }
         .toast-leave {
-            animation: toastFadeOut 0.2s cubic-bezier(0.7, 0, 0.84, 0) forwards;
-        }
-
-        /* Grid background subtle effect */
-        .bg-grid-pattern {
-            background-size: 24px 24px;
-            background-image: linear-gradient(to right, rgba(148, 163, 184, 0.05) 1px, transparent 1px),
-                              linear-gradient(to bottom, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
-        }
-        .bg-grid-pattern {
-            background-image: linear-gradient(to right, rgba(30, 41, 59, 0.4) 1px, transparent 1px),
-                              linear-gradient(to bottom, rgba(30, 41, 59, 0.4) 1px, transparent 1px);
+            animation: toastFadeOut 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
         }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-obsidian-950 text-slate-900 dark:text-slate-100 transition-colors duration-150 min-h-screen flex bg-grid-pattern antialiased">
+<body class="bg-canvas-default text-fg-default min-h-screen flex flex-col antialiased">
+
+<% if (typeof user !== 'undefined') { %>
+<!-- Global Header (GitHub Style, 64px height on desktop, 56px on mobile) -->
+<header class="h[56px] md:h-[64px] bg-canvas-subtle border-b border-ghborder-default sticky top-0 z-40 flex items-center justify-between px-4 md:px-6 select-none">
+    <div class="flex items-center gap-3 md:gap-4 flex-1 max-w-3xl">
+        <!-- Logo / Brand Mark -->
+        <a href="/" class="flex items-center gap-2.5 text-fg-default hover:text-accent-fg transition-colors group">
+            <div class="w-8 h-8 rounded-md bg-accent-emphasis flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
+                <span class="material-icons text-xl">view_in_ar</span>
+            </div>
+            <span class="font-semibold text-base tracking-tight hidden sm:inline-block">CraftHub</span>
+        </a>
+
+        <!-- Global Search Field -->
+        <div class="relative flex-1 max-w-md hidden sm:block">
+            <div class="relative flex items-center">
+                <span class="material-icons text-base text-fg-muted absolute left-2.5 pointer-events-none">search</span>
+                <input type="text" id="global-search-input" placeholder="Search or jump to... (Press '/' to focus)"
+                    class="w-full bg-canvas-default border border-ghborder-default rounded-md pl-8 pr-8 py-1.5 text-xs text-fg-default placeholder-fg-muted outline-none focus:border-accent-fg focus:ring-1 focus:ring-accent-fg transition-all"
+                    onkeydown="if(event.key === 'Enter') { window.location.href='/?q=' + encodeURIComponent(this.value); }">
+                <kbd class="absolute right-2 px-1.5 py-0.5 text-[10px] font-mono text-fg-muted bg-canvas-subtle border border-ghborder-default rounded text-center pointer-events-none">/</kbd>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Header Controls -->
+    <div class="flex items-center gap-2 md:gap-3">
+        <!-- Dashboard / Navigation Links -->
+        <nav class="hidden md:flex items-center gap-1 mr-2 text-xs font-semibold">
+            <a href="/" class="px-2.5 py-1.5 rounded-md hover:bg-canvas-default text-fg-default hover:text-accent-fg transition-colors">Repositories</a>
+            <a href="/console" class="px-2.5 py-1.5 rounded-md hover:bg-canvas-default text-fg-default hover:text-accent-fg transition-colors">Multi-Console</a>
+            <% if (user && user.role === 'admin') { %>
+            <a href="/admin/overview" class="px-2.5 py-1.5 rounded-md hover:bg-canvas-default text-fg-default hover:text-accent-fg transition-colors">Admin</a>
+            <% } %>
+        </nav>
+
+        <!-- Notifications Bell -->
+        <a href="/console" class="p-1.5 text-fg-muted hover:text-fg-default hover:bg-canvas-default rounded-md transition-colors relative" title="Notifications">
+            <span class="material-icons text-xl">notifications</span>
+            <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-accent-fg"></span>
+        </a>
+
+        <!-- Theme Toggle -->
+        <button onclick="toggleTheme()" class="p-1.5 text-fg-muted hover:text-fg-default hover:bg-canvas-default rounded-md transition-colors" title="Toggle Theme">
+            <span class="material-icons text-xl dark:hidden">dark_mode</span>
+            <span class="material-icons text-xl hidden dark:inline">light_mode</span>
+        </button>
+
+        <!-- User Dropdown Menu -->
+        <div class="relative group">
+            <button class="flex items-center gap-1.5 p-1 rounded-md hover:bg-canvas-default transition-colors">
+                <div class="w-7 h-7 rounded-full bg-accent-emphasis text-white flex items-center justify-center text-xs font-bold font-mono">
+                    <%= user.username ? user.username.charAt(0).toUpperCase() : 'U' %>
+                </div>
+                <span class="material-icons text-sm text-fg-muted">arrow_drop_down</span>
+            </button>
+            <div class="absolute right-0 mt-1 w-48 bg-canvas-default border border-ghborder-default rounded-md shadow-lg py-1 hidden group-hover:block hover:block z-50">
+                <div class="px-3 py-2 border-b border-ghborder-muted text-xs">
+                    <div class="font-semibold text-fg-default"><%= user.username %></div>
+                    <div class="text-fg-muted text-[11px] capitalize"><%= user.role || 'user' %> account</div>
+                </div>
+                <a href="/profile" class="block px-3 py-1.5 text-xs text-fg-default hover:bg-accent-emphasis hover:text-white transition-colors">Your Profile</a>
+                <a href="/" class="block px-3 py-1.5 text-xs text-fg-default hover:bg-accent-emphasis hover:text-white transition-colors">Your Bots</a>
+                <% if (user && user.role === 'admin') { %>
+                <a href="/admin/overview" class="block px-3 py-1.5 text-xs text-fg-default hover:bg-accent-emphasis hover:text-white transition-colors">Admin Settings</a>
+                <% } %>
+                <div class="border-t border-ghborder-muted my-1"></div>
+                <a href="/logout" class="block px-3 py-1.5 text-xs text-danger-fg hover:bg-danger-emphasis hover:text-white transition-colors">Sign out</a>
+            </div>
+        </div>
+    </div>
+</header>
+<% } %>
+
+<script>
+// Keyboard shortcut for global search
+document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        const searchInput = document.getElementById('global-search-input');
+        if (searchInput) {
+            e.preventDefault();
+            searchInput.focus();
+        }
+    }
+});
+
+function toggleTheme() {
+    const html = document.getElementById('html-root');
+    if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+    } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+    }
+}
+
+// Restore saved theme on load
+(function() {
+    const savedTheme = localStorage.getItem('theme');
+    const html = document.getElementById('html-root');
+    if (savedTheme === 'light') {
+        html.classList.remove('dark');
+    } else if (savedTheme === 'dark') {
+        html.classList.add('dark');
+    }
+})();
+</script>
