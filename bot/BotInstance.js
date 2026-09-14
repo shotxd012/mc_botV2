@@ -255,8 +255,50 @@ class BotInstance {
             }
         });
 
-        this.bot.on('kicked', (reason) => {
-            this.log(`Bot kicked: ${reason}`, 'error');
+        this.bot.on('kicked', (reason, loggedIn) => {
+            // Recursively extract plain text from NBT compound/chat JSON structures.
+            // Servers like BungeeCord/Velocity send reasons as NBT: { type, value } wrappers.
+            const extractText = (node) => {
+                if (node === null || node === undefined) return '';
+                if (typeof node === 'string') return node;
+                if (typeof node === 'number' || typeof node === 'boolean') return String(node);
+                if (Array.isArray(node)) return node.map(extractText).join('');
+                if (typeof node === 'object') {
+                    // NBT-style { type: 'string'|'compound'|'list', value: ... }
+                    if ('type' in node && 'value' in node) {
+                        if (node.type === 'list' && node.value && Array.isArray(node.value.value)) {
+                            return node.value.value.map(extractText).join('');
+                        }
+                        return extractText(node.value);
+                    }
+                    // Standard Minecraft chat JSON { text, extra, ... }
+                    let out = '';
+                    if (node.text) out += extractText(node.text);
+                    if (node.extra) out += extractText(node.extra);
+                    // Collect any other nested compound fields
+                    for (const key of Object.keys(node)) {
+                        if (key !== 'text' && key !== 'extra' && typeof node[key] === 'object') {
+                            out += extractText(node[key]);
+                        }
+                    }
+                    return out || JSON.stringify(node);
+                }
+                return '';
+            };
+
+            let reasonText;
+            if (typeof reason === 'string') {
+                try {
+                    reasonText = extractText(JSON.parse(reason));
+                } catch {
+                    reasonText = reason;
+                }
+            } else {
+                reasonText = extractText(reason);
+            }
+
+            reasonText = reasonText.trim().replace(/\n+/g, ' | ') || 'Unknown reason';
+            this.log(`Bot kicked: ${reasonText}`, 'error');
         });
 
         this.bot.on('error', (err) => {
