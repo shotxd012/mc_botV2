@@ -67,6 +67,22 @@ router.get('/bot/:id', async (req, res) => renderBotPage(req, res));
 router.get('/bot/:id/config', async (req, res) => renderBotPage(req, res, 'config'));
 router.get('/bot/:id/analytics', async (req, res) => renderBotPage(req, res, 'analytics'));
 router.get('/bot/:id/events', async (req, res) => renderBotPage(req, res, 'events'));
+router.get('/bot/:id/game', async (req, res) => {
+    const id = req.params.id;
+    const user = await dataManager.getAdmin(req.session.user.username);
+    const status = botManager.getStatus(id);
+    const botConfig = await dataManager.getBot(id);
+
+    if (!status || !botConfig) return res.redirect('/');
+    if (user.role !== 'admin' && botConfig.assignedTo !== req.session.user.username) {
+        return res.redirect('/');
+    }
+    if (passkeyUtils.requiresPasskeyForBot(botConfig) && !passkeyUtils.isPasskeyValidated(req, botConfig.id)) {
+        return res.render('bot-passkey', { page: 'bot-passkey', user, botConfig, botId: id, serverName: null, error: null });
+    }
+
+    res.render('bot-game', { page: 'bot', user, status, botConfig, botId: id });
+});
 
 router.get('/bot/:id/settings', async (req, res) => {
     const id = req.params.id;

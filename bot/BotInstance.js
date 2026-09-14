@@ -273,12 +273,15 @@ class BotInstance {
             this.reconnectTimeout = null;
         }
 
-        const config = this.botConfig.server;
-        const account = this.botConfig.account;
+        const config = this.botConfig?.server || {};
+        const account = this.botConfig?.account || {};
 
-        if (!account.email) {
-            this.log("No Minecraft account email set.", 'error');
+        if (!account.email || !config.ip || !config.port) {
+            const missing = !account.email ? 'Minecraft account email' : 'server configuration';
+            this.log(`No ${missing} configured.`, 'error');
             this.authStatus = 'Offline';
+            this.isRunning = false;
+            this.shouldReconnect = false;
             this.emitStatus();
             return;
         }
@@ -310,19 +313,18 @@ class BotInstance {
 
             this.bot.loadPlugin(mineflayerPathfinder.pathfinder);
 
-            // Conditionally load auto-eat based on botConfig
-            if (this.botConfig.autoEat !== false) {
-                this.bot.loadPlugin(autoEatLoader);
-                this.bot.once('autoEat:options', () => {
-                    try {
-                        this.bot.autoEat.options = {
-                            priority: 'foodPoints',
-                            startAt: 14,
-                            bannedFood: []
-                        };
-                    } catch (e) { /* ignore */ }
-                });
-            }
+            // Load the food utility for both manual and automatic eating.
+            this.bot.loadPlugin(autoEatLoader);
+            this.bot.once('autoEat:options', () => {
+                try {
+                    this.bot.autoEat.options = {
+                        priority: 'foodPoints',
+                        startAt: 14,
+                        bannedFood: []
+                    };
+                    if (this.botConfig.autoEat === false) this.bot.autoEat.disableAuto();
+                } catch (e) { /* ignore */ }
+            });
 
             this.bindEvents();
         } catch (err) {
@@ -332,6 +334,38 @@ class BotInstance {
             this.authStatus = 'Offline';
             this.emitStatus();
         }
+    }
+
+    async eatFood() {
+        if (!this.bot || !this.bot.entity) {
+            return { success: false, error: 'Bot must be online before it can eat.' };
+        }
+        if (!this.bot.autoEat || typeof this.bot.autoEat.eat !== 'function') {
+            return { success: false, error: 'Food utility is not ready yet.' };
+        }
+
+        try {
+            await this.bot.autoEat.eat();
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message || 'No edible food is available.' };
+        }
+    }
+
+    getInventory() {
+        if (!this.bot || !this.bot.entity || !this.bot.inventory) {
+            return { success: false, error: 'Bot must be online to view its inventory.' };
+        }
+
+        return {
+            success: true,
+            slots: this.bot.inventory.slots.map((item, slot) => item ? {
+                slot,
+                name: item.name,
+                displayName: item.displayName || item.name,
+                count: item.count
+            } : null)
+        };
     }
 
     stop() {

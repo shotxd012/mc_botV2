@@ -103,6 +103,40 @@ router.post('/bot/:id/afk', async (req, res) => {
     res.json({ success: true });
 });
 
+router.post('/bot/:id/eat', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    const bot = await dataManager.getBot(req.params.id);
+    if (!bot) return res.status(404).json({ success: false, error: 'Bot not found' });
+    if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+    const passkeyBlock = await enforcePasskey(req, res, bot);
+    if (passkeyBlock) return;
+
+    const instance = botManager.getBotInstance(req.params.id);
+    if (!instance) return res.status(404).json({ success: false, error: 'Bot instance not found' });
+    const result = await instance.eatFood();
+    if (result.success) {
+        await dataManager.addAdminLog(req.session.user.username, 'manual_eat', String(req.params.id), null);
+    }
+    res.json(result);
+});
+
+router.get('/bot/:id/inventory', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    const bot = await dataManager.getBot(req.params.id);
+    if (!bot) return res.status(404).json({ success: false, error: 'Bot not found' });
+    if (user.role !== 'admin' && bot.assignedTo !== req.session.user.username) {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+    const passkeyBlock = await enforcePasskey(req, res, bot);
+    if (passkeyBlock) return;
+
+    const instance = botManager.getBotInstance(req.params.id);
+    if (!instance) return res.status(404).json({ success: false, error: 'Bot instance not found' });
+    res.json(instance.getInventory());
+});
+
 router.post('/bot/:id/command', async (req, res) => {
     // Check if user has admin privileges or is assigned to this bot
     const user = await dataManager.getAdmin(req.session.user.username);
