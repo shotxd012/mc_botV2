@@ -51,6 +51,8 @@ class BotInstance {
         this.afkInterval = null;
         this.reconnectTimeout = null;
         this.shouldReconnect = false;
+        this.authRetryCount = 0;
+        this.retryAuthOnDisconnect = false;
         this.startTime = null;
         this.uptimeInterval = null; // Interval for periodic uptime updates
         this.authStatus = 'Offline'; // Offline, Pending, Verified
@@ -405,17 +407,21 @@ class BotInstance {
     }
 
     stop() {
-        if (!this.bot) return;
-
-        this.log("Stopping bot...");
-        this.shouldReconnect = false;
-        this.stopAfk();
-        this.stopMetricSampling();
-
         if (this.reconnectTimeout) {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
         }
+        if (!this.bot) {
+            this.shouldReconnect = false;
+            this.retryAuthOnDisconnect = false;
+            return;
+        }
+
+        this.log("Stopping bot...");
+        this.shouldReconnect = false;
+        this.retryAuthOnDisconnect = false;
+        this.stopAfk();
+        this.stopMetricSampling();
 
         // Accumulate uptime before stopping
         this.accumulateUptime();
@@ -451,6 +457,8 @@ class BotInstance {
             this.isRunning = true;
             this.startTime = Date.now();
             this.authStatus = 'Verified';
+            this.authRetryCount = 0;
+            this.retryAuthOnDisconnect = false;
             this.emitStatus();
             this.logEvent('login', `Logged in as ${this.bot.username}`);
             this.sendWebhook('login', `Bot connected to ${this.botConfig.server?.ip}`);
@@ -505,12 +513,17 @@ class BotInstance {
             this.sendWebhook('disconnect', `Bot disconnected: ${reason}`);
 
             const settings = dataManager.getSettings();
-            if (this.shouldReconnect && settings.autoReconnect) {
-                this.log("Auto-reconnecting in 10 seconds...");
+            const shouldRetry = this.retryAuthOnDisconnect || (this.shouldReconnect && settings.autoReconnect);
+            if (shouldRetry) {
+                const retryDelay = this.retryAuthOnDisconnect
+                    ? Math.min(60000, 15000 * (2 ** this.authRetryCount))
+                    : 10000;
+                if (this.retryAuthOnDisconnect) this.authRetryCount += 1;
+                this.log(`Reconnecting in ${Math.round(retryDelay / 1000)} seconds...`);
                 this.authStatus = 'Reconnecting';
                 this.emitStatus();
-                this.logEvent('reconnect', 'Scheduled auto-reconnect in 10s');
-                this.reconnectTimeout = setTimeout(this.start, 10000);
+                this.logEvent('reconnect', `Scheduled reconnect in ${Math.round(retryDelay / 1000)}s`);
+                this.reconnectTimeout = setTimeout(this.start, retryDelay);
             } else {
                 this.authStatus = 'Offline';
                 this.emitStatus();
@@ -561,8 +574,14 @@ class BotInstance {
         });
 
         this.bot.on('error', (err) => {
-            this.log(`Bot error: ${err.message}`, 'error');
-            this.logEvent('error', err.message);
+            const message = err?.message || String(err);
+            if (message.includes('503') && message.includes('login_with_xbox')) {
+                this.retryAuthOnDisconnect = true;
+                this.log('Xbox authentication service is temporarily unavailable. Retrying automatically.', 'warning');
+            } else {
+                this.log(`Bot error: ${message}`, 'error');
+            }
+            this.logEvent('error', message);
         });
 
         // Raw message event
