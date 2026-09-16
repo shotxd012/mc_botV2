@@ -1,7 +1,7 @@
 <%- include('../partials/header') %>
 <%- include('../partials/sidebar') %>
 
-<main class="flex-1 p-4 sm:p-6 md:p-8 min-h-screen pb-20 md:pb-8 flex flex-col gap-6">
+<main class="flex-1 p-4 sm:p-6 md:p-8 max-w-[1280px] w-full mx-auto min-h-screen pb-20 md:pb-8 flex flex-col gap-6">
     <%- include('layout-nav') %>
 
     <!-- Settings Form -->
@@ -9,67 +9,67 @@
         <!-- Main Settings Columns -->
         <div class="lg:col-span-2 space-y-6">
             <!-- Automation & Reconnect Policy -->
-            <div class="bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 p-6 shadow-sm">
-                <div class="flex items-center gap-2 border-b border-slate-200 dark:border-obsidian-700/60 pb-3 mb-5">
-                    <span class="material-icons text-primary">autorenew</span>
-                    <h2 class="text-sm font-mono uppercase font-bold tracking-wider text-slate-900 dark:text-white">
+            <div class="bg-canvas-default border border-ghborder-default rounded-md p-5 shadow-sm">
+                <div class="flex items-center gap-2 border-b border-ghborder-muted pb-3 mb-5">
+                    <span class="material-icons text-accent-fg">autorenew</span>
+                    <h2 class="text-sm font-semibold text-fg-default">
                         Fleet Automation & Reconnection Policy
                     </h2>
                 </div>
 
                 <div class="space-y-4 font-mono text-xs">
-                    <div class="flex items-start justify-between gap-4 p-3 bg-slate-50 dark:bg-obsidian-950 border border-slate-200 dark:border-obsidian-850">
+                    <div class="flex items-start justify-between gap-4 p-3 bg-canvas-subtle border border-ghborder-default rounded-md">
                         <div>
-                            <div class="font-bold text-slate-900 dark:text-white">Automatic Reconnect</div>
-                            <div class="text-slate-500 text-[11px] mt-0.5">Automatically re-establish connection if a bot disconnects or gets kicked by the server.</div>
+                            <div class="font-semibold text-fg-default">Automatic Reconnect</div>
+                            <div class="text-fg-muted text-[11px] mt-0.5">Automatically re-establish connection if a bot disconnects or gets kicked by the server.</div>
                         </div>
-                        <input type="checkbox" name="autoReconnect" id="autoReconnect" <%= settings.autoReconnect ? 'checked' : '' %> class="accent-primary w-4 h-4 cursor-pointer mt-1">
+                        <input type="checkbox" name="autoReconnect" id="autoReconnect" <%= settings.autoReconnect ? 'checked' : '' %> class="accent-accent-fg w-4 h-4 cursor-pointer mt-1">
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-slate-500 font-semibold mb-1 uppercase text-[10px]">Reconnect Cooldown (Seconds)</label>
-                            <input type="number" name="reconnectDelay" value="<%= settings.reconnectDelay || 10 %>" min="2" max="300" class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-primary">
-                            <span class="text-[10px] text-slate-400 mt-1 block">Cooldown wait time before retrying connection.</span>
+                            <label class="block text-fg-muted font-semibold mb-1 uppercase text-[10px]">Reconnect Cooldown (Seconds)</label>
+                            <input type="number" name="reconnectDelay" value="<%= settings.reconnectDelay || 10 %>" min="2" max="300" class="w-full bg-canvas-default border border-ghborder-default rounded-md px-3 py-2 text-fg-default outline-none focus:border-accent-fg">
+                            <span class="text-[10px] text-fg-muted mt-1 block">Cooldown wait time before retrying connection.</span>
                         </div>
 
                         <div>
-                            <label class="block text-slate-500 font-semibold mb-1 uppercase text-[10px]">Default Minecraft Version</label>
-                            <select name="defaultVersion" class="w-full bg-slate-50 dark:bg-obsidian-950 border border-slate-300 dark:border-obsidian-700 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-primary">
+                            <label class="block text-fg-muted font-semibold mb-1 uppercase text-[10px]">Default Minecraft Version</label>
+                            <select name="defaultVersion" class="w-full bg-canvas-default border border-ghborder-default rounded-md px-3 py-2 text-fg-default outline-none focus:border-accent-fg">
                                 <option value="1.20.4" <%= (settings.defaultVersion === '1.20.4' || !settings.defaultVersion) ? 'selected' : '' %>>1.20.4 (Recommended)</option>
                                 <option value="1.20.1" <%= settings.defaultVersion === '1.20.1' ? 'selected' : '' %>>1.20.1</option>
                                 <option value="1.19.4" <%= settings.defaultVersion === '1.19.4' ? 'selected' : '' %>>1.19.4</option>
                                 <option value="1.18.2" <%= settings.defaultVersion === '1.18.2' ? 'selected' : '' %>>1.18.2</option>
                                 <option value="auto" <%= settings.defaultVersion === 'auto' ? 'selected' : '' %>>Auto-Detect</option>
                             </select>
-                            <span class="text-[10px] text-slate-400 mt-1 block">Pre-filled version for newly deployed instances.</span>
+                            <span class="text-[10px] text-fg-muted mt-1 block">Pre-filled version for newly deployed instances.</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Security & Passkey Rules -->
-            <div class="bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 p-6 shadow-sm">
-                <div class="flex items-center gap-2 border-b border-slate-200 dark:border-obsidian-700/60 pb-3 mb-5">
-                    <span class="material-icons text-primary">security</span>
-                    <h2 class="text-sm font-mono uppercase font-bold tracking-wider text-slate-900 dark:text-white">
+            <div class="bg-canvas-default border border-ghborder-default rounded-md p-5 shadow-sm">
+                <div class="flex items-center gap-2 border-b border-ghborder-muted pb-3 mb-5">
+                    <span class="material-icons text-accent-fg">security</span>
+                    <h2 class="text-sm font-semibold text-fg-default">
                         Access Control & Passkey Enforcement
                     </h2>
                 </div>
 
                 <div class="space-y-4 font-mono text-xs">
-                    <div class="flex items-start justify-between gap-4 p-3 bg-slate-50 dark:bg-obsidian-950 border border-slate-200 dark:border-obsidian-850">
+                    <div class="flex items-start justify-between gap-4 p-3 bg-canvas-subtle border border-ghborder-default rounded-md">
                         <div>
-                            <div class="font-bold text-slate-900 dark:text-white">Global Passkey Enforcement</div>
-                            <div class="text-slate-500 text-[11px] mt-0.5">Require individual bot passkeys before opening the live console or executing privileged in-game commands.</div>
+                            <div class="font-semibold text-fg-default">Global Passkey Enforcement</div>
+                            <div class="text-fg-muted text-[11px] mt-0.5">Require individual bot passkeys before opening the live console or executing privileged in-game commands.</div>
                         </div>
                         <input type="checkbox" name="passkeyEnforced" id="passkeyEnforced" <%= settings.passkeyEnforced ? 'checked' : '' %> class="accent-primary w-4 h-4 cursor-pointer mt-1">
                     </div>
 
-                    <div class="flex items-start justify-between gap-4 p-3 bg-slate-50 dark:bg-obsidian-950 border border-slate-200 dark:border-obsidian-850">
+                    <div class="flex items-start justify-between gap-4 p-3 bg-canvas-subtle border border-ghborder-default rounded-md">
                         <div>
-                            <div class="font-bold text-slate-900 dark:text-white">Dark Mode by Default</div>
-                            <div class="text-slate-500 text-[11px] mt-0.5">Enforce the Obsidian dark cyber theme for unauthenticated guests and newly registered users.</div>
+                            <div class="font-semibold text-fg-default">Dark Mode by Default</div>
+                            <div class="text-fg-muted text-[11px] mt-0.5">Enforce the application theme for unauthenticated guests and newly registered users.</div>
                         </div>
                         <input type="checkbox" name="darkModeDefault" id="darkModeDefault" <%= settings.darkMode ? 'checked' : '' %> class="accent-primary w-4 h-4 cursor-pointer mt-1">
                     </div>
@@ -78,7 +78,7 @@
 
             <!-- Submit Button -->
             <div class="flex justify-end">
-                <button type="submit" class="px-6 py-2.5 bg-primary hover:bg-primary-hover text-white font-mono text-xs uppercase font-bold transition-all border border-primary-hover active:translate-y-0.5 shadow-sm flex items-center gap-2">
+                <button type="submit" class="px-6 py-2.5 bg-accent-emphasis hover:bg-accent-fg text-white rounded-md text-xs font-semibold transition-colors border border-accent-emphasis flex items-center gap-2">
                     <span class="material-icons text-sm">save</span>
                     <span>Save Global Settings</span>
                 </button>
@@ -87,36 +87,36 @@
 
         <!-- Sidebar / System Diagnostics Card -->
         <div class="space-y-6">
-            <div class="bg-white dark:bg-obsidian-900 border border-slate-200 dark:border-obsidian-700 p-6 shadow-sm font-mono text-xs space-y-4">
-                <div class="flex items-center gap-2 border-b border-slate-200 dark:border-obsidian-700/60 pb-3">
-                    <span class="material-icons text-primary text-sm">tune</span>
-                    <h3 class="text-xs uppercase font-bold text-slate-900 dark:text-white">Platform Information</h3>
+            <div class="bg-canvas-default border border-ghborder-default rounded-md p-5 shadow-sm font-mono text-xs space-y-4">
+                <div class="flex items-center gap-2 border-b border-ghborder-muted pb-3">
+                    <span class="material-icons text-accent-fg text-sm">tune</span>
+                    <h3 class="text-sm font-semibold text-fg-default">Platform Information</h3>
                 </div>
 
                 <div class="space-y-2.5">
-                    <div class="flex justify-between items-center text-slate-500">
+                    <div class="flex justify-between items-center text-fg-muted">
                         <span class="text-[10px] uppercase">Data Store:</span>
-                        <span class="text-emerald-500 font-bold">MongoDB Atlas</span>
+                        <span class="text-success-fg font-semibold">MongoDB Atlas</span>
                     </div>
-                    <div class="flex justify-between items-center text-slate-500">
+                    <div class="flex justify-between items-center text-fg-muted">
                         <span class="text-[10px] uppercase">Session Store:</span>
-                        <span class="text-slate-800 dark:text-slate-200 font-bold">connect-mongo</span>
+                        <span class="text-fg-default font-semibold">connect-mongo</span>
                     </div>
-                    <div class="flex justify-between items-center text-slate-500">
+                    <div class="flex justify-between items-center text-fg-muted">
                         <span class="text-[10px] uppercase">Registered Bots:</span>
-                        <span class="text-slate-800 dark:text-slate-200 font-bold"><%= botCount %> instances</span>
+                        <span class="text-fg-default font-semibold"><%= botCount %> instances</span>
                     </div>
-                    <div class="flex justify-between items-center text-slate-500">
+                    <div class="flex justify-between items-center text-fg-muted">
                         <span class="text-[10px] uppercase">Server Clusters:</span>
-                        <span class="text-slate-800 dark:text-slate-200 font-bold"><%= serverCount %> profiles</span>
+                        <span class="text-fg-default font-semibold"><%= serverCount %> profiles</span>
                     </div>
-                    <div class="flex justify-between items-center text-slate-500">
+                    <div class="flex justify-between items-center text-fg-muted">
                         <span class="text-[10px] uppercase">Session Duration:</span>
-                        <span class="text-slate-800 dark:text-slate-200">7 Days Max</span>
+                        <span class="text-fg-default">7 Days Max</span>
                     </div>
                 </div>
 
-                <div class="pt-3 border-t border-slate-200 dark:border-obsidian-800 text-[11px] text-slate-400">
+                <div class="pt-3 border-t border-ghborder-muted text-[11px] text-fg-muted">
                     Changes take effect immediately across all background bot loops and client sessions.
                 </div>
             </div>
