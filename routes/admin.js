@@ -172,6 +172,29 @@ router.get('/users', async (req, res) => {
     }
 });
 
+router.get('/users/:username', async (req, res) => {
+    try {
+        const target = await dataManager.getAdmin(req.params.username);
+        if (!target) return res.status(404).send('User not found');
+        const [allBots, allUsers] = await Promise.all([
+            dataManager.getBots(),
+            dataManager.getAllAdmins()
+        ]);
+        res.render('admin/user-detail', {
+            page: 'admin-users',
+            adminTab: 'users',
+            user: req.adminUser,
+            target,
+            bots: allBots,
+            users: allUsers,
+            assignedBots: allBots.filter(bot => bot.assignedTo === target.username)
+        });
+    } catch (err) {
+        console.error('Admin user detail error:', err);
+        res.status(500).send('Internal server error');
+    }
+});
+
 // 5. Audit Logs Explorer
 router.get('/logs', async (req, res) => {
     try {

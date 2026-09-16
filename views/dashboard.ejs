@@ -13,7 +13,7 @@
             </div>
             <p class="text-fg-muted mt-1 text-xs sm:text-sm">Manage, inspect, and automate your Minecraft AFK bot workers.</p>
         </div>
-        <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
+        <% if (typeof user !== 'undefined' && user && (user.role === 'admin' || user.canCreateBots)) { %>
         <button onclick="openCreateModal()" class="bg-success-emphasis hover:bg-success-fg text-white px-3.5 py-1.5 rounded-md font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors border border-success-emphasis shadow-sm w-full sm:w-auto">
             <span class="material-icons text-base">add</span>
             <span>New Bot</span>
@@ -95,7 +95,7 @@
         <div onclick="openCreateModal()" class="bg-canvas-subtle/50 border border-dashed border-ghborder-default hover:border-accent-fg rounded-md p-6 flex flex-col items-center justify-center text-fg-muted hover:text-accent-fg cursor-pointer transition-all min-h-[180px] group">
             <span class="material-icons text-3xl mb-1 group-hover:scale-110 transition-transform">add_circle_outline</span>
             <span class="font-semibold text-xs text-fg-default group-hover:text-accent-fg">Create Bot Repository</span>
-            <span class="text-[11px] text-fg-muted mt-1">Configure server host & credentials</span>
+            <span class="text-[11px] text-fg-muted mt-1"><%= user.role === 'admin' || !user.botLimit ? 'Unlimited bot slots' : `${user.botLimit} bot slot${user.botLimit === 1 ? '' : 's'}` %></span>
         </div>
         <% } %>
     </div>
@@ -196,7 +196,7 @@ function filterByStatus(status) {
 }
 
 function openCreateModal() {
-    <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
+    <% if (typeof user !== 'undefined' && user && (user.role === 'admin' || user.canCreateBots)) { %>
         const modal = document.getElementById('create-modal');
         modal.classList.remove('hidden');
         setTimeout(() => {
@@ -205,9 +205,9 @@ function openCreateModal() {
         }, 10);
     <% } else { %>
         if (typeof showToast === 'function') {
-            showToast('Permission denied. Only administrators can create bots.', 'error');
+            showToast('Bot creation is not enabled for this account.', 'error');
         } else {
-            alert('Permission denied. Only administrators can create bots.');
+            alert('Bot creation is not enabled for this account.');
         }
     <% } %>
 }

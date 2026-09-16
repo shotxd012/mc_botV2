@@ -149,6 +149,29 @@ async function updateAdminPassword(username, newPassword) {
     }
 }
 
+async function updateAdmin(username, updates) {
+    try {
+        const admin = await Admin.findOne({ username });
+        if (!admin) return null;
+
+        if (typeof updates.role === 'string' && ['admin', 'user'].includes(updates.role)) {
+            admin.role = updates.role;
+        }
+        if (typeof updates.canCreateBots === 'boolean') admin.canCreateBots = updates.canCreateBots;
+        if (typeof updates.botLimit === 'number' && updates.botLimit >= 0) admin.botLimit = updates.botLimit;
+        if (typeof updates.password === 'string' && updates.password.length >= 6) {
+            const bcrypt = require('bcryptjs');
+            admin.password = await bcrypt.hash(updates.password, 10);
+        }
+
+        const saved = await admin.save();
+        return saved.toObject();
+    } catch (err) {
+        console.error("Error updating admin in MongoDB:", err);
+        return null;
+    }
+}
+
 // --- Bot Management ---
 
 async function getBots() {
@@ -395,6 +418,7 @@ module.exports = {
     getAllAdmins,
     deleteAdmin,
     updateAdminPassword,
+    updateAdmin,
     getBots,
     getBot,
     addBot,

@@ -15,6 +15,15 @@ const adminSchema = new mongoose.Schema({
         enum: ['admin', 'user'],
         default: 'user'
     },
+    canCreateBots: {
+        type: Boolean,
+        default: false
+    },
+    botLimit: {
+        type: Number,
+        min: 0,
+        default: 0
+    },
     createdAt: {
         type: Date,
         default: Date.now

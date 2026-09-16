@@ -176,13 +176,21 @@ router.post('/bot/:id/command', async (req, res) => {
 
 // Bot Management
 router.post('/bots/create', async (req, res) => {
-    // Check if user has admin privileges
     const user = await dataManager.getAdmin(req.session.user.username);
+    if (!user) return res.status(401).json({ success: false, error: 'User session is no longer valid.' });
+
+    const assignedTo = user.role === 'admin' ? null : user.username;
     if (user.role !== 'admin') {
-        return res.status(403).json({ success: false, error: 'Permission denied. Only administrators can create bots.' });
+        if (!user.canCreateBots) {
+            return res.status(403).json({ success: false, error: 'Bot creation is not enabled for your account.' });
+        }
+        const ownedBots = await dataManager.getBotsByUser(user.username);
+        if (user.botLimit > 0 && ownedBots.length >= user.botLimit) {
+            return res.status(403).json({ success: false, error: `Bot slot limit reached (${user.botLimit}).` });
+        }
     }
     
-    const newBot = await botManager.createBot(req.body);
+    const newBot = await botManager.createBot(req.body, assignedTo);
     if (!newBot) {
         return res.json({ success: false, error: 'Failed to create bot.' });
     }
@@ -372,6 +380,43 @@ router.post('/admin/create-user', async (req, res) => {
     }
 });
 
+router.post('/admin/user/update', async (req, res) => {
+    const currentUser = await dataManager.getAdmin(req.session.user.username);
+    if (!currentUser || currentUser.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Permission denied.' });
+    }
+
+    const { username, role, canCreateBots, botLimit, password } = req.body;
+    if (!username) return res.status(400).json({ success: false, error: 'Username is required.' });
+    if (username === 'root' && (role === 'user' || canCreateBots === true)) {
+        return res.status(400).json({ success: false, error: 'The root account cannot be restricted.' });
+    }
+    if (password && password.length < 6) {
+        return res.status(400).json({ success: false, error: 'Password must be at least 6 characters.' });
+    }
+
+    const normalizedLimit = Math.max(0, parseInt(botLimit, 10) || 0);
+    const assignedBots = await dataManager.getBotsByUser(username);
+    if (role === 'user' && normalizedLimit > 0 && assignedBots.length > normalizedLimit) {
+        return res.status(400).json({ success: false, error: `This user already owns ${assignedBots.length} bots. Set a limit of at least that amount.` });
+    }
+
+    const updated = await dataManager.updateAdmin(username, {
+        role: role === 'admin' ? 'admin' : 'user',
+        canCreateBots: canCreateBots === true || canCreateBots === 'true',
+        botLimit: normalizedLimit,
+        password: password || undefined
+    });
+    if (!updated) return res.status(404).json({ success: false, error: 'User not found.' });
+    await dataManager.addAdminLog(req.session.user.username, 'update_user_access', username, {
+        role: updated.role,
+        canCreateBots: updated.canCreateBots,
+        botLimit: updated.botLimit,
+        passwordChanged: Boolean(password)
+    });
+    res.json({ success: true, user: updated });
+});
+
 // Bot Assignment Routes
 router.post('/admin/assign-bot', async (req, res) => {
     // Check if user has admin privileges
@@ -383,6 +428,15 @@ router.post('/admin/assign-bot', async (req, res) => {
     const { botId, username } = req.body;
     
     try {
+        const target = await dataManager.getAdmin(username);
+        if (!target) return res.status(404).json({ success: false, error: 'User not found.' });
+        if (target.role !== 'admin' && target.botLimit > 0) {
+            const assignedBots = await dataManager.getBotsByUser(username);
+            const existingBot = assignedBots.some(bot => String(bot.id) === String(botId));
+            if (!existingBot && assignedBots.length >= target.botLimit) {
+                return res.status(400).json({ success: false, error: `Bot slot limit reached (${target.botLimit}).` });
+            }
+        }
         const success = await dataManager.assignBotToUser(botId, username);
         if (success) {
             await dataManager.addAdminLog(req.session.user.username, 'assign_bot_to_user', String(botId), { username });

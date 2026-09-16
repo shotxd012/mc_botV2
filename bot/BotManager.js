@@ -40,8 +40,8 @@ function getAllBotsStatus() {
     return statuses;
 }
 
-async function createBot(data) {
-    const newBotData = await dataManager.addBot(data);
+async function createBot(data, assignedTo = null) {
+    const newBotData = await dataManager.addBot(data, assignedTo);
     if (!newBotData) {
         return null;
     }
