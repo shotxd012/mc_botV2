@@ -33,21 +33,25 @@ function computeServerCounts(bots) {
     return counts;
 }
 
+async function getOverviewData() {
+    const [allUsers, allBots, allServers, adminLogs] = await Promise.all([
+        dataManager.getAllAdmins(),
+        dataManager.getBots(),
+        dataManager.getServers(),
+        dataManager.getAdminLogs(30)
+    ]);
+    const systemStats = await buildSystemStats({
+        bots: allBots,
+        botStatuses: botManager.getAllBotsStatus(),
+        servers: allServers
+    });
+    return { allUsers, allBots, allServers, adminLogs, systemStats };
+}
+
 // 1. Overview Dashboard
 router.get(['/', '/overview'], async (req, res) => {
     try {
-        const [allUsers, allBots, allServers, adminLogs] = await Promise.all([
-            dataManager.getAllAdmins(),
-            dataManager.getBots(),
-            dataManager.getServers(),
-            dataManager.getAdminLogs(30)
-        ]);
-        const botStatuses = botManager.getAllBotsStatus();
-        const systemStats = await buildSystemStats({
-            bots: allBots,
-            botStatuses,
-            servers: allServers
-        });
+        const { allUsers, allBots, allServers, adminLogs, systemStats } = await getOverviewData();
 
         res.render('admin/overview', {
             page: 'admin-overview',
@@ -62,6 +66,21 @@ router.get(['/', '/overview'], async (req, res) => {
     } catch (err) {
         console.error('Admin overview error:', err);
         res.status(500).send('Internal server error');
+    }
+});
+
+router.get('/api/overview', async (req, res) => {
+    try {
+        const { allUsers, systemStats } = await getOverviewData();
+        res.json({
+            success: true,
+            users: allUsers.length,
+            systemStats,
+            updatedAt: new Date().toISOString()
+        });
+    } catch (err) {
+        console.error('Admin overview API error:', err);
+        res.status(500).json({ success: false, error: 'Unable to read system telemetry' });
     }
 });
 

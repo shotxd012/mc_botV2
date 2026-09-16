@@ -2,28 +2,65 @@
 <%- include('../partials/sidebar') %>
 
 <main class="flex-1 p-4 sm:p-6 md:p-8 max-w-[1280px] w-full mx-auto min-h-full flex flex-col gap-6">
+    <style>
+        @keyframes admin-live-pulse { 50% { opacity: .35; transform: scale(.78); } }
+        .admin-live-led { animation: admin-live-pulse 1.2s ease-in-out infinite; }
+        .telemetry-card { background: var(--bgColor-default); border: 1px solid var(--borderColor-default); border-radius: 6px; padding: 1rem; min-width: 0; box-shadow: 0 1px 2px rgb(0 0 0 / 4%); }
+        .telemetry-card > span { display: block; color: var(--fgColor-muted); font: 600 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .3rem; }
+        .telemetry-card > strong { display: block; color: var(--fgColor-default); font: 700 1rem ui-monospace, SFMono-Regular, Menlo, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .telemetry-card > small { display: block; color: var(--fgColor-muted); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; margin-top: .3rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    </style>
+
     <header class="border-b border-ghborder-default pb-5">
-        <div class="flex items-center gap-2">
-            <h1 class="text-xl sm:text-2xl font-semibold text-fg-default tracking-tight">Admin Overview</h1>
-            <span class="px-2 py-0.5 text-xs font-mono font-medium bg-danger-subtle text-danger-fg border border-danger-subtle rounded-pill">System Root</span>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2"><h1 class="text-xl sm:text-2xl font-semibold text-fg-default tracking-tight">Admin Overview</h1><span class="px-2 py-0.5 text-xs font-mono font-medium bg-danger-subtle text-danger-fg border border-danger-subtle rounded-pill">System Root</span></div>
+            <div id="overview-live-state" class="flex items-center gap-2 text-xs font-mono text-success-fg" aria-live="polite"><span id="overview-live-led" class="admin-live-led w-2.5 h-2.5 rounded-full bg-success-fg"></span><span id="overview-live-label">LIVE</span><span class="text-fg-muted">·</span><span id="overview-updated">just now</span></div>
         </div>
         <p class="text-fg-muted mt-1 text-xs sm:text-sm">Platform telemetry, system metrics, and active session oversight.</p>
     </header>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-canvas-default border border-ghborder-default p-4 rounded-md shadow-sm">
-            <div class="text-xs font-semibold text-fg-muted uppercase">Total Bot Fleet</div>
-            <div class="text-2xl font-bold font-mono text-fg-default mt-1"><%= systemStats.bots.total || 0 %></div>
-        </div>
-        <div class="bg-canvas-default border border-ghborder-default p-4 rounded-md shadow-sm">
-            <div class="text-xs font-semibold text-fg-muted uppercase">Online Instances</div>
-            <div class="text-2xl font-bold font-mono text-success-fg mt-1"><%= systemStats.bots.online || 0 %></div>
-        </div>
-        <div class="bg-canvas-default border border-ghborder-default p-4 rounded-md shadow-sm">
-            <div class="text-xs font-semibold text-fg-muted uppercase">Registered Users</div>
-            <div class="text-2xl font-bold font-mono text-accent-fg mt-1"><%= users.length || 0 %></div>
-        </div>
-    </div>
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3" aria-label="Fleet summary">
+        <div class="bg-canvas-default border border-ghborder-default p-4 rounded-md shadow-sm"><div class="text-xs font-semibold text-fg-muted uppercase">Total Bot Fleet</div><div id="stat-bots-total" class="text-2xl font-bold font-mono text-fg-default mt-1"><%= systemStats.bots.total || 0 %></div><div class="text-xs text-fg-muted mt-1">managed instances</div></div>
+        <div class="bg-canvas-default border border-ghborder-default p-4 rounded-md shadow-sm"><div class="text-xs font-semibold text-fg-muted uppercase">Online Instances</div><div id="stat-bots-online" class="text-2xl font-bold font-mono text-success-fg mt-1"><%= systemStats.bots.online || 0 %></div><div id="stat-bots-offline" class="text-xs text-fg-muted mt-1"><%= systemStats.bots.offline || 0 %> offline</div></div>
+        <div class="bg-canvas-default border border-ghborder-default p-4 rounded-md shadow-sm"><div class="text-xs font-semibold text-fg-muted uppercase">Server Profiles</div><div id="stat-servers-online" class="text-2xl font-bold font-mono text-fg-default mt-1"><%= systemStats.servers.online || 0 %></div><div id="stat-servers-total" class="text-xs text-fg-muted mt-1"><%= systemStats.servers.total || 0 %> total profiles</div></div>
+        <div class="bg-canvas-default border border-ghborder-default p-4 rounded-md shadow-sm"><div class="text-xs font-semibold text-fg-muted uppercase">Registered Users</div><div id="stat-users" class="text-2xl font-bold font-mono text-accent-fg mt-1"><%= users.length || 0 %></div><div class="text-xs text-fg-muted mt-1">accounts with access</div></div>
+    </section>
+
+    <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3" aria-label="System telemetry">
+        <div class="telemetry-card"><span>System Uptime</span><strong id="stat-system-uptime"><%= systemStats.uptime.system %></strong><small>App: <b id="stat-app-uptime"><%= systemStats.uptime.app %></b></small></div>
+        <div class="telemetry-card"><span>CPU Architecture</span><strong><%= systemStats.cpu.count %> Cores</strong><small>Load: <b id="stat-load"><%= systemStats.cpu.loadAvg %></b></small></div>
+        <div class="telemetry-card"><span>RAM Memory</span><strong id="stat-memory"><%= systemStats.memory.used %> / <%= systemStats.memory.total %></strong><small>RSS: <b id="stat-rss"><%= systemStats.memory.process.rss %></b></small></div>
+        <div class="telemetry-card"><span>Process CPU</span><strong id="stat-process-cpu"><%= systemStats.cpu.processPercent %>%</strong><small>Heap: <b id="stat-heap"><%= systemStats.memory.process.heapUsed %> / <%= systemStats.memory.process.heapTotal %></b></small></div>
+        <div class="telemetry-card"><span>Storage Disk</span><strong id="stat-disk"><%= systemStats.disk ? systemStats.disk.used + ' / ' + systemStats.disk.total : 'Unavailable' %></strong><small id="stat-disk-detail"><%= systemStats.disk ? 'Free: ' + systemStats.disk.free + ' (' + systemStats.disk.percent + ')' : 'No disk data' %></small></div>
+        <div class="telemetry-card"><span>Network I/O</span><strong id="stat-network-rx"><%= systemStats.network ? 'RX ' + systemStats.network.rx : 'Unavailable' %></strong><small id="stat-network-tx"><%= systemStats.network ? 'TX ' + systemStats.network.tx : 'No network data' %></small></div>
+        <div class="telemetry-card"><span>Database State</span><strong id="stat-db"><%= systemStats.db.readyLabel %></strong><small id="stat-db-ping">Ping: <%= systemStats.db.pingMs === null ? 'N/A' : systemStats.db.pingMs + ' ms' %></small></div>
+        <div class="telemetry-card"><span>Runtime Environment</span><strong><%= systemStats.meta.node %></strong><small class="truncate"><%= systemStats.meta.platform %></small></div>
+        <div class="telemetry-card"><span>Host Machine</span><strong class="truncate"><%= systemStats.meta.hostname %></strong><small>Arch: <%= systemStats.meta.arch %> · PID <%= systemStats.meta.pid %></small></div>
+        <div class="telemetry-card"><span>Thermal Temp</span><strong id="stat-temperature"><%= systemStats.temperature %></strong><small>hardware sensors</small></div>
+    </section>
+
+    <section class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div class="bg-canvas-default border border-ghborder-default p-5 rounded-md shadow-sm xl:col-span-2"><div class="flex items-center justify-between mb-4 border-b border-ghborder-default pb-3"><h2 class="text-xs font-mono uppercase font-bold tracking-wider text-fg-default">System Load History</h2><span id="load-sample-count" class="text-[10px] font-mono text-fg-muted"><%= systemStats.loadHistory.length %> samples</span></div><div id="load-history" class="space-y-2 max-h-64 overflow-y-auto text-xs font-mono"></div></div>
+        <div class="bg-canvas-default border border-ghborder-default p-5 rounded-md shadow-sm"><div class="flex items-center justify-between mb-4 border-b border-ghborder-default pb-3"><h2 class="text-xs font-mono uppercase font-bold tracking-wider text-fg-default">Bot Status</h2><span id="bot-count-label" class="text-[10px] font-mono text-fg-muted"><%= systemStats.botsDetail.length %> BOTS</span></div><div id="bot-status-list" class="space-y-2 max-h-64 overflow-y-auto text-xs"></div></div>
+    </section>
 </main>
+
+<script>
+    (() => {
+        const initialStats = <%- JSON.stringify(systemStats) %>;
+        const setText = (id, value) => { const element = document.getElementById(id); if (element) element.textContent = value ?? 'N/A'; };
+        const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[character]));
+        function renderStats(stats, users) {
+            setText('stat-bots-total', stats.bots.total); setText('stat-bots-online', stats.bots.online); setText('stat-bots-offline', `${stats.bots.offline} offline`); setText('stat-servers-online', stats.servers.online); setText('stat-servers-total', `${stats.servers.total} total profiles`); setText('stat-users', users);
+            setText('stat-system-uptime', stats.uptime.system); setText('stat-app-uptime', stats.uptime.app); setText('stat-load', stats.cpu.loadAvg); setText('stat-memory', `${stats.memory.used} / ${stats.memory.total}`); setText('stat-rss', stats.memory.process.rss); setText('stat-process-cpu', `${stats.cpu.processPercent}%`); setText('stat-heap', `${stats.memory.process.heapUsed} / ${stats.memory.process.heapTotal}`); setText('stat-disk', stats.disk ? `${stats.disk.used} / ${stats.disk.total}` : 'Unavailable'); setText('stat-disk-detail', stats.disk ? `Free: ${stats.disk.free} (${stats.disk.percent})` : 'No disk data'); setText('stat-network-rx', stats.network ? `RX ${stats.network.rx}` : 'Unavailable'); setText('stat-network-tx', stats.network ? `TX ${stats.network.tx}` : 'No network data'); setText('stat-db', stats.db.readyLabel); setText('stat-db-ping', `Ping: ${stats.db.pingMs === null ? 'N/A' : `${stats.db.pingMs} ms`}`); setText('stat-temperature', stats.temperature);
+            setText('load-sample-count', `${stats.loadHistory.length} samples`); document.getElementById('load-history').innerHTML = stats.loadHistory.slice().reverse().map(entry => `<div class="flex items-center justify-between bg-canvas-subtle px-3 py-2 border border-ghborder-default"><span class="text-fg-muted">${escapeHtml(new Date(entry.ts).toLocaleTimeString())}</span><span class="font-bold text-fg-default">${escapeHtml(entry.load1)} / ${escapeHtml(entry.load5)} / ${escapeHtml(entry.load15)}</span></div>`).join('');
+            setText('bot-count-label', `${stats.botsDetail.length} BOTS`); document.getElementById('bot-status-list').innerHTML = stats.botsDetail.map(bot => `<div class="flex items-center justify-between bg-canvas-subtle px-3 py-2 border border-ghborder-default"><div><div class="font-mono font-bold text-fg-default">${escapeHtml(bot.name)} <span class="text-fg-muted">#${escapeHtml(bot.id)}</span></div><div class="text-[10px] font-mono text-fg-muted">Uptime: ${escapeHtml(bot.uptime)}</div></div><div class="text-right font-mono"><span class="px-1.5 py-0.5 text-[10px] font-bold uppercase border ${bot.online ? 'bg-success-subtle text-success-fg border-success-subtle' : 'bg-canvas-subtle text-fg-muted border-ghborder-default'}">${bot.online ? 'Online' : 'Offline'}</span><div class="text-[10px] text-fg-muted mt-1">${bot.afk ? 'AFK' : 'Active'}</div></div></div>`).join('') || '<div class="text-fg-muted italic">No bots configured.</div>';
+        }
+        function setLiveState(online, timestamp) { const state = document.getElementById('overview-live-state'); const led = document.getElementById('overview-live-led'); if (state) state.className = `flex items-center gap-2 text-xs font-mono ${online ? 'text-success-fg' : 'text-danger-fg'}`; if (led) { led.classList.toggle('bg-success-fg', online); led.classList.toggle('bg-danger-fg', !online); led.classList.toggle('admin-live-led', online); } setText('overview-live-label', online ? 'LIVE' : 'STALE'); setText('overview-updated', timestamp ? new Date(timestamp).toLocaleTimeString() : 'connection lost'); }
+        renderStats(initialStats, <%= users.length || 0 %>); setLiveState(true, new Date().toISOString());
+        async function refreshOverview() { try { const response = await fetch('/admin/api/overview', { headers: { Accept: 'application/json' } }); if (!response.ok) throw new Error('Telemetry request failed'); const data = await response.json(); renderStats(data.systemStats, data.users); setLiveState(true, data.updatedAt); } catch (error) { setLiveState(false); } }
+        setInterval(refreshOverview, 5000);
+    })();
+</script>
 
 <%- include('../partials/footer') %>
