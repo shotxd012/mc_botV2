@@ -1,0 +1,18 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<main class="flex-1 p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-auto min-h-screen flex flex-col gap-6">
+    <%- include('_header', { title: 'Cookies & Acceptable Use', icon: 'tune', intro: 'A plain-language summary of browser storage and responsible operation.' }) %>
+    <article class="legal-content bg-canvas-default border border-ghborder-default rounded-md p-5 sm:p-8 shadow-sm">
+        <p class="legal-meta">Last updated: September 16, 2026</p>
+        <h2>Cookies and Session Storage</h2>
+        <p>CraftHub uses a necessary session cookie to keep you signed in and protect authenticated requests. The cookie is not used for advertising. Session data is stored server-side and expires according to the configured session lifetime.</p>
+        <h2>Third-Party Requests</h2>
+        <p>Some features may contact services such as Microsoft authentication, Minecraft asset delivery, MongoDB, or webhook providers. Those services may process requests under their own policies.</p>
+        <h2>Acceptable Use</h2>
+        <p>Use the dashboard only for authorized automation and administration. Respect server rules, rate limits, privacy, intellectual property, and the security of other users and systems.</p>
+        <h2>Reporting Abuse</h2>
+        <p>Report suspected account compromise, unauthorized bot activity, or security problems to the service administrator immediately. Include enough detail to investigate without sharing passwords or access tokens.</p>
+    </article>
+</main>
+<%- include('../partials/footer') %>

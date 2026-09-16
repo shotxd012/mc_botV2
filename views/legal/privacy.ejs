@@ -1,0 +1,23 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<main class="flex-1 p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-auto min-h-screen flex flex-col gap-6">
+    <%- include('_header', { title: 'Privacy Policy', icon: 'shield', intro: 'How CraftHub collects, uses, stores, and protects information.' }) %>
+    <article class="legal-content bg-canvas-default border border-ghborder-default rounded-md p-5 sm:p-8 shadow-sm">
+        <p class="legal-meta">Last updated: September 16, 2026</p>
+        <h2>1. Information We Collect</h2>
+        <p>CraftHub collects information needed to operate the dashboard, authenticate accounts, and manage Minecraft bot instances.</p>
+        <ul><li>Account information such as username and a securely hashed password.</li><li>Bot configuration, server profile, assignment, status, event, metric, and console history data that you or an administrator provide.</li><li>Session and security information such as session identifiers, timestamps, and access logs.</li><li>Technical information needed to run the service, such as IP address, browser, operating system, and server health data, where available from the hosting environment.</li></ul>
+        <h2>2. How We Use Information</h2>
+        <p>Information is used to sign you in, enforce permissions, operate and monitor bot instances, provide audit trails, troubleshoot failures, and protect the service from misuse. We do not sell account or bot data.</p>
+        <h2>3. Minecraft and Microsoft Accounts</h2>
+        <p>When Microsoft authentication is used, authentication is handled through the relevant Microsoft and Minecraft services. CraftHub stores local authentication cache data required by the bot library. Do not add an account that you do not own or have permission to operate.</p>
+        <h2>4. Storage and Retention</h2>
+        <p>Data is stored in the service database and application storage configured by the operator. Records are retained while an account or bot is active, or longer when needed for security, legal, backup, or audit purposes.</p>
+        <h2>5. Security</h2>
+        <p>Passwords are hashed before storage, sessions use server-side storage, and access is restricted by account roles and bot assignments. No online service can guarantee absolute security, so use strong credentials and report suspected compromise promptly.</p>
+        <h2>6. Contact</h2>
+        <p>For privacy questions or requests, contact the service administrator through the support channel provided by the operator.</p>
+    </article>
+</main>
+<%- include('../partials/footer') %>

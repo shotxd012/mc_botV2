@@ -1,0 +1,24 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<main class="flex-1 p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-auto min-h-screen flex flex-col gap-6">
+    <%- include('_header', { title: 'Terms of Service', icon: 'description', intro: 'Rules for using the CraftHub dashboard and bot automation tools.' }) %>
+    <article class="legal-content bg-canvas-default border border-ghborder-default rounded-md p-5 sm:p-8 shadow-sm">
+        <p class="legal-meta">Last updated: September 16, 2026</p>
+        <h2>1. Acceptance</h2>
+        <p>By creating an account or using CraftHub, you agree to these terms and to use the service only as permitted by applicable law and the rules of each Minecraft server you access.</p>
+        <h2>2. Authorized Use</h2>
+        <p>You must own or be authorized to use every Microsoft, Minecraft, server, and webhook account configured in CraftHub. You are responsible for your credentials, bot commands, server targets, and activity performed through your account.</p>
+        <h2>3. Prohibited Conduct</h2>
+        <ul><li>Do not use the service to access accounts or servers without permission.</li><li>Do not use bots to spam, harass, deceive, exploit, evade bans, or disrupt a server.</li><li>Do not bypass authentication, permissions, bot limits, passkeys, rate limits, or security controls.</li><li>Do not upload malicious commands, credentials, or content intended to damage the service or another system.</li></ul>
+        <h2>4. Third-Party Rules</h2>
+        <p>Minecraft, Microsoft, hosting providers, and server operators may have separate terms and rules. Those rules control whether bot automation is allowed. CraftHub does not grant permission to automate on any third-party server.</p>
+        <h2>5. Availability and Responsibility</h2>
+        <p>The service is provided as configured by its operator and may be unavailable, changed, or removed. You are responsible for backups, account security, server permission, and reviewing bot behavior before enabling automation.</p>
+        <h2>6. Suspension</h2>
+        <p>The operator may suspend or remove accounts, bots, or access that violate these terms, create a security risk, or breach a third-party service rule.</p>
+        <h2>7. Changes</h2>
+        <p>These terms may be updated when the service changes. Continued use after an update means you accept the revised terms.</p>
+    </article>
+</main>
+<%- include('../partials/footer') %>

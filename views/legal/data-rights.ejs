@@ -1,0 +1,22 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<main class="flex-1 p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-auto min-h-screen flex flex-col gap-6">
+    <%- include('_header', { title: 'Data Rights & Deletion', icon: 'manage_accounts', intro: 'Review, export, correct, or delete information associated with your account.' }) %>
+    <article class="legal-content bg-canvas-default border border-ghborder-default rounded-md p-5 sm:p-8 shadow-sm">
+        <p class="legal-meta">Last updated: September 16, 2026</p>
+        <h2>1. Your Choices</h2>
+        <p>Depending on your location and the service operator, you may request access to, correction of, export of, or deletion of personal information associated with your account.</p>
+        <h2>2. Request Account Data</h2>
+        <p>Contact the service administrator using the support channel provided by the operator. Include your username and clearly state whether you want access, correction, export, or deletion. The administrator may request reasonable verification before acting.</p>
+        <h2>3. What Deletion May Remove</h2>
+        <p>Account deletion may remove your login account, assigned bot configurations, console history, bot events, metrics, and related profile data. Bots you created or own may need to be unassigned, transferred, or deleted separately. Ask the administrator to confirm the desired treatment of those bots.</p>
+        <h2>4. Exceptions</h2>
+        <p>Some information may be retained temporarily for backups, fraud prevention, security investigations, accounting, legal compliance, or audit requirements. Deleted data may also remain in encrypted backups until those backups expire.</p>
+        <h2>5. Credentials and Third-Party Data</h2>
+        <p>Deleting a CraftHub account does not automatically delete a Microsoft account, Minecraft account, server account, webhook, or data held by another provider. Manage those services directly with their respective providers.</p>
+        <h2>6. Operator Contact</h2>
+        <p>This installation is operated by the organization or person who deployed it. Replace the support channel with the operator's official contact details before production use.</p>
+    </article>
+</main>
+<%- include('../partials/footer') %>

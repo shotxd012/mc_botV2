@@ -1,0 +1,26 @@
+<header class="border-b border-ghborder-default pb-5">
+    <div class="flex items-center gap-3">
+        <span class="material-icons text-accent-fg text-2xl"><%= icon %></span>
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-fg-default"><%= title %></h1>
+            <p class="text-fg-muted text-xs sm:text-sm mt-1"><%= intro %></p>
+        </div>
+    </div>
+    <nav class="flex flex-wrap gap-x-4 gap-y-2 mt-5 text-xs font-semibold" aria-label="Legal pages">
+        <a href="/privacy" class="<%= legalPage === 'privacy' ? 'text-fg-default border-b-2 border-accent-fg' : 'text-fg-muted hover:text-accent-fg' %> pb-2">Privacy</a>
+        <a href="/terms" class="<%= legalPage === 'terms' ? 'text-fg-default border-b-2 border-accent-fg' : 'text-fg-muted hover:text-accent-fg' %> pb-2">Terms</a>
+        <a href="/data-rights" class="<%= legalPage === 'data-rights' ? 'text-fg-default border-b-2 border-accent-fg' : 'text-fg-muted hover:text-accent-fg' %> pb-2">Data rights</a>
+        <a href="/cookies" class="<%= legalPage === 'cookies' ? 'text-fg-default border-b-2 border-accent-fg' : 'text-fg-muted hover:text-accent-fg' %> pb-2">Cookies & use</a>
+    </nav>
+</header>
+
+<style>
+    .legal-content { color: var(--fg-default); font-size: .875rem; line-height: 1.7; }
+    .legal-content h2 { margin: 1.75rem 0 .5rem; color: var(--fg-default); font-size: 1rem; font-weight: 700; }
+    .legal-content h2:first-of-type { margin-top: .5rem; }
+    .legal-content p { margin: .65rem 0; color: var(--fg-muted); }
+    .legal-content ul { margin: .65rem 0; padding-left: 1.25rem; color: var(--fg-muted); list-style: disc; }
+    .legal-content li { margin: .35rem 0; }
+    .legal-content a { color: var(--accent-fg); }
+    .legal-meta { color: var(--fg-subtle) !important; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+</style>
