@@ -11,7 +11,7 @@ This is a Minecraft AFK Bot Admin Dashboard - a web-based application that contr
 - **Frontend**: EJS templates with Tailwind CSS (via CDN)
 - **Real-time Communication**: Socket.IO
 - **Authentication**: express-session with bcrypt for local authentication
-- **Data Storage**: Local JSON file (data/data.json) instead of database
+- **Data Storage**: MongoDB for application data and runtime records
 
 ## Key Components
 
@@ -23,7 +23,7 @@ This is a Minecraft AFK Bot Admin Dashboard - a web-based application that contr
 - `routes/`: Contains route handlers for authentication, dashboard, and control APIs
 
 ### Data Flow
-- User credentials and bot configurations stored in `data/data.json`
+- User credentials, bot configurations, server profiles, settings, logs, events, and metrics stored in MongoDB
 - Socket.IO provides real-time status updates and console logs
 - Multiple bot instances can run simultaneously managed by BotManager
 
@@ -56,10 +56,10 @@ PORT=3000 npm start
 
 ## Configuration
 
-- Server settings (IP, port, version) stored per bot in data/data.json
-- Authentication cache stored in `data/nmp-cache-{botId}` directories
+- Server settings (IP, port, version) stored per bot in MongoDB
+- Microsoft authentication profiles use the OS temporary directory at `mc-bot-auth-cache/bot-{botId}` because Mineflayer requires a filesystem profile directory
 - Global settings include auto-reconnect and dark mode preferences
-- Console history stored per bot in `data/bot_{id}_history.json` files
+- Console history stored in MongoDB `BotLog` documents
 
 ## Additional Features
 

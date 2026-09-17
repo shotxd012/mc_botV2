@@ -10,7 +10,7 @@ A budget-friendly, secure, and feature-rich admin dashboard to control and monit
 - **Server Settings**: Configure Server IP, Port, Version, and Microsoft Account.
 - **Microsoft Authentication**: Built-in flow for first-time verification.
 - **Dark Mode**: Enabled by default with persistent settings.
-- **MongoDB Storage**: Uses MongoDB for users, bots, and settings.
+- **MongoDB Storage**: Uses MongoDB for users, bots, settings, servers, logs, events, and metrics.
 
 ## 🛠️ Tech Stack
 
@@ -45,12 +45,9 @@ A budget-friendly, secure, and feature-rich admin dashboard to control and monit
    ```
    The dashboard will be available at `http://localhost:3010` by default.
 
-## 🔐 Default Login
+## 🔐 First Login
 
-- **Username**: `root`
-- **Password**: `REDACTED_DEFAULT_PASSWORD`
-
-> **Note**: You can change the password by updating the Admin record in MongoDB (requires hashing the new password) or implementing a change password feature.
+The first account registered against an empty MongoDB database becomes the administrator. Later accounts are regular users. Never commit credentials or Microsoft tokens.
 
 ## ⚙️ Environment Variables
 
@@ -59,6 +56,8 @@ A budget-friendly, secure, and feature-rich admin dashboard to control and monit
 - `NODE_ENV`: Set to `production` to enable secure session cookies.
 - `TRUST_PROXY`: Set to `true` or `1` when running behind a reverse proxy (Nginx, Render, etc.).
 - `PORT`: Override the default port (3010).
+- `BOT_PASSKEYS`: Comma-separated `botId:passkey` values.
+- `SENTRY_DSN`: Sentry DSN for server and bot error reporting.
 
 ## 🎮 Usage Guide
 
@@ -92,7 +91,7 @@ afk-bot-dashboard/
 ├── bot/
 │   └── bot.js          # Mineflayer bot logic
 ├── data/
-│   └── ...             # Runtime bot cache/history files
+│   └── ...             # Legacy local data; application data is stored in MongoDB
 ├── public/
 │   └── js/
 │       └── dashboard.js # Frontend logic
@@ -105,7 +104,7 @@ afk-bot-dashboard/
 ## ⚠️ Troubleshooting
 
 - **Bot won't connect?** Check the Server IP and Port. Ensure the server is online and not whitelisted.
-- **Microsoft Auth Loop?** If the bot keeps asking for auth, ensure you complete the flow on the Microsoft website. The token is cached in `data/nmp-cache` (managed by mineflayer).
+- **Microsoft Auth Loop?** If the bot keeps asking for auth, complete the Microsoft flow again. Mineflayer uses a disposable profile under the operating system temporary directory; clearing it requires re-authentication.
 - **Port in use?** If port 3000 is taken, change `PORT` in `app.js` or set `PORT` environment variable.
 
 ## 📜 License

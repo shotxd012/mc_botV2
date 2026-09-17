@@ -8,6 +8,8 @@ const BotMetric = require('../models/BotMetric');
 const Bot = require('../models/Bot');
 const https = require('https');
 const http = require('http');
+const os = require('os');
+const path = require('path');
 
 let runtimeSnapshot = null;
 let runtimeSnapshotAt = 0;
@@ -294,7 +296,7 @@ class BotInstance {
             port: parseInt(config.port),
             version: config.version === 'auto' ? false : config.version,
             username: isOffline ? (account.username || this.botConfig.name) : account.email,
-            profilesFolder: `./data/nmp-cache-${this.id}`
+            profilesFolder: path.join(os.tmpdir(), 'mc-bot-auth-cache', `bot-${this.id}`)
         };
 
         if (!isOffline) {
