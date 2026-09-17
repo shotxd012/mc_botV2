@@ -78,7 +78,7 @@ class BotInstance {
         const timestamp = new Date().toLocaleTimeString();
         const logEntry = `[${timestamp}] ${message}`;
         if (this.io) {
-            this.io.emit('log', { botId: this.id, message: logEntry, type });
+            this.io.to(`bot:${this.id}`).emit('log', { botId: this.id, message: logEntry, type });
         }
 
         // Add to console history
@@ -87,7 +87,7 @@ class BotInstance {
 
     emitStatus() {
         if (this.io) {
-            this.io.emit('status', { botId: this.id, status: this.getStatus() });
+            this.io.to(`bot:${this.id}`).emit('status', { botId: this.id, status: this.getStatus() });
         }
     }
 
@@ -203,7 +203,7 @@ class BotInstance {
             await BotEvent.create({ botId: this.id, event, details });
             // Emit to frontend for live timeline
             if (this.io) {
-                this.io.emit('bot-event', {
+                this.io.to(`bot:${this.id}`).emit('bot-event', {
                     botId: this.id,
                     event,
                     details,
@@ -301,7 +301,7 @@ class BotInstance {
                 this.authStatus = 'Pending Auth';
                 this.emitStatus();
                 if (this.io) {
-                    this.io.emit('auth-code', { botId: this.id, data });
+                    this.io.to(`bot:${this.id}`).emit('auth-code', { botId: this.id, data });
                 }
             }
         };
@@ -589,7 +589,7 @@ class BotInstance {
             const message = jsonMsg.toString();
             this.log(`[MSG] ${message}`, 'chat');
             if (this.io) {
-                this.io.emit('log', { botId: this.id, message: `[MSG] ${message}`, type: 'chat' });
+                this.io.to(`bot:${this.id}`).emit('log', { botId: this.id, message: `[MSG] ${message}`, type: 'chat' });
             }
         });
 
@@ -597,7 +597,7 @@ class BotInstance {
         this.bot.on('chat', (username, message) => {
             this.log(`[${username}] ${message}`, 'chat');
             if (this.io) {
-                this.io.emit('log', { botId: this.id, message: `[${username}] ${message}`, type: 'chat' });
+                this.io.to(`bot:${this.id}`).emit('log', { botId: this.id, message: `[${username}] ${message}`, type: 'chat' });
             }
         });
 

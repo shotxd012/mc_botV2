@@ -1,6 +1,4 @@
-const PROTECTED_BOT_IDS = new Map([
-    [1, 'REDACTED_BOT_PASSKEY']
-]);
+const PROTECTED_BOT_IDS = new Map(String(process.env.BOT_PASSKEYS || '').split(',').map(entry => entry.split(':')).filter(([id, passkey]) => id && passkey).map(([id, passkey]) => [parseInt(id, 10), passkey]).filter(([id]) => Number.isInteger(id)));
 
 function requiresPasskeyForBot(botConfig) {
     if (botConfig && typeof botConfig.id !== 'undefined') {

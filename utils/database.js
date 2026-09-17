@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
-const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://shibinhussainmk_db_user:REDACTED_MONGODB_PASSWORD@musicbot.3sydv1a.mongodb.net/?retryWrites=true&w=majority&appName=musicBOT';
+const mongoUri = process.env.MONGODB_URI;
+if (!mongoUri) throw new Error('MONGODB_URI is required');
 
 const connectDB = async () => {
     try {

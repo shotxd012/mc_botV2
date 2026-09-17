@@ -20,6 +20,24 @@ async function enforcePasskey(req, res, bot) {
     return { blocked: true };
 }
 
+async function loadAuthorizedBot(req, res, next) {
+    try {
+        const user = await dataManager.getAdmin(req.session.user.username);
+        const bot = await dataManager.getBot(req.params.id);
+        if (!user) return res.status(401).json({ success: false, error: 'User session is no longer valid.' });
+        if (!bot) return res.status(404).json({ success: false, error: 'Bot not found' });
+        if (user.role !== 'admin' && bot.assignedTo !== user.username) return res.status(403).json({ success: false, error: 'Permission denied.' });
+        req.bot = bot;
+        req.currentUser = user;
+        if (!req.path.endsWith('/passkey') && !req.path.endsWith('/passkey/lock')) {
+            if (await enforcePasskey(req, res, bot)) return;
+        }
+        next();
+    } catch (error) { next(error); }
+}
+
+router.use('/bot/:id', loadAuthorizedBot);
+
 // Bot Control
 router.post('/bot/:id/start', async (req, res) => {
     // Check if user has admin privileges or is assigned to this bot
@@ -199,6 +217,35 @@ router.post('/bots/create', async (req, res) => {
         server: newBot.server
     });
     res.json({ success: true, bot: newBot });
+});
+
+router.post('/templates/create', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    if (!user || user.role !== 'admin') return res.status(403).json({ success: false, error: 'Permission denied.' });
+    const { botId, name } = req.body;
+    if (!botId || !name || !String(name).trim()) return res.status(400).json({ success: false, error: 'Template name and source bot are required.' });
+    const template = await botManager.createTemplateFromBot(botId, String(name).trim(), user.username);
+    if (!template) return res.status(404).json({ success: false, error: 'Source bot not found.' });
+    await dataManager.addAdminLog(user.username, 'create_bot_template', String(template._id), { name: template.name, botId: String(botId) });
+    res.json({ success: true, template });
+});
+
+router.post('/templates/apply', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    if (!user || user.role !== 'admin') return res.status(403).json({ success: false, error: 'Permission denied.' });
+    const created = await botManager.createBotFromTemplate(req.body.templateId);
+    if (!created) return res.status(404).json({ success: false, error: 'Template not found.' });
+    await dataManager.addAdminLog(user.username, 'create_bot_from_template', String(created.id), { templateId: String(req.body.templateId) });
+    res.json({ success: true, bot: created });
+});
+
+router.post('/templates/delete', async (req, res) => {
+    const user = await dataManager.getAdmin(req.session.user.username);
+    if (!user || user.role !== 'admin') return res.status(403).json({ success: false, error: 'Permission denied.' });
+    const deleted = await botManager.deleteTemplate(req.body.templateId);
+    if (!deleted) return res.status(404).json({ success: false, error: 'Template not found.' });
+    await dataManager.addAdminLog(user.username, 'delete_bot_template', String(req.body.templateId), null);
+    res.json({ success: true });
 });
 
 router.post('/bot/:id/delete', async (req, res) => {

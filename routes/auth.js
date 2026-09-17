@@ -53,7 +53,8 @@ router.post('/register', async (req, res) => {
         }
         
         // Create new user
-        const result = await dataManager.createAdmin(username, password);
+        const existingAdmins = await dataManager.getAllAdmins();
+        const result = await dataManager.createAdmin(username, password, existingAdmins.length === 0 ? 'admin' : 'user');
         if (result) {
             req.session.user = { username };
             res.redirect('/');

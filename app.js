@@ -1,4 +1,6 @@
 require('dotenv').config();
+const Sentry = require('@sentry/node');
+Sentry.init({ dsn: process.env.SENTRY_DSN || undefined, environment: process.env.NODE_ENV || 'development' });
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -36,14 +38,11 @@ if (trustProxy) {
 
 const sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret) {
-    if (isProduction) {
-        throw new Error('SESSION_SECRET is required in production');
-    }
-    console.warn('Warning: SESSION_SECRET is not set. Using insecure development fallback.');
+    throw new Error('SESSION_SECRET is required in every environment');
 }
 
-app.use(session({
-    secret: sessionSecret || 'REDACTED_SESSION_FALLBACK',
+const sessionMiddleware = session({
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
@@ -57,7 +56,9 @@ app.use(session({
         sameSite: 'lax',
         maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
     }
-}));
+});
+app.use(sessionMiddleware);
+io.engine.use(sessionMiddleware);
 
 // Make user available to all views
 app.use(async (req, res, next) => {
@@ -91,12 +92,33 @@ app.use('/admin', requireAuth, adminRoutes);
 app.use('/', requireAuth, dashboardRoutes);
 app.use('/api', requireAuth, controlRoutes);
 
+Sentry.setupExpressErrorHandler(app);
+app.use((error, req, res, next) => {
+    console.error('Unhandled Express error:', error);
+    if (res.headersSent) return next(error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+});
+
 // --- Socket.IO ---
+io.use(async (socket, next) => {
+    try {
+        const user = socket.request.session?.user;
+        if (!user) return next(new Error('Authentication required'));
+        const admin = await dataManager.getAdmin(user.username);
+        if (!admin) return next(new Error('Authentication required'));
+        const bots = admin.role === 'admin' ? await dataManager.getBots() : await dataManager.getBotsByUser(admin.username);
+        socket.allowedBotIds = new Set(bots.map(bot => String(bot.id)));
+        next();
+    } catch (error) { Sentry.captureException(error); next(new Error('Authentication failed')); }
+});
+
 io.on('connection', (socket) => {
-    // Send list of bots on connect
-    socket.emit('bot-list', botManager.getAllBotsStatus());
+    const statuses = botManager.getAllBotsStatus().filter(status => socket.allowedBotIds.has(String(status.id)));
+    statuses.forEach(status => socket.join(`bot:${status.id}`));
+    socket.emit('bot-list', statuses);
 
     socket.on('get-status', (botId) => {
+        if (!socket.allowedBotIds.has(String(botId))) return;
         const status = botManager.getStatus(botId);
         if (status) {
             socket.emit('status', { botId, status });
@@ -133,5 +155,8 @@ async function startServer() {
 }
 
 startServer();
+
+process.on('uncaughtException', error => { console.error('Uncaught exception:', error); Sentry.captureException(error); });
+process.on('unhandledRejection', reason => { console.error('Unhandled rejection:', reason); Sentry.captureException(reason); });
 
 module.exports = { app, server, io };

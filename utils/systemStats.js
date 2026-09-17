@@ -270,5 +270,6 @@ async function buildSystemStats({ bots = [], botStatuses = [], servers = [] } = 
 }
 
 module.exports = {
-    buildSystemStats
+    buildSystemStats,
+    formatBytes
 };

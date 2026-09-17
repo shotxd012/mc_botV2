@@ -7,8 +7,9 @@
 </script>
 
 <main class="flex-1 min-w-0 p-4 sm:p-6 md:p-8 max-w-[1280px] w-full mx-auto flex flex-col gap-6">
+    <%- include('partials/bot-topbar', { botConfig, botId, status, section }) %>
     <!-- GitHub Repository Header Format -->
-    <header class="flex flex-col gap-4 border-b border-ghborder-default pb-4">
+    <header class="hidden">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div class="flex items-center gap-2 min-w-0">
                 <span class="material-icons text-xl text-fg-muted">dns</span>

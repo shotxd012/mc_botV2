@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/shotxd012/mc_botV2#readme",
   "dependencies": {
+    "@sentry/node": "^10.75.0",
     "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.2",
     "connect-mongo": "^6.0.0",

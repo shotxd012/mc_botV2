@@ -2,6 +2,7 @@ const BotInstance = require('./BotInstance');
 const dataManager = require('../utils/dataManager');
 const BotTemplate = require('../models/BotTemplate');
 const Bot = require('../models/Bot');
+const Sentry = require('@sentry/node');
 
 let bots = new Map(); // id -> BotInstance
 let io = null;
@@ -21,6 +22,7 @@ async function init(socketIo) {
                         instance.start();
                     } catch (e) {
                         console.error(`[BotManager] Auto-start failed for bot ${botData.id}:`, e);
+                        Sentry.captureException(e, { tags: { botId: String(botData.id), operation: 'auto-start' } });
                     }
                 }, 2000 + botData.id * 500); // stagger starts to avoid simultaneous auth requests
             }

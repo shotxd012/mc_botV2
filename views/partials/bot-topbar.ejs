@@ -1,0 +1,26 @@
+<header class="flex flex-col gap-4 border-b border-ghborder-default pb-4">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="flex items-center gap-2 min-w-0">
+            <span class="material-icons text-xl text-fg-muted">dns</span>
+            <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+                <a href="/" class="text-accent-fg hover:underline text-lg font-semibold">bots</a>
+                <span class="text-fg-muted text-lg">/</span>
+                <h2 class="bot-title text-lg font-bold text-fg-default font-mono truncate"><%= botConfig.name %></h2>
+                <span class="px-2 py-0.5 text-[11px] font-mono text-fg-muted bg-canvas-subtle border border-ghborder-default rounded-pill">#<%= botId %></span>
+                <% if (botConfig.autoStart) { %><span class="px-2 py-0.5 text-[10px] font-mono bg-accent-subtle text-accent-fg border border-accent-muted rounded-pill">auto-start</span><% } %>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 self-end sm:self-auto">
+            <button id="start-stop-btn" onclick="toggleStartStop()" class="px-3 py-1.5 <%= status.isRunning ? 'bg-danger-emphasis hover:bg-danger-fg border-danger-emphasis' : 'bg-success-emphasis hover:bg-success-fg border-success-emphasis' %> text-white rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm">
+                <span id="start-stop-icon" class="material-icons text-sm"><%= status.isRunning ? 'stop' : 'play_arrow' %></span><span id="start-stop-text"><%= status.isRunning ? 'Stop Bot' : 'Start Bot' %></span>
+            </button>
+            <button onclick="controlBot('restart')" class="px-3 py-1.5 bg-canvas-subtle hover:bg-canvas-default text-fg-default border border-ghborder-default hover:border-ghborder-strong rounded-md text-xs font-medium flex items-center gap-1 transition-colors"><span class="material-icons text-sm text-fg-muted">refresh</span><span>Restart</span></button>
+            <a href="/bot/<%= botId %>/settings" class="p-1.5 bg-canvas-subtle hover:bg-canvas-default text-fg-muted hover:text-fg-default border border-ghborder-default rounded-md transition-colors" title="Settings"><span class="material-icons text-base">settings</span></a>
+        </div>
+    </div>
+    <div class="flex items-center gap-2 text-xs text-fg-muted font-mono"><span id="status-dot" class="w-2 h-2 rounded-full <%= status.online ? 'bg-success-fg' : 'bg-danger-fg' %>"></span><span id="status-text" class="font-semibold text-fg-default"><%= status.online ? 'Online' : 'Offline' %></span><span>•</span><span class="truncate"><%= status.server ? status.server.ip + ':' + status.server.port : 'No server configured' %></span></div>
+    <nav class="flex w-full min-w-0 items-center gap-1 overflow-x-auto border-b border-ghborder-default pt-2" aria-label="Bot workspace tabs">
+        <% const tabs = [{ href: '', icon: 'terminal', label: 'Console', key: 'console' }, { href: '/config', icon: 'tune', label: 'Config', key: 'config' }, { href: '/analytics', icon: 'insights', label: 'Analytics', key: 'analytics' }, { href: '/events', icon: 'history', label: 'Events', key: 'events' }, { href: '/game', icon: 'sports_esports', label: 'In-Game', key: 'game' }, { href: '/settings', icon: 'settings', label: 'Settings', key: 'settings' }]; %>
+        <% tabs.forEach(tab => { %><a href="/bot/<%= botId %><%= tab.href %>" aria-current="<%= section === tab.key ? 'page' : 'false' %>" class="px-3 py-2 text-xs font-semibold flex items-center gap-1.5 border-b-2 <%= section === tab.key ? 'border-accent-fg text-fg-default' : 'border-transparent text-fg-muted hover:text-fg-default hover:border-ghborder-muted' %> transition-colors whitespace-nowrap"><span class="material-icons text-base"><%= tab.icon %></span><%= tab.label %></a><% }) %>
+    </nav>
+</header>

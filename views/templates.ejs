@@ -1,0 +1,54 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<main class="flex-1 min-w-0 p-4 sm:p-6 md:p-8 max-w-[1280px] w-full mx-auto min-h-full flex flex-col gap-6">
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-ghborder-default pb-5">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-semibold text-fg-default tracking-tight">Bot Templates</h1>
+            <p class="text-fg-muted mt-1 text-xs sm:text-sm">Save reusable bot configurations and create new instances from them.</p>
+        </div>
+        <button onclick="openTemplateModal()" class="bg-accent-emphasis hover:bg-accent-fg text-white px-3.5 py-1.5 rounded-md font-semibold text-xs flex items-center gap-1.5 border border-accent-emphasis">
+            <span class="material-icons text-base">add</span> New Template
+        </button>
+    </header>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <% if (!templates.length) { %>
+        <div class="lg:col-span-2 bg-canvas-default border border-dashed border-ghborder-default rounded-md p-10 text-center">
+            <span class="material-icons text-3xl text-fg-muted">content_copy</span>
+            <h2 class="text-sm font-semibold text-fg-default mt-3">No templates yet</h2>
+            <p class="text-xs text-fg-muted mt-1">Create one from an existing bot configuration.</p>
+        </div>
+        <% } %>
+        <% templates.forEach(template => { %>
+        <article class="bg-canvas-default border border-ghborder-default rounded-md p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-3 border-b border-ghborder-muted pb-3">
+                <div class="min-w-0"><h2 class="text-sm font-semibold text-fg-default truncate"><%= template.name %></h2><p class="text-[10px] text-fg-muted font-mono mt-1"><%= template.server.ip %>:<%= template.server.port %> · <%= template.server.version %></p></div>
+                <button onclick="deleteTemplate('<%= template._id %>')" class="text-danger-fg hover:text-white hover:bg-danger-emphasis p-1.5 rounded-md" title="Delete template"><span class="material-icons text-base">delete</span></button>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-4 text-xs"><div><span class="block text-[10px] text-fg-muted uppercase">AFK profile</span><strong class="text-fg-default font-mono"><%= template.afkProfile %></strong></div><div><span class="block text-[10px] text-fg-muted uppercase">Auto eat</span><strong class="text-fg-default"><%= template.autoEat ? 'Enabled' : 'Disabled' %></strong></div></div>
+            <button onclick="applyTemplate('<%= template._id %>')" class="w-full mt-4 px-3 py-2 bg-accent-subtle text-accent-fg border border-accent-muted rounded-md text-xs font-semibold hover:bg-accent-muted">Create Bot From Template</button>
+        </article>
+        <% }) %>
+    </section>
+</main>
+
+<div id="template-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 p-4">
+    <form onsubmit="createTemplate(event)" class="bg-canvas-default border border-ghborder-default rounded-lg p-5 w-full max-w-md shadow-2xl">
+        <div class="flex items-center justify-between border-b border-ghborder-muted pb-3 mb-4"><h2 class="text-sm font-semibold text-fg-default">Create template</h2><button type="button" onclick="closeTemplateModal()" class="text-fg-muted hover:text-fg-default"><span class="material-icons">close</span></button></div>
+        <label class="block text-xs font-semibold text-fg-default mb-1">Template name</label><input name="name" required maxlength="80" class="w-full px-3 py-2 bg-canvas-default border border-ghborder-default rounded-md text-xs text-fg-default mb-4">
+        <label class="block text-xs font-semibold text-fg-default mb-1">Source bot</label><select name="botId" required class="w-full px-3 py-2 bg-canvas-default border border-ghborder-default rounded-md text-xs text-fg-default mb-4"><% bots.forEach(bot => { %><option value="<%= bot.id %>"><%= bot.name %> (#<%= bot.id %>)</option><% }) %></select>
+        <button class="w-full px-3 py-2 bg-accent-emphasis hover:bg-accent-fg text-white rounded-md text-xs font-semibold">Save Template</button>
+    </form>
+</div>
+
+<script>
+function openTemplateModal() { const modal = document.getElementById('template-modal'); modal.classList.remove('hidden'); modal.classList.add('flex'); }
+function closeTemplateModal() { const modal = document.getElementById('template-modal'); modal.classList.add('hidden'); modal.classList.remove('flex'); }
+async function templateRequest(url, body) { const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.error || 'Template request failed.'); return result; }
+async function createTemplate(event) { event.preventDefault(); const form = new FormData(event.target); try { await templateRequest('/api/templates/create', { name: form.get('name'), botId: form.get('botId') }); window.location.reload(); } catch (error) { showToast(error.message, 'error'); } }
+async function applyTemplate(templateId) { try { await templateRequest('/api/templates/apply', { templateId }); showToast('Bot created from template.', 'success'); setTimeout(() => window.location.reload(), 500); } catch (error) { showToast(error.message, 'error'); } }
+async function deleteTemplate(templateId) { if (!confirm('Delete this template?')) return; try { await templateRequest('/api/templates/delete', { templateId }); window.location.reload(); } catch (error) { showToast(error.message, 'error'); } }
+</script>
+
+<%- include('partials/footer') %>

@@ -7,37 +7,7 @@
 </script>
 
 <main class="flex-1 min-w-0 p-4 sm:p-6 md:p-8 max-w-[1280px] w-full mx-auto min-h-screen pb-20 md:pb-8 flex flex-col gap-6">
-    <header class="flex flex-col gap-4 border-b border-ghborder-default pb-4">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div class="flex items-center gap-3 min-w-0">
-                <a href="/bot/<%= botId %>" class="p-2 bg-canvas-subtle hover:bg-canvas-default text-fg-muted hover:text-fg-default border border-ghborder-default rounded-md flex items-center justify-center" title="Back to console">
-                    <span class="material-icons text-base">arrow_back</span>
-                </a>
-                <div class="min-w-0">
-                    <div class="flex items-center gap-2.5">
-                        <h2 class="text-xl md:text-2xl font-bold tracking-tight text-fg-default truncate"><%= botConfig.name %></h2>
-                        <span class="px-2 py-0.5 font-mono text-[11px] bg-canvas-subtle border border-ghborder-default text-fg-muted rounded-pill">#<%= botId %></span>
-                    </div>
-                    <div class="flex items-center gap-2 text-xs text-fg-muted mt-1 font-mono">
-                        <span class="w-2 h-2 rounded-full inline-block <%= status.online ? 'bg-success-fg' : 'bg-danger-fg' %>"></span>
-                        <span class="font-semibold text-fg-default"><%= status.online ? 'Online' : 'Offline' %></span>
-                        <span>•</span>
-                        <span class="truncate"><%= status.server ? status.server.ip + ':' + status.server.port : 'No server configured' %></span>
-                    </div>
-                </div>
-            </div>
-            <span class="text-[10px] font-mono uppercase tracking-widest text-accent-fg border border-accent-muted bg-accent-subtle px-2 py-1 rounded-pill">Bot Settings</span>
-        </div>
-
-        <nav class="flex w-full min-w-0 items-center gap-1 overflow-x-auto border-b border-ghborder-default pt-2" aria-label="Bot workspace">
-            <a href="/bot/<%= botId %>" class="workspace-link"><span class="material-icons text-base">terminal</span> Console</a>
-            <a href="/bot/<%= botId %>/config" class="workspace-link"><span class="material-icons text-base">tune</span> Config</a>
-            <a href="/bot/<%= botId %>/analytics" class="workspace-link"><span class="material-icons text-base">insights</span> Analytics</a>
-            <a href="/bot/<%= botId %>/events" class="workspace-link"><span class="material-icons text-base">history</span> Events</a>
-            <a href="/bot/<%= botId %>/game" class="workspace-link"><span class="material-icons text-base">sports_esports</span> In-Game</a>
-            <a href="/bot/<%= botId %>/settings" aria-current="page" class="workspace-link workspace-link-active"><span class="material-icons text-base">settings</span> Settings</a>
-        </nav>
-    </header>
+    <%- include('partials/bot-topbar', { botConfig, botId, status, section: 'settings' }) %>
 
     <div class="max-w-4xl w-full mx-auto grid gap-5">
         <section class="bg-canvas-default border border-ghborder-default rounded-md p-5 shadow-sm">
