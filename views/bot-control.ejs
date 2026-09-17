@@ -204,6 +204,15 @@
                             <label class="block text-xs font-semibold text-fg-default mb-1">Server Target IP</label>
                             <input type="text" name="ip" value="<%= typeof botConfig.server !== 'undefined' ? botConfig.server.ip : '' %>" required class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs font-mono text-fg-default outline-none focus:border-accent-fg">
                         </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-fg-default mb-1">Server Cluster Profile</label>
+                            <select name="serverProfile" id="config-server-profile" class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs font-mono text-fg-default outline-none focus:border-accent-fg">
+                                <option value="">Custom server connection</option>
+                                <% (typeof servers !== 'undefined' ? servers : []).forEach(server => { %>
+                                <option value="<%= server._id %>" <%= botConfig.serverProfile && String(botConfig.serverProfile) === String(server._id) ? 'selected' : '' %>><%= server.name %> · <%= server.ip %>:<%= server.port %></option>
+                                <% }) %>
+                            </select>
+                        </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-semibold text-fg-default mb-1">Port</label>
@@ -211,12 +220,25 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-fg-default mb-1">Minecraft Version</label>
-                                <input type="text" name="version" value="<%= typeof botConfig.server !== 'undefined' ? botConfig.server.version : '1.20.4' %>" required class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs font-mono text-fg-default outline-none focus:border-accent-fg">
+                                <select name="version" id="config-version" class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs font-mono text-fg-default outline-none focus:border-accent-fg">
+                                    <% const currentVersion = typeof botConfig.server !== 'undefined' ? botConfig.server.version : '1.20.4'; %>
+                                    <% const knownVersions = ['1.20.4', '1.20.1', '1.19.4', '1.18.2', '1.12.2', 'auto']; %>
+                                    <% knownVersions.forEach(version => { %><option value="<%= version %>" <%= currentVersion === version ? 'selected' : '' %>><%= version === 'auto' ? 'Auto-detect' : version %></option><% }) %>
+                                    <option value="custom" <%= !knownVersions.includes(currentVersion) ? 'selected' : '' %>>Custom version</option>
+                                </select>
+                                <input type="text" name="customVersion" value="<%= knownVersions.includes(currentVersion) ? '' : currentVersion %>" placeholder="e.g. 1.8.9" class="<%= knownVersions.includes(currentVersion) ? 'hidden ' : '' %>mt-2 w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs font-mono text-fg-default outline-none focus:border-accent-fg">
                             </div>
                         </div>
                         <div>
+                            <label class="block text-xs font-semibold text-fg-default mb-1">Account Mode</label>
+                            <select name="accountType" id="config-account-type" class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs font-mono text-fg-default outline-none focus:border-accent-fg">
+                                <option value="online" <%= !botConfig.account || botConfig.account.type !== 'offline' ? 'selected' : '' %>>Online / Microsoft authentication</option>
+                                <option value="offline" <%= botConfig.account && botConfig.account.type === 'offline' ? 'selected' : '' %>>Offline / no authentication</option>
+                            </select>
+                        </div>
+                        <div id="config-online-account" class="<%= botConfig.account && botConfig.account.type === 'offline' ? 'hidden' : '' %>">
                             <label class="block text-xs font-semibold text-fg-default mb-1">Microsoft Account Email</label>
-                            <input type="email" name="email" value="<%= typeof botConfig.account !== 'undefined' ? botConfig.account.email : '' %>" required class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs text-fg-default outline-none focus:border-accent-fg">
+                            <input type="email" name="email" value="<%= typeof botConfig.account !== 'undefined' ? botConfig.account.email : '' %>" <%= botConfig.account && botConfig.account.type === 'offline' ? '' : 'required' %> class="w-full px-3 py-1.5 bg-canvas-default border border-ghborder-default rounded-md text-xs text-fg-default outline-none focus:border-accent-fg">
                         </div>
                         <button type="submit" class="w-full bg-accent-emphasis hover:bg-accent-fg text-white font-semibold text-xs py-2 rounded-md transition-colors border border-accent-emphasis">
                             Save Bot Configuration
@@ -518,6 +540,17 @@ async function loadEvents() {
         </div>`;
     }).join('');
 }
+
+document.getElementById('config-account-type')?.addEventListener('change', event => {
+    const online = event.target.value !== 'offline';
+    document.getElementById('config-online-account')?.classList.toggle('hidden', !online);
+    const email = document.querySelector('#config-online-account input[name="email"]');
+    if (email) email.required = online;
+});
+
+document.getElementById('config-version')?.addEventListener('change', event => {
+    event.target.nextElementSibling.classList.toggle('hidden', event.target.value !== 'custom');
+});
 
 if (BOT_SECTION === 'analytics') loadMetrics();
 if (BOT_SECTION === 'events') loadEvents();

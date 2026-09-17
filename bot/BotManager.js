@@ -63,8 +63,8 @@ function deleteBot(id) {
     return false;
 }
 
-function updateBotConfig(id, updates) {
-    const updatedData = dataManager.updateBot(id, updates);
+async function updateBotConfig(id, updates) {
+    const updatedData = await dataManager.updateBot(id, updates);
     if (updatedData) {
         const bot = bots.get(parseInt(id));
         if (bot) {

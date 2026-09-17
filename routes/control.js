@@ -198,6 +198,12 @@ router.post('/bots/create', async (req, res) => {
     if (!user) return res.status(401).json({ success: false, error: 'User session is no longer valid.' });
 
     const assignedTo = user.role === 'admin' ? null : user.username;
+    const accountType = req.body.accountType === 'offline' ? 'offline' : 'online';
+    const version = req.body.version === 'custom' ? String(req.body.customVersion || '').trim() : req.body.version;
+    if (!version) return res.status(400).json({ success: false, error: 'Minecraft version is required.' });
+    if (accountType === 'online' && !String(req.body.email || '').trim()) {
+        return res.status(400).json({ success: false, error: 'An email is required for online account mode.' });
+    }
     if (user.role !== 'admin') {
         if (!user.canCreateBots) {
             return res.status(403).json({ success: false, error: 'Bot creation is not enabled for your account.' });
@@ -208,7 +214,7 @@ router.post('/bots/create', async (req, res) => {
         }
     }
     
-    const newBot = await botManager.createBot(req.body, assignedTo);
+    const newBot = await botManager.createBot({ ...req.body, accountType, version }, assignedTo);
     if (!newBot) {
         return res.json({ success: false, error: 'Failed to create bot.' });
     }
@@ -280,15 +286,26 @@ router.post('/bot/:id/settings', async (req, res) => {
     const passkeyBlock = await enforcePasskey(req, res, bot);
     if (passkeyBlock) return;
     
-    const { name, server, account } = req.body;
+    const { name, server, account, serverProfile } = req.body;
     const updates = {};
     if (typeof name === 'string' && name.trim()) updates.name = name.trim();
-    if (server) updates.server = server;
-    if (account) updates.account = account;
+    if (server) {
+        const version = String(server.version || '').trim();
+        if (!server.ip || !server.port || !version) return res.status(400).json({ success: false, error: 'Server IP, port, and version are required.' });
+        updates.server = { ip: String(server.ip).trim(), port: parseInt(server.port, 10) || 25565, version };
+    }
+    if (account) {
+        const type = account.type === 'offline' ? 'offline' : 'online';
+        const email = type === 'online' ? String(account.email || '').trim() : '';
+        if (type === 'online' && !email) return res.status(400).json({ success: false, error: 'An email is required for online account mode.' });
+        updates.account = { type, email };
+    }
+    if (serverProfile !== undefined) updates.serverProfile = serverProfile || null;
 
-    botManager.updateBotConfig(req.params.id, updates);
+    const updated = await botManager.updateBotConfig(req.params.id, updates);
+    if (!updated) return res.status(404).json({ success: false, error: 'Bot not found or settings could not be saved.' });
     await dataManager.addAdminLog(req.session.user.username, 'update_bot_settings', String(req.params.id), updates);
-    res.json({ success: true });
+    res.json({ success: true, bot: updated });
 });
 
 // Global Settings

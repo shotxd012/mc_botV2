@@ -36,7 +36,7 @@ const botSchema = new mongoose.Schema({
         },
         type: {
             type: String,
-            default: 'microsoft'
+            default: 'online'
         },
         verified: {
             type: Boolean,

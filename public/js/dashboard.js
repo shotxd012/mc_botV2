@@ -450,10 +450,16 @@ async function updateBotConfig(e) {
             version: data.version
         },
         account: {
-            email: data.email
+            email: data.email,
+            type: data.accountType === 'offline' ? 'offline' : 'online'
         },
-        name: data.name
+        name: data.name,
+        serverProfile: data.serverProfile || null
     };
+
+    if (data.version === 'custom') {
+        payload.server.version = data.customVersion.trim();
+    }
 
     try {
         const res = await fetch(`/api/bot/${BOT_ID}/settings`, {

@@ -198,21 +198,32 @@ async function addBot(botData, assignedTo = null) {
         const maxBot = await Bot.findOne().sort({ id: -1 }).lean();
         const newId = maxBot ? maxBot.id + 1 : 1;
 
+        const accountType = botData.accountType === 'offline' ? 'offline' : 'online';
+        let serverProfile = null;
+        let server = {
+            ip: botData.ip || 'localhost',
+            port: parseInt(botData.port) || 25565,
+            version: botData.version || '1.20.4'
+        };
+        if (botData.serverProfile) {
+            const profile = await Server.findById(botData.serverProfile).lean();
+            if (profile) {
+                serverProfile = profile._id;
+                server = { ip: profile.ip, port: profile.port, version: profile.version };
+            }
+        }
+
         const newBot = new Bot({
             id: newId,
             name: botData.name || `Bot ${newId}`,
-            server: {
-                ip: botData.ip || 'localhost',
-                port: parseInt(botData.port) || 25565,
-                version: botData.version || '1.20.4'
-            },
+            server,
             account: {
-                email: botData.email || '',
-                type: 'microsoft',
+                email: accountType === 'online' ? (botData.email || '') : '',
+                type: accountType,
                 verified: false,
                 authCache: null
             },
-            serverProfile: botData.serverProfile || null,
+            serverProfile,
             assignedTo: assignedTo,
             created: Date.now()
         });

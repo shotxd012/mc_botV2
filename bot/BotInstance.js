@@ -278,8 +278,9 @@ class BotInstance {
         const config = this.botConfig?.server || {};
         const account = this.botConfig?.account || {};
 
-        if (!account.email || !config.ip || !config.port) {
-            const missing = !account.email ? 'Minecraft account email' : 'server configuration';
+        const isOffline = account.type === 'offline';
+        if ((!isOffline && !account.email) || !config.ip || !config.port) {
+            const missing = !isOffline && !account.email ? 'Minecraft account email' : 'server configuration';
             this.log(`No ${missing} configured.`, 'error');
             this.authStatus = 'Offline';
             this.isRunning = false;
@@ -292,10 +293,13 @@ class BotInstance {
             host: config.ip,
             port: parseInt(config.port),
             version: config.version === 'auto' ? false : config.version,
-            username: account.email,
-            auth: 'microsoft',
-            profilesFolder: `./data/nmp-cache-${this.id}`,
-            onMsaCode: (data) => {
+            username: isOffline ? (account.username || this.botConfig.name) : account.email,
+            profilesFolder: `./data/nmp-cache-${this.id}`
+        };
+
+        if (!isOffline) {
+            options.auth = 'microsoft';
+            options.onMsaCode = (data) => {
                 this.log(`Microsoft Auth Code: ${data.user_code}`, 'action');
                 this.log(`Please visit ${data.verification_uri}`, 'action');
                 this.authStatus = 'Pending Auth';
@@ -303,8 +307,8 @@ class BotInstance {
                 if (this.io) {
                     this.io.to(`bot:${this.id}`).emit('auth-code', { botId: this.id, data });
                 }
-            }
-        };
+            };
+        }
 
         this.log(`Connecting to ${options.host}:${options.port} as ${options.username}...`);
 

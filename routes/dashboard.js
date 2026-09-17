@@ -19,10 +19,12 @@ router.get('/', async (req, res) => {
         bots = assignedBots.map(bot => botManager.getStatus(bot.id)).filter(status => status !== null);
     }
     
+    const servers = user.role === 'admin' ? await dataManager.getServers() : [];
     res.render('dashboard', {
         page: 'home',
         user: user, // Pass user info to template for conditional rendering
-        bots: bots
+        bots: bots,
+        servers
     });
 });
 
@@ -36,6 +38,7 @@ async function renderBotPage(req, res, section = 'console', view = 'bot-control'
     }
 
     const botConfig = await dataManager.getBot(id);
+    const servers = user.role === 'admin' ? await dataManager.getServers() : [];
 
     // Check if user has permission to access this bot
     if (user.role !== 'admin' && botConfig.assignedTo !== req.session.user.username) {
@@ -59,7 +62,8 @@ async function renderBotPage(req, res, section = 'console', view = 'bot-control'
         botConfig: botConfig,
         botId: id,
         user: user,
-        section: section
+        section: section,
+        servers
     });
 }
 

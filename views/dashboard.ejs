@@ -121,31 +121,49 @@
             </div>
 
             <div>
+                <label class="block text-xs font-semibold text-fg-default mb-1">Account Mode</label>
+                <select name="accountType" id="account-type" onchange="toggleAccountFields()" class="w-full bg-canvas-default border border-ghborder-default rounded-md px-3 py-1.5 text-xs font-mono text-fg-default outline-none focus:border-accent-fg focus:ring-1 focus:ring-accent-fg transition-all">
+                    <option value="online">Online / Microsoft authentication</option>
+                    <option value="offline">Offline / no authentication</option>
+                </select>
+            </div>
+
+            <div id="online-account-fields">
                 <label class="block text-xs font-semibold text-fg-default mb-1">Microsoft Account Email</label>
-                <input type="email" name="email" placeholder="operator@example.com" required class="w-full bg-canvas-default border border-ghborder-default rounded-md px-3 py-1.5 text-xs text-fg-default outline-none focus:border-accent-fg focus:ring-1 focus:ring-accent-fg transition-all">
+                <input type="email" name="email" id="account-email" placeholder="operator@example.com" required class="w-full bg-canvas-default border border-ghborder-default rounded-md px-3 py-1.5 text-xs text-fg-default outline-none focus:border-accent-fg focus:ring-1 focus:ring-accent-fg transition-all">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-fg-default mb-1">Server Cluster Profile</label>
+                <select name="serverProfile" id="server-profile" class="w-full bg-canvas-default border border-ghborder-default rounded-md px-3 py-1.5 text-xs font-mono text-fg-default outline-none focus:border-accent-fg focus:ring-1 focus:ring-accent-fg transition-all">
+                    <option value="">Custom server connection</option>
+                    <% (servers || []).forEach(server => { %><option value="<%= server._id %>" data-ip="<%= server.ip %>" data-port="<%= server.port %>" data-version="<%= server.version %>"><%= server.name %> · <%= server.ip %>:<%= server.port %></option><% }) %>
+                </select>
             </div>
 
             <div class="grid grid-cols-3 gap-3">
                 <div class="col-span-2">
                     <label class="block text-xs font-semibold text-fg-default mb-1">Server Host IP</label>
-                    <input type="text" name="ip" placeholder="play.example.com" required class="w-full bg-canvas-default border border-ghborder-default rounded-md px-3 py-1.5 text-xs font-mono text-fg-default outline-none focus:border-accent-fg focus:ring-1 focus:ring-accent-fg transition-all">
+                    <input type="text" name="ip" id="server-ip" placeholder="play.example.com" required class="w-full bg-canvas-default border border-ghborder-default rounded-md px-3 py-1.5 text-xs font-mono text-fg-default outline-none focus:border-accent-fg focus:ring-1 focus:ring-accent-fg transition-all">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-fg-default mb-1">Port</label>
-                    <input type="number" name="port" value="25565" required class="w-full bg-canvas-default border border-ghborder-default rounded-md px-3 py-1.5 text-xs font-mono text-fg-default outline-none focus:border-accent-fg focus:ring-1 focus:ring-accent-fg transition-all">
+                    <input type="number" name="port" id="server-port" value="25565" required class="w-full bg-canvas-default border border-ghborder-default rounded-md px-3 py-1.5 text-xs font-mono text-fg-default outline-none focus:border-accent-fg focus:ring-1 focus:ring-accent-fg transition-all">
                 </div>
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-fg-default mb-1">Minecraft Version</label>
-                <select name="version" class="w-full bg-canvas-default border border-ghborder-default rounded-md px-3 py-1.5 text-xs font-mono text-fg-default outline-none focus:border-accent-fg focus:ring-1 focus:ring-accent-fg transition-all">
+                <select name="version" id="server-version" class="w-full bg-canvas-default border border-ghborder-default rounded-md px-3 py-1.5 text-xs font-mono text-fg-default outline-none focus:border-accent-fg focus:ring-1 focus:ring-accent-fg transition-all">
                     <option value="1.20.4">1.20.4</option>
                     <option value="1.20.1">1.20.1</option>
                     <option value="1.19.4">1.19.4</option>
                     <option value="1.18.2">1.18.2</option>
                     <option value="1.12.2">1.12.2</option>
                     <option value="auto">Auto-detect</option>
+                    <option value="custom">Custom version</option>
                 </select>
+                <input type="text" name="customVersion" placeholder="e.g. 1.8.9" class="hidden mt-2 w-full bg-canvas-default border border-ghborder-default rounded-md px-3 py-1.5 text-xs font-mono text-fg-default outline-none focus:border-accent-fg">
             </div>
 
             <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-ghborder-muted">
@@ -219,6 +237,29 @@ function closeCreateModal() {
     setTimeout(() => {
         modal.classList.add('hidden');
     }, 150);
+}
+
+document.querySelector('select[name="version"]')?.addEventListener('change', event => {
+    event.target.nextElementSibling.classList.toggle('hidden', event.target.value !== 'custom');
+});
+
+document.getElementById('server-profile')?.addEventListener('change', event => {
+    const option = event.target.selectedOptions[0];
+    if (!option.value) return;
+    document.getElementById('server-ip').value = option.dataset.ip || '';
+    document.getElementById('server-port').value = option.dataset.port || '25565';
+    const versionSelect = document.getElementById('server-version');
+    const version = option.dataset.version || 'auto';
+    const knownVersion = Array.from(versionSelect.options).some(item => item.value === version);
+    versionSelect.value = knownVersion ? version : 'custom';
+    versionSelect.nextElementSibling.value = knownVersion ? '' : version;
+    versionSelect.nextElementSibling.classList.toggle('hidden', knownVersion);
+});
+
+function toggleAccountFields() {
+    const online = document.getElementById('account-type').value === 'online';
+    document.getElementById('online-account-fields').classList.toggle('hidden', !online);
+    document.getElementById('account-email').required = online;
 }
 
 async function createBot(e) {
